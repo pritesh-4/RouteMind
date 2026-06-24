@@ -41,13 +41,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # ── 1. Lint ──────────────────────────────────────────────────────
+      # ── 1. Lint ────────────────────────────────────────────────────────────
       - name: Lint
         run: pnpm lint
 
-      # ── 2. Unit tests ────────────────────────────────────────────────
+      # ── 2. Unit tests ─────────────────────────────────────────────────────────
       - name: Test
-        run: pnpm test --run
+        run: pnpm test:run
 
       # ── 3. Build (catches type errors, bad imports, Tailwind issues) ─
       - name: Build
