@@ -7,19 +7,16 @@ import ChatInput from '../components/ChatInput'
 import TypingIndicator from '../components/TypingIndicator'
 
 const Chat = () => {
-  // Sidebar & Layout State
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [activeChatId, setActiveChatId] = useState('1')
 
-  // Chat conversations list state
   const [chatHistory, setChatHistory] = useState([
     { id: '1', title: 'RouteMind Introduction', timestamp: 'Just now' },
     { id: '2', title: 'Code Performance Tuning', timestamp: '2h ago' },
     { id: '3', title: 'LLM Routing Benchmarks', timestamp: 'Yesterday' }
   ])
 
-  // Message store for conversations
   const [conversationsMessages, setConversationsMessages] = useState({
     '1': [],
     '2': [
@@ -56,35 +53,25 @@ const Chat = () => {
 
   const [isLoading, setIsLoading] = useState(false)
   const [loadingStep, setLoadingStep] = useState('Analyzing Intent...')
-  // FIX Bug 4: track the model chosen by routing so TypingIndicator shows the correct name
   const [pendingModel, setPendingModel] = useState(null)
   const messagesEndRef = useRef(null)
   const messageIdRef = useRef(100)
-  // FIX Bug 2: store timeout IDs so we can cancel them if user switches chat or unmounts
   const timeoutRefs = useRef([])
 
   const currentMessages = conversationsMessages[activeChatId] || []
 
-  // Cancel all pending timeouts on unmount
   useEffect(() => {
-    return () => {
-      timeoutRefs.current.forEach(clearTimeout)
-    }
+    return () => { timeoutRefs.current.forEach(clearTimeout) }
   }, [])
 
-  // Auto-scroll to bottom of workspace
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [currentMessages.length, isLoading])
 
-  // New Chat initialization
   const handleNewChat = (newChat) => {
     setChatHistory(prev => [newChat, ...prev])
     setActiveChatId(newChat.id)
-    setConversationsMessages(prev => ({
-      ...prev,
-      [newChat.id]: []
-    }))
+    setConversationsMessages(prev => ({ ...prev, [newChat.id]: [] }))
   }
 
   const handleDeleteChat = (id) => {
@@ -93,28 +80,21 @@ const Chat = () => {
     const newMessages = { ...conversationsMessages }
     delete newMessages[id]
     setConversationsMessages(newMessages)
-
     if (activeChatId === id && updated.length > 0) {
       setActiveChatId(updated[0].id)
     }
   }
 
   const handleRenameChat = (id, newTitle) => {
-    setChatHistory(prev =>
-      prev.map(c => c.id === id ? { ...c, title: newTitle } : c)
-    )
+    setChatHistory(prev => prev.map(c => c.id === id ? { ...c, title: newTitle } : c))
   }
 
-  // Handle prompt submissions
   const handleSendMessage = (content) => {
     if (!content.trim() || isLoading) return
 
-    // FIX Bug 2: cancel any in-flight timers from a previous message before starting new ones
     timeoutRefs.current.forEach(clearTimeout)
     timeoutRefs.current = []
 
-    // Snapshot the active chat ID at the time of sending so all callbacks
-    // write to the correct conversation even if the user switches chats
     const chatIdAtSend = activeChatId
 
     messageIdRef.current += 1
@@ -134,7 +114,6 @@ const Chat = () => {
     setPendingModel(null)
     setLoadingStep('Analyzing Intent...')
 
-    // Determine routing result up-front so all stages can reference it
     const query = content.toLowerCase()
     let model = 'GPT-4o'
     let cost = '$0.0022'
@@ -160,19 +139,13 @@ const Chat = () => {
       reply = 'The self-attention mechanism computes representations of sequence elements by relating different positions of a single sequence. This allows the model to process context globally rather than sequentially.'
     }
 
-    // FIX Bug 4: expose the decided model to TypingIndicator immediately
-    // so it shows the correct name in its "Optimal Route Selected" panel
     const t1 = setTimeout(() => {
       setLoadingStep('Comparing Models...')
-
       const t2 = setTimeout(() => {
         setLoadingStep('Selecting Best Model...')
-        // Reveal the actual model name at the "selecting" stage
         setPendingModel(model)
-
         const t3 = setTimeout(() => {
           setLoadingStep('Generating Response...')
-
           const t4 = setTimeout(() => {
             messageIdRef.current += 1
             const assistantMsg = {
@@ -182,26 +155,14 @@ const Chat = () => {
               time: 'Just now',
               routing: { model, cost, confidence, reason }
             }
-
-            // FIX Bug 2: write to the snapshotted chat ID, not the current activeChatId
-            // FIX Bug 1: use the functional updater to check the live message count,
-            // avoiding the stale-closure problem that prevented auto-rename from firing
             setConversationsMessages(prev => {
               const existingMsgs = prev[chatIdAtSend] || []
-              return {
-                ...prev,
-                [chatIdAtSend]: [...existingMsgs, assistantMsg]
-              }
+              return { ...prev, [chatIdAtSend]: [...existingMsgs, assistantMsg] }
             })
-
-            // FIX Bug 1: rename the chat using state at callback time, not render time.
-            // We check chatHistory via setChatHistory's functional form to get fresh data.
             setChatHistory(prevHistory => {
               const chatIndex = prevHistory.findIndex(c => c.id === chatIdAtSend)
               if (chatIndex === -1) return prevHistory
               const chat = prevHistory[chatIndex]
-              // Only auto-rename if the chat still has its default placeholder title
-              // and only has the single user message we just added (i.e. it was a fresh chat)
               const msgsAtCallback = conversationsMessages[chatIdAtSend] || []
               const isFirstMessage = msgsAtCallback.length <= 1
               if (isFirstMessage && chat.title === 'New Workspace Chat') {
@@ -212,7 +173,6 @@ const Chat = () => {
               }
               return prevHistory
             })
-
             setIsLoading(false)
             setPendingModel(null)
           }, 1200)
@@ -225,9 +185,11 @@ const Chat = () => {
     timeoutRefs.current.push(t1)
   }
 
+  // Stagger delays for welcome screen prompt cards
+  const cardDelays = ['stagger-1', 'stagger-2', 'stagger-3', 'stagger-4']
+
   return (
     <div className="h-screen bg-app-bg flex text-[#FAFAFA] overflow-hidden font-sans selection:bg-blue-600/30 selection:text-white">
-      {/* Sidebar Navigation */}
       <Sidebar
         activeChatId={activeChatId}
         onChatSelect={setActiveChatId}
@@ -241,12 +203,11 @@ const Chat = () => {
         setMobileOpen={setMobileOpen}
       />
 
-      {/* Main Workspace Frame */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden bg-app-bg">
-        {/* Unified Workspace Header */}
-        <header className="flex items-center justify-between px-4 h-14 border-b border-border-app bg-[#0E0E0E] shrink-0">
-          <div className="flex items-center gap-3">
-            {/* Desktop Sidebar Toggle (Only visible when collapsed) */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden bg-app-bg min-w-0">
+        {/* Header — full width on mobile, respects sidebar on desktop */}
+        <header className="flex items-center justify-between px-3 sm:px-4 h-14 border-b border-border-app bg-[#0E0E0E] shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            {/* Desktop: expand collapsed sidebar */}
             {isCollapsed && (
               <button
                 onClick={() => setIsCollapsed(false)}
@@ -257,21 +218,25 @@ const Chat = () => {
               </button>
             )}
 
-            {/* Mobile Sidebar Toggle */}
+            {/* Mobile: hamburger — always visible, full touch target */}
             <button
               onClick={() => setMobileOpen(true)}
-              className="md:hidden p-1.5 rounded-lg text-neutral-400 hover:text-[#FAFAFA] hover:bg-neutral-900 border border-transparent hover:border-border-app transition-all duration-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 cursor-pointer"
+              className="md:hidden p-2 -ml-1 rounded-lg text-neutral-400 hover:text-[#FAFAFA] hover:bg-neutral-900 transition-all duration-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 cursor-pointer"
               aria-label="Open sidebar menu"
             >
-              <Menu size={18} />
+              <Menu size={20} />
             </button>
 
-            <div className="flex items-center gap-2">
-              <Link to="/" className="text-white font-semibold text-xs tracking-wider font-mono uppercase text-blue-400 hover:text-blue-300 transition-all duration-200">
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+              <Link
+                to="/"
+                className="text-blue-400 hover:text-blue-300 font-semibold text-xs tracking-wider font-mono uppercase transition-all duration-200 shrink-0"
+              >
                 RouteMind
               </Link>
-              <span className="text-neutral-700 text-xs">/</span>
-              <span className="text-neutral-400 text-xs font-medium truncate max-w-[150px] sm:max-w-[240px]">
+              <span className="text-neutral-700 text-xs shrink-0">/</span>
+              {/* Truncate long chat titles gracefully on small screens */}
+              <span className="text-neutral-400 text-xs font-medium truncate max-w-[110px] xs:max-w-[160px] sm:max-w-[240px]">
                 {chatHistory.find(c => c.id === activeChatId)?.title || 'Workspace'}
               </span>
             </div>
@@ -282,20 +247,21 @@ const Chat = () => {
               const newId = Date.now().toString()
               handleNewChat({ id: newId, title: 'New Workspace Chat', timestamp: 'Just now' })
             }}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-900 border border-transparent hover:border-border-app transition-all duration-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 flex items-center gap-1.5 cursor-pointer"
+            className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-900 border border-transparent hover:border-border-app transition-all duration-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 flex items-center gap-1.5 cursor-pointer shrink-0"
             aria-label="Start new chat"
           >
             <Plus size={16} />
+            {/* Label hidden on very small screens to prevent overflow */}
             <span className="text-xs font-medium hidden sm:inline">New Chat</span>
           </button>
         </header>
 
-        {/* Scrollable Conversation Workspace */}
+        {/* Scrollable message area */}
         <div className="flex-1 overflow-y-auto bg-app-bg scrollbar-thin scrollbar-thumb-neutral-800 scrollbar-track-transparent">
           {currentMessages.length === 0 ? (
-            /* Welcome / Hero State */
-            <div className="min-h-full flex flex-col items-center justify-center max-w-[850px] mx-auto px-6 py-20 text-center space-y-12 select-none">
-              <div className="space-y-4">
+            // Welcome state — staggered entrance on each card
+            <div className="min-h-full flex flex-col items-center justify-center max-w-[850px] mx-auto px-4 sm:px-6 py-16 sm:py-20 text-center space-y-10 sm:space-y-12 select-none">
+              <div className="space-y-4 animate-slide-up-fade">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-950/20 text-xs font-medium text-blue-400">
                   <span className="flex h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse"></span>
                   Active Proxy Node: US-East-1 Edge
@@ -303,7 +269,7 @@ const Chat = () => {
                 <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
                   RouteMind
                 </h2>
-                <p className="text-lg sm:text-xl font-medium text-neutral-300">
+                <p className="text-base sm:text-xl font-medium text-neutral-300">
                   One Interface. Every AI. Zero Guesswork.
                 </p>
                 <p className="text-sm text-neutral-400 max-w-md mx-auto leading-relaxed">
@@ -311,8 +277,8 @@ const Chat = () => {
                 </p>
               </div>
 
-              {/* Prompt Suggestions Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl pt-4">
+              {/* Prompt suggestion cards with staggered entrance */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full max-w-2xl pt-2">
                 {[
                   "Debug my React project",
                   "Summarize this research paper",
@@ -322,7 +288,7 @@ const Chat = () => {
                   <button
                     key={idx}
                     onClick={() => handleSendMessage(prompt)}
-                    className="p-4 bg-card-bg hover:bg-sidebar-bg border border-border-app hover:border-blue-500/30 rounded-xl text-left transition-all duration-200 hover:-translate-y-0.5 group focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 cursor-pointer"
+                    className={`p-4 bg-card-bg hover:bg-sidebar-bg border border-border-app hover:border-blue-500/30 rounded-xl text-left transition-all duration-200 hover:-translate-y-0.5 group focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 cursor-pointer animate-slide-up-fade ${cardDelays[idx]}`}
                   >
                     <p className="text-xs font-semibold text-primary group-hover:text-white transition-colors">{prompt}</p>
                     <p className="text-[10px] text-neutral-500 mt-1 leading-normal">Click to submit query directly to RouteMind proxy.</p>
@@ -331,27 +297,23 @@ const Chat = () => {
               </div>
             </div>
           ) : (
-            /* Message Feed State */
             <div className="pb-32">
               {currentMessages.map((msg) => (
                 <ChatMessage key={msg.id} message={msg} />
               ))}
-
-              {/* Typing/Routing Stage Indicator */}
               {isLoading && (
                 <TypingIndicator
                   loadingStep={loadingStep}
                   selectedModel={pendingModel}
                 />
               )}
-
               <div ref={messagesEndRef} />
             </div>
           )}
         </div>
 
-        {/* Fixed Footer Input Bar */}
-        <div className="bg-app-bg border-t border-border-app/40 shrink-0">
+        {/* Footer input — safe-area padding for mobile browsers */}
+        <div className="bg-app-bg border-t border-border-app/40 shrink-0 pb-safe">
           <ChatInput
             onSubmit={handleSendMessage}
             isLoading={isLoading}
