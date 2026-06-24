@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
+import AuthenticationComingSoonModal from './AuthenticationComingSoonModal'
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [authModalOpen, setAuthModalOpen] = useState(false)
 
   // Add scroll listener to update border/background on scroll
   useEffect(() => {
@@ -94,26 +96,36 @@ const Navbar = () => {
           aria-label="Global navigation"
         >
           {[
-            { label: 'Features', href: '#features' },
-            { label: 'Architecture', href: '#architecture' },
-            { label: 'Benefits', href: '#benefits' },
+            { label: 'Features', href: '/#features' },
+            { label: 'Benefits', href: '/benefits' },
             { label: 'Documentation', href: '/docs' }
-          ].map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              className="text-neutral-400 hover:text-white text-sm font-medium transition-colors duration-200 relative py-1.5 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 rounded-sm"
-            >
-              {link.label}
-            </a>
-          ))}
+          ].map((link) => {
+            const isInternal = link.href.startsWith('/');
+            return isInternal ? (
+              <Link
+                key={link.label}
+                to={link.href}
+                className="text-neutral-400 hover:text-white text-sm font-medium transition-colors duration-200 relative py-1.5 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 rounded-sm"
+              >
+                {link.label}
+              </Link>
+            ) : (
+              <a
+                key={link.label}
+                href={link.href}
+                className="text-neutral-400 hover:text-white text-sm font-medium transition-colors duration-200 relative py-1.5 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 rounded-sm"
+              >
+                {link.label}
+              </a>
+            );
+          })}
         </nav>
 
         {/* Right Section: Actions */}
         <div className="hidden md:flex items-center gap-x-4">
           {/* GitHub icon link */}
           <a
-            href="https://github.com/routemind"
+            href="https://github.com/pritesh-4/RouteMind"
             target="_blank"
             rel="noopener noreferrer"
             className="text-neutral-400 hover:text-white p-2 rounded-lg hover:bg-neutral-900 border border-transparent hover:border-neutral-800 transition-all duration-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500"
@@ -131,12 +143,12 @@ const Navbar = () => {
           </a>
 
           {/* Sign In (Secondary) - Hidden on tablet, visible on desktop */}
-          <Link
-            to="/login"
-            className="hidden lg:inline-flex text-neutral-400 hover:text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500"
+          <button
+            onClick={() => setAuthModalOpen(true)}
+            className="hidden lg:inline-flex text-neutral-400 hover:text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 cursor-pointer"
           >
             Sign In
-          </Link>
+          </button>
 
           {/* Get Started (Primary CTA) */}
           <Link
@@ -170,20 +182,31 @@ const Navbar = () => {
         <div className="px-4 py-6 space-y-4 max-w-7xl mx-auto sm:px-6">
           <nav className="flex flex-col space-y-3" aria-label="Mobile navigation">
             {[
-              { label: 'Features', href: '#features' },
-              { label: 'Architecture', href: '#architecture' },
-              { label: 'Benefits', href: '#benefits' },
+              { label: 'Features', href: '/#features' },
+              { label: 'Benefits', href: '/benefits' },
               { label: 'Documentation', href: '/docs' }
-            ].map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                onClick={() => setIsOpen(false)}
-                className="text-neutral-400 hover:text-white text-[15px] font-medium py-1.5 transition-colors border-b border-neutral-900/50"
-              >
-                {link.label}
-              </a>
-            ))}
+            ].map((link) => {
+              const isInternal = link.href.startsWith('/');
+              return isInternal ? (
+                <Link
+                  key={link.label}
+                  to={link.href}
+                  onClick={() => setIsOpen(false)}
+                  className="text-neutral-400 hover:text-white text-[15px] font-medium py-1.5 transition-colors border-b border-neutral-900/50 block"
+                >
+                  {link.label}
+                </Link>
+              ) : (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  onClick={() => setIsOpen(false)}
+                  className="text-neutral-400 hover:text-white text-[15px] font-medium py-1.5 transition-colors border-b border-neutral-900/50 block"
+                >
+                  {link.label}
+                </a>
+              );
+            })}
           </nav>
 
           <div className="pt-4 border-t border-neutral-900 flex flex-col gap-3">
@@ -206,13 +229,15 @@ const Navbar = () => {
             </a>
             
             <div className="grid grid-cols-2 gap-3 pt-2">
-              <Link
-                to="/login"
-                onClick={() => setIsOpen(false)}
-                className="text-center text-neutral-300 hover:text-white text-sm font-medium py-2.5 rounded-lg border border-neutral-800 bg-neutral-900/40 hover:bg-neutral-900 transition-colors focus:outline-none"
+              <button
+                onClick={() => {
+                  setIsOpen(false)
+                  setAuthModalOpen(true)
+                }}
+                className="text-center text-neutral-300 hover:text-white text-sm font-medium py-2.5 rounded-lg border border-neutral-800 bg-neutral-900/40 hover:bg-neutral-900 transition-colors focus:outline-none cursor-pointer"
               >
                 Sign In
-              </Link>
+              </button>
               <Link
                 to="/chat"
                 onClick={() => setIsOpen(false)}
@@ -224,6 +249,10 @@ const Navbar = () => {
           </div>
         </div>
       </div>
+      <AuthenticationComingSoonModal 
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+      />
     </header>
   )
 }
