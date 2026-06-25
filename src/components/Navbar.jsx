@@ -1,12 +1,31 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, Sun, Moon, Laptop } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useTheme } from '../context/ThemeContext'
 import AuthenticationComingSoonModal from './AuthenticationComingSoonModal'
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
+  const { theme, setTheme } = useTheme()
+  const [themeDropdownOpen, setThemeDropdownOpen] = useState(false)
+  const themeDropdownRef = useRef(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (themeDropdownRef.current && !themeDropdownRef.current.contains(event.target)) {
+        setThemeDropdownOpen(false)
+      }
+    }
+    if (themeDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [themeDropdownOpen])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,8 +43,8 @@ const Navbar = () => {
     <header 
       className={`sticky top-0 z-50 w-full h-[76px] flex items-center transition-all duration-300 ${
         scrolled 
-          ? 'bg-app-bg/90 backdrop-blur-md border-b border-[#1A1A1A] shadow-[0_4px_30px_rgba(0,0,0,0.4)]' 
-          : 'bg-app-bg border-b border-sidebar-bg'
+          ? 'bg-app-bg/90 backdrop-blur-md border-b border-border-app/60 shadow-[0_4px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.4)]' 
+          : 'bg-app-bg border-b border-border-app/30'
       }`}
     >
       <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
@@ -74,7 +93,7 @@ const Navbar = () => {
           </div>
 
           <div className="flex flex-col">
-            <span className="text-white font-semibold text-[17px] tracking-tight leading-none group-hover:text-neutral-200 transition-colors">
+            <span className="text-primary font-semibold text-[17px] tracking-tight leading-none group-hover:text-primary/80 transition-colors">
               RouteMind
             </span>
             <span className="text-[10px] text-neutral-500 font-medium tracking-wide mt-1 hidden lg:block uppercase font-mono">
@@ -98,7 +117,7 @@ const Navbar = () => {
               <Link
                 key={link.label}
                 to={link.href}
-                className="text-neutral-400 hover:text-white text-sm font-medium transition-colors duration-200 relative py-1.5 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 rounded-sm"
+                className="text-secondary hover:text-primary text-sm font-medium transition-colors duration-200 relative py-1.5 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 rounded-sm"
               >
                 {link.label}
               </Link>
@@ -106,7 +125,7 @@ const Navbar = () => {
               <a
                 key={link.label}
                 href={link.href}
-                className="text-neutral-400 hover:text-white text-sm font-medium transition-colors duration-200 relative py-1.5 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 rounded-sm"
+                className="text-secondary hover:text-primary text-sm font-medium transition-colors duration-200 relative py-1.5 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 rounded-sm"
               >
                 {link.label}
               </a>
@@ -120,7 +139,7 @@ const Navbar = () => {
             href="https://github.com/pritesh-4/RouteMind"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-neutral-400 hover:text-white p-2 rounded-lg hover:bg-neutral-900 border border-transparent hover:border-neutral-800 transition-all duration-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500"
+            className="text-secondary hover:text-primary p-2 rounded-lg hover:bg-card-bg border border-transparent hover:border-border-app transition-all duration-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500"
             aria-label="GitHub Repository"
           >
             <svg 
@@ -134,9 +153,60 @@ const Navbar = () => {
             </svg>
           </a>
 
+          {/* Theme Dropdown Selector */}
+          <div className="relative flex items-center" ref={themeDropdownRef}>
+            <button
+              onClick={() => setThemeDropdownOpen(!themeDropdownOpen)}
+              className={`p-2 rounded-lg text-secondary hover:text-primary hover:bg-card-bg border border-transparent hover:border-border-app transition-all duration-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 cursor-pointer ${themeDropdownOpen ? 'bg-card-bg text-primary border-border-app' : ''}`}
+              aria-label="Toggle visual theme"
+              aria-haspopup="true"
+              aria-expanded={themeDropdownOpen}
+            >
+              {theme === 'dark' ? <Moon size={18} /> : theme === 'light' ? <Sun size={18} /> : <Laptop size={18} />}
+            </button>
+
+            <AnimatePresence>
+              {themeDropdownOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                  className="absolute right-0 top-full z-50 mt-2 bg-sidebar-bg border border-border-app rounded-lg shadow-xl p-1 w-32 animate-in fade-in duration-100"
+                >
+                  {[
+                    { id: 'light', label: 'Light', icon: Sun },
+                    { id: 'dark', label: 'Dark', icon: Moon },
+                    { id: 'system', label: 'System', icon: Laptop },
+                  ].map((opt) => {
+                    const Icon = opt.icon
+                    const isSelected = theme === opt.id
+                    return (
+                      <button
+                        key={opt.id}
+                        onClick={() => {
+                          setTheme(opt.id)
+                          setThemeDropdownOpen(false)
+                        }}
+                        className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs text-left cursor-pointer focus:outline-none focus:bg-card-bg transition-colors ${
+                          isSelected 
+                            ? 'bg-blue-600/10 text-blue-400 font-medium' 
+                            : 'text-neutral-400 hover:bg-card-bg/50 hover:text-primary'
+                        }`}
+                      >
+                        <Icon size={13} className={isSelected ? 'text-blue-400' : 'text-neutral-500'} />
+                        <span>{opt.label}</span>
+                      </button>
+                    )
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
           <button
             onClick={() => setAuthModalOpen(true)}
-            className="hidden lg:inline-flex text-neutral-400 hover:text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 cursor-pointer"
+            className="hidden lg:inline-flex text-secondary hover:text-primary text-sm font-medium px-3 py-2 rounded-lg transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 cursor-pointer"
           >
             Sign In
           </button>
@@ -153,7 +223,7 @@ const Navbar = () => {
         <div className="md:hidden flex items-center">
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="text-neutral-400 hover:text-white p-2 rounded-lg hover:bg-neutral-900 transition-all focus:outline-none focus:ring-1 focus:ring-neutral-700"
+            className="text-secondary hover:text-primary p-2 rounded-lg hover:bg-card-bg transition-all focus:outline-none focus:ring-1 focus:ring-border-app"
             aria-expanded={isOpen}
             aria-label={isOpen ? "Close menu" : "Open menu"}
           >
@@ -164,7 +234,7 @@ const Navbar = () => {
 
       {/* Mobile Dropdown */}
       <div 
-        className={`absolute top-[76px] left-0 w-full bg-app-bg border-b border-[#1A1A1A] transition-all duration-300 ease-in-out z-40 md:hidden overflow-hidden ${
+        className={`absolute top-[76px] left-0 w-full bg-app-bg border-b border-border-app transition-all duration-300 ease-in-out z-40 md:hidden overflow-hidden ${
           isOpen ? 'max-h-[360px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
         }`}
       >
@@ -181,7 +251,7 @@ const Navbar = () => {
                   key={link.label}
                   to={link.href}
                   onClick={() => setIsOpen(false)}
-                  className="text-neutral-400 hover:text-white text-[15px] font-medium py-1.5 transition-colors border-b border-neutral-900/50 block"
+                  className="text-secondary hover:text-primary text-[15px] font-medium py-1.5 transition-colors border-b border-border-app/40 block"
                 >
                   {link.label}
                 </Link>
@@ -190,7 +260,7 @@ const Navbar = () => {
                   key={link.label}
                   href={link.href}
                   onClick={() => setIsOpen(false)}
-                  className="text-neutral-400 hover:text-white text-[15px] font-medium py-1.5 transition-colors border-b border-neutral-900/50 block"
+                  className="text-secondary hover:text-primary text-[15px] font-medium py-1.5 transition-colors border-b border-border-app/40 block"
                 >
                   {link.label}
                 </a>
@@ -198,12 +268,41 @@ const Navbar = () => {
             })}
           </nav>
 
-          <div className="pt-4 border-t border-neutral-900 flex flex-col gap-3">
+          <div className="pt-4 border-t border-border-app flex flex-col gap-3">
+            {/* Mobile Theme Preference Selector Segment */}
+            <div className="flex flex-col gap-2 py-1.5 border-b border-border-app/40 pb-4">
+              <span className="text-secondary text-[11px] font-semibold uppercase tracking-wider font-mono">Theme Preference</span>
+              <div className="grid grid-cols-3 gap-1 bg-card-bg border border-border-app rounded-lg p-0.5">
+                {[
+                  { id: 'light', label: 'Light', icon: Sun },
+                  { id: 'dark', label: 'Dark', icon: Moon },
+                  { id: 'system', label: 'System', icon: Laptop },
+                ].map((opt) => {
+                  const Icon = opt.icon
+                  const isSelected = theme === opt.id
+                  return (
+                    <button
+                      key={opt.id}
+                      onClick={() => setTheme(opt.id)}
+                      className={`flex items-center justify-center gap-1.5 py-2 rounded-md text-xs transition-all cursor-pointer focus:outline-none ${
+                        isSelected 
+                          ? 'bg-sidebar-bg text-blue-400 font-semibold shadow-sm border border-border-app/20' 
+                          : 'text-neutral-500 hover:text-primary'
+                      }`}
+                    >
+                      <Icon size={13} />
+                      <span>{opt.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
             <a
               href="https://github.com/routemind"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2.5 text-neutral-400 hover:text-white text-[15px] font-medium py-1"
+              className="flex items-center gap-2.5 text-secondary hover:text-primary text-[15px] font-medium py-1"
             >
               <svg 
                 className="w-[18px] h-[18px]" 
@@ -222,7 +321,7 @@ const Navbar = () => {
                   setIsOpen(false)
                   setAuthModalOpen(true)
                 }}
-                className="text-center text-neutral-300 hover:text-white text-sm font-medium py-2.5 rounded-lg border border-neutral-800 bg-neutral-900/40 hover:bg-neutral-900 transition-colors focus:outline-none cursor-pointer"
+                className="text-center text-secondary hover:text-primary text-sm font-medium py-2.5 rounded-lg border border-border-app bg-card-bg/40 hover:bg-card-bg transition-colors focus:outline-none cursor-pointer"
               >
                 Sign In
               </button>

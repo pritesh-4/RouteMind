@@ -77,7 +77,7 @@ const ChatInput = ({
           placeholder={isLoading ? "RouteMind is choosing the best model..." : placeholder}
           rows={1}
           aria-label="Ask RouteMind a query"
-          className="w-full bg-transparent border-0 ring-0 focus:ring-0 focus:outline-none px-3.5 pt-2.5 pb-1 text-sm text-[#FAFAFA] placeholder-[#71717A] resize-none overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-800 scrollbar-track-transparent leading-relaxed"
+          className="w-full bg-transparent border-0 ring-0 focus:ring-0 focus:outline-none px-3.5 pt-2.5 pb-1 text-sm text-primary placeholder-[#71717A] resize-none overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-800 scrollbar-track-transparent leading-relaxed"
           style={{ minHeight: '56px', maxHeight: '200px' }}
         />
 
@@ -88,7 +88,7 @@ const ChatInput = ({
             <button
               type="button"
               disabled={isLoading}
-              className="p-2 rounded-lg text-neutral-500 hover:text-[#FAFAFA] hover:bg-neutral-800/40 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 cursor-pointer"
+              className="p-2 rounded-lg text-neutral-500 hover:text-primary hover:bg-card-bg transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 cursor-pointer"
               title="Attach File (PDF, Image, Document)"
               aria-label="Attach file"
             >
@@ -110,7 +110,7 @@ const ChatInput = ({
               p-2 rounded-xl flex items-center justify-center transition-all duration-200 outline-none
               ${value.trim() && !isLoading
                 ? 'bg-blue-600 text-white hover:bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)] hover:scale-[1.03] active:scale-[0.98] cursor-pointer'
-                : 'bg-neutral-900 text-neutral-600 border border-neutral-800 cursor-not-allowed'
+                : 'bg-blue-50 text-blue-400 border border-blue-100 dark:bg-neutral-900 dark:text-neutral-600 dark:border-neutral-800 cursor-not-allowed'
               }
             `}
             title="Send Message"

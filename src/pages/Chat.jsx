@@ -189,7 +189,7 @@ const Chat = () => {
   const cardDelays = ['stagger-1', 'stagger-2', 'stagger-3', 'stagger-4']
 
   return (
-    <div className="h-screen bg-app-bg flex text-[#FAFAFA] overflow-hidden font-sans selection:bg-blue-600/30 selection:text-white">
+    <div className="h-screen bg-app-bg flex text-primary overflow-hidden font-sans selection:bg-blue-600/30 selection:text-white">
       <Sidebar
         activeChatId={activeChatId}
         onChatSelect={setActiveChatId}
@@ -205,13 +205,13 @@ const Chat = () => {
 
       <div className="flex-1 flex flex-col h-screen overflow-hidden bg-app-bg min-w-0">
         {/* Header — full width on mobile, respects sidebar on desktop */}
-        <header className="flex items-center justify-between px-3 sm:px-4 h-14 border-b border-border-app bg-[#0E0E0E] shrink-0">
+        <header className="flex items-center justify-between px-3 sm:px-4 h-14 border-b border-blue-100 dark:border-border-app bg-blue-50/80 dark:bg-[#0E0E0E] shrink-0">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             {/* Desktop: expand collapsed sidebar */}
             {isCollapsed && (
               <button
                 onClick={() => setIsCollapsed(false)}
-                className="hidden md:flex p-1.5 rounded-lg text-neutral-400 hover:text-[#FAFAFA] hover:bg-neutral-900 border border-transparent hover:border-border-app transition-all duration-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 cursor-pointer"
+                className="hidden md:flex p-1.5 rounded-lg text-neutral-400 hover:text-primary hover:bg-card-bg border border-transparent hover:border-border-app transition-all duration-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 cursor-pointer"
                 aria-label="Expand sidebar"
               >
                 <PanelLeft size={16} />
@@ -221,7 +221,7 @@ const Chat = () => {
             {/* Mobile: hamburger — always visible, full touch target */}
             <button
               onClick={() => setMobileOpen(true)}
-              className="md:hidden p-2 -ml-1 rounded-lg text-neutral-400 hover:text-[#FAFAFA] hover:bg-neutral-900 transition-all duration-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 cursor-pointer"
+              className="md:hidden p-2 -ml-1 rounded-lg text-neutral-400 hover:text-primary hover:bg-card-bg transition-all duration-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 cursor-pointer"
               aria-label="Open sidebar menu"
             >
               <Menu size={20} />
@@ -230,13 +230,13 @@ const Chat = () => {
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
               <Link
                 to="/"
-                className="text-blue-400 hover:text-blue-300 font-semibold text-xs tracking-wider font-mono uppercase transition-all duration-200 shrink-0"
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold text-xs tracking-wider font-mono uppercase transition-all duration-200 shrink-0"
               >
                 RouteMind
               </Link>
-              <span className="text-neutral-700 text-xs shrink-0">/</span>
+              <span className="text-neutral-300 dark:text-neutral-700 text-xs shrink-0">/</span>
               {/* Truncate long chat titles gracefully on small screens */}
-              <span className="text-neutral-400 text-xs font-medium truncate max-w-[110px] xs:max-w-[160px] sm:max-w-[240px]">
+              <span className="text-secondary text-xs font-medium truncate max-w-[110px] xs:max-w-[160px] sm:max-w-[240px]">
                 {chatHistory.find(c => c.id === activeChatId)?.title || 'Workspace'}
               </span>
             </div>
@@ -247,7 +247,7 @@ const Chat = () => {
               const newId = Date.now().toString()
               handleNewChat({ id: newId, title: 'New Workspace Chat', timestamp: 'Just now' })
             }}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-900 border border-transparent hover:border-border-app transition-all duration-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 flex items-center gap-1.5 cursor-pointer shrink-0"
+            className="p-1.5 rounded-lg text-neutral-400 hover:text-primary hover:bg-card-bg border border-transparent hover:border-border-app transition-all duration-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 flex items-center gap-1.5 cursor-pointer shrink-0"
             aria-label="Start new chat"
           >
             <Plus size={16} />
@@ -266,7 +266,7 @@ const Chat = () => {
                   <span className="flex h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse"></span>
                   Active Proxy Node: US-East-1 Edge
                 </div>
-                <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
+                <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-primary leading-tight">
                   RouteMind
                 </h2>
                 <p className="text-base sm:text-xl font-medium text-neutral-300">
@@ -290,7 +290,7 @@ const Chat = () => {
                     onClick={() => handleSendMessage(prompt)}
                     className={`p-4 bg-card-bg hover:bg-sidebar-bg border border-border-app hover:border-blue-500/30 rounded-xl text-left transition-all duration-200 hover:-translate-y-0.5 group focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 cursor-pointer animate-slide-up-fade ${cardDelays[idx]}`}
                   >
-                    <p className="text-xs font-semibold text-primary group-hover:text-white transition-colors">{prompt}</p>
+                    <p className="text-xs font-semibold text-primary group-hover:text-primary transition-colors">{prompt}</p>
                     <p className="text-[10px] text-neutral-500 mt-1 leading-normal">Click to submit query directly to RouteMind proxy.</p>
                   </button>
                 ))}

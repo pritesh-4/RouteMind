@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { routingStats } from '../data/mockData'
 import { 
   MessageSquare, Plus, Settings, Sun, Moon, 
   PanelLeftClose, PanelLeft, Trash2, Edit2, X,
   Laptop, Sparkles, Command, Shield, Search
 } from 'lucide-react'
+import { useTheme } from '../context/ThemeContext'
 
 const Sidebar = ({
   activeChatId = '1',
@@ -23,8 +25,24 @@ const Sidebar = ({
   const [editTitle, setEditTitle] = useState('')
   const editInputRef = useRef(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [themeMode, setThemeMode] = useState('dark')
+  const { theme, setTheme } = useTheme()
+  const [themeDropdownOpen, setThemeDropdownOpen] = useState(false)
+  const themeDropdownRef = useRef(null)
   const [searchQuery, setSearchQuery] = useState('')
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (themeDropdownRef.current && !themeDropdownRef.current.contains(event.target)) {
+        setThemeDropdownOpen(false)
+      }
+    }
+    if (themeDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [themeDropdownOpen])
 
   useEffect(() => {
     if (editingId && editInputRef.current) {
@@ -320,19 +338,57 @@ const Sidebar = ({
               </button>
             </Tooltip>
 
-            <Tooltip text={`Theme: ${themeMode.charAt(0).toUpperCase() + themeMode.slice(1)}`} isCollapsed={isCollapsed}>
-              <button
-                onClick={() => {
-                  const modes = ['dark', 'light', 'system']
-                  const nextIndex = (modes.indexOf(themeMode) + 1) % modes.length
-                  setThemeMode(modes[nextIndex])
-                }}
-                className="p-2 rounded-lg text-neutral-400 hover:text-primary hover:bg-card-bg border border-transparent hover:border-border-app transition-all focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50"
-                aria-label="Toggle visual theme"
-              >
-                {themeMode === 'dark' ? <Moon size={15} /> : themeMode === 'light' ? <Sun size={15} /> : <Laptop size={15} />}
-              </button>
-            </Tooltip>
+            <div className="relative" ref={themeDropdownRef}>
+              <Tooltip text={`Theme: ${theme.charAt(0).toUpperCase() + theme.slice(1)}`} isCollapsed={isCollapsed}>
+                <button
+                  onClick={() => setThemeDropdownOpen(!themeDropdownOpen)}
+                  className={`p-2 rounded-lg text-neutral-400 hover:text-primary hover:bg-card-bg border border-transparent hover:border-border-app transition-all focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 cursor-pointer ${themeDropdownOpen ? 'bg-card-bg text-primary border-border-app' : ''}`}
+                  aria-label="Toggle visual theme"
+                  aria-haspopup="true"
+                  aria-expanded={themeDropdownOpen}
+                >
+                  {theme === 'dark' ? <Moon size={15} /> : theme === 'light' ? <Sun size={15} /> : <Laptop size={15} />}
+                </button>
+              </Tooltip>
+
+              <AnimatePresence>
+                {themeDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                    transition={{ duration: 0.15, ease: 'easeOut' }}
+                    className={`absolute bottom-full z-50 mb-2 bg-sidebar-bg border border-border-app rounded-lg shadow-xl p-1 w-32 ${isCollapsed ? 'left-0' : 'right-0'}`}
+                  >
+                    {[
+                      { id: 'light', label: 'Light', icon: Sun },
+                      { id: 'dark', label: 'Dark', icon: Moon },
+                      { id: 'system', label: 'System', icon: Laptop },
+                    ].map((opt) => {
+                      const Icon = opt.icon
+                      const isSelected = theme === opt.id
+                      return (
+                        <button
+                          key={opt.id}
+                          onClick={() => {
+                            setTheme(opt.id)
+                            setThemeDropdownOpen(false)
+                          }}
+                          className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs text-left cursor-pointer focus:outline-none focus:bg-card-bg transition-colors ${
+                            isSelected 
+                              ? 'bg-blue-600/10 text-blue-400 font-medium' 
+                              : 'text-neutral-400 hover:bg-card-bg/50 hover:text-primary'
+                          }`}
+                        >
+                          <Icon size={13} className={isSelected ? 'text-blue-400' : 'text-neutral-500'} />
+                          <span>{opt.label}</span>
+                        </button>
+                      )
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             <Tooltip text={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"} isCollapsed={isCollapsed}>
               <button

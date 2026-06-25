@@ -40,7 +40,7 @@ const Reveal = ({ children, className = '', delay = 0 }) => (
 
 const Benefits = () => {
   return (
-    <div className="min-h-screen bg-app-bg text-[#FAFAFA] flex flex-col font-sans selection:bg-blue-600/30 selection:text-white relative overflow-x-hidden">
+    <div className="min-h-screen bg-app-bg text-primary flex flex-col font-sans selection:bg-blue-600/30 selection:text-white relative overflow-x-hidden">
       <Navbar />
 
       {/* Background glow */}
@@ -65,7 +65,7 @@ const Benefits = () => {
 
           <motion.h1
             variants={fadeInUp}
-            className="text-4xl sm:text-5xl font-bold tracking-tight text-white leading-[1.1]"
+            className="text-4xl sm:text-5xl font-bold tracking-tight text-primary leading-[1.1]"
           >
             The intelligence of every model. <br />
             <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Zero complexity.</span>
@@ -90,7 +90,7 @@ const Benefits = () => {
                 <div className="inline-flex p-2 rounded-lg bg-blue-950/30 border border-blue-500/20 text-blue-400 animate-pulse">
                   <Sliders size={18} />
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Smarter Model Selection</h2>
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-primary">Smarter Model Selection</h2>
                 <p className="text-secondary text-sm leading-relaxed">
                   Different AI models excel at different tasks. GPT may perform better for coding, Claude may excel at writing, and Gemini may be stronger for large documents. RouteMind analyzes each request and automatically chooses the most suitable model.
                 </p>
@@ -106,7 +106,7 @@ const Benefits = () => {
                 <div className="space-y-3">
                   <div className="p-3 bg-sidebar-bg/70 backdrop-blur-sm border border-border-app rounded-lg">
                     <div className="text-[10px] text-neutral-500 mb-1">User Query</div>
-                    <div className="text-white flex items-center gap-1.5">
+                    <div className="text-primary flex items-center gap-1.5">
                       <span className="text-blue-500 font-bold shrink-0">&gt;</span>
                       <span>Debug a React application state synchronization hook</span>
                     </div>
@@ -121,7 +121,7 @@ const Benefits = () => {
                     </div>
                     <div className="flex items-center gap-2 mb-2">
                       <Cpu size={13} className="text-blue-400" />
-                      <span className="text-white font-bold">GPT-4o</span>
+                      <span className="text-primary font-bold">GPT-4o</span>
                     </div>
                     <div className="text-[10px] text-neutral-400 leading-normal">
                       Reason: Strong coding and debugging performance for React 19 concurrent render states.
@@ -176,7 +176,7 @@ const Benefits = () => {
                 <div className="inline-flex p-2 rounded-lg bg-blue-950/30 border border-blue-500/20 text-blue-400">
                   <Zap size={18} />
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Reduced Decision Fatigue</h2>
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-primary">Reduced Decision Fatigue</h2>
                 <p className="text-secondary text-sm leading-relaxed">
                   Users should focus on solving problems, not choosing tools. RouteMind removes the need to constantly switch between AI platforms and compare results. Type your query once, and let our infrastructure orchestrate the processing steps.
                 </p>
@@ -191,7 +191,7 @@ const Benefits = () => {
                 <div className="inline-flex p-2 rounded-lg bg-blue-950/30 border border-blue-500/20 text-blue-400">
                   <Eye size={18} />
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Transparent AI Decisions</h2>
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-primary">Transparent AI Decisions</h2>
                 <p className="text-secondary text-sm leading-relaxed">
                   Most AI products hide how decisions are made. RouteMind explains every routing choice. Users always know which model answered, why it was selected, and what performance factors influenced the decision.
                 </p>
@@ -206,7 +206,7 @@ const Benefits = () => {
                 <div className="space-y-2.5">
                   <div className="flex justify-between py-1 border-b border-border-app/20">
                     <span className="text-neutral-500">Selected Model</span>
-                    <span className="text-white font-bold">Gemini Flash</span>
+                    <span className="text-primary font-bold">Gemini Flash</span>
                   </div>
                   <div className="flex justify-between py-1 border-b border-border-app/20">
                     <span className="text-neutral-500">Confidence Score</span>
@@ -265,7 +265,7 @@ const Benefits = () => {
                 <div className="inline-flex p-2 rounded-lg bg-blue-950/30 border border-blue-500/20 text-blue-400">
                   <Coins size={18} />
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Cost Optimization</h2>
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-primary">Cost Optimization</h2>
                 <p className="text-secondary text-sm leading-relaxed">
                   Not every task requires the most expensive frontier model. RouteMind intelligently matches simpler tasks with highly efficient, low-cost models. This helps users receive premium, lightning-fast responses while reducing unnecessary API usage costs.
                 </p>
@@ -280,7 +280,7 @@ const Benefits = () => {
                 <div className="inline-flex p-2 rounded-lg bg-blue-950/30 border border-blue-500/20 text-blue-400">
                   <Workflow size={18} />
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Unified AI Experience</h2>
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-primary">Unified AI Experience</h2>
                 <p className="text-secondary text-sm leading-relaxed">
                   AI usage is becoming fragmented. Users have to manage multiple developer accounts, separate interfaces, and disconnected workflows. RouteMind creates a single, clean interface for interacting with multiple global AI providers seamlessly.
                 </p>
@@ -318,7 +318,7 @@ const Benefits = () => {
         <section className="space-y-8">
           <Reveal className="space-y-2 text-center max-w-2xl mx-auto">
             <span className="text-[10px] font-mono text-neutral-500 tracking-wider uppercase font-semibold">Workspace Contexts</span>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">Real-world Scenarios</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Real-world Scenarios</h2>
             <p className="text-secondary text-sm">
               See how RouteMind automatically distributes workflow requirements depending on user roles and prompt context:
             </p>
@@ -348,14 +348,14 @@ const Benefits = () => {
                       {tag}
                     </div>
                     <div>
-                      <h3 className="text-xs font-semibold text-white">{role}</h3>
+                      <h3 className="text-xs font-semibold text-primary">{role}</h3>
                       <p className="text-[9px] text-neutral-500">{sub}</p>
                     </div>
                   </div>
                   <div className="space-y-1.5 font-mono text-[10px]">
                     <div>
                       <span className="text-neutral-500">Task:</span>
-                      <p className="text-white mt-0.5">{task}</p>
+                      <p className="text-primary mt-0.5">{task}</p>
                     </div>
                     <div>
                       <span className="text-neutral-500">Selected Model:</span>
@@ -375,14 +375,14 @@ const Benefits = () => {
         <section className="space-y-8">
           <Reveal className="space-y-2 text-center max-w-2xl mx-auto">
             <span className="text-[10px] font-mono text-neutral-500 tracking-wider uppercase font-semibold">Workflow Efficiency</span>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">Workflow Comparison</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Workflow Comparison</h2>
             <p className="text-secondary text-sm">How RouteMind differs from traditional, manual multi-model workspaces:</p>
           </Reveal>
 
           <Reveal>
             <div className="w-full overflow-x-auto rounded-xl border border-border-app bg-card-bg/40 backdrop-blur-xl">
               <table className="w-full border-collapse text-left text-sm font-sans">
-                <thead className="bg-card-bg/70 border-b border-border-app text-xs font-semibold text-white uppercase select-none">
+                <thead className="bg-card-bg/70 border-b border-border-app text-xs font-semibold text-primary uppercase select-none">
                   <tr>
                     <th className="px-6 py-4 font-semibold text-neutral-300">Feature Parameter</th>
                     <th className="px-6 py-4 font-semibold text-red-400/90">Traditional Workflow</th>
@@ -399,7 +399,7 @@ const Benefits = () => {
                     <tr key={feature} className="hover:bg-card-bg/30 transition-colors">
                       <td className="px-6 py-4 text-neutral-300 font-medium">{feature}</td>
                       <td className="px-6 py-4 text-neutral-500">{before}</td>
-                      <td className="px-6 py-4 text-white font-medium">
+                      <td className="px-6 py-4 text-primary font-medium">
                         <span className="flex items-center gap-2">
                           <span className="h-1.5 w-1.5 rounded-full bg-blue-400 shrink-0" />
                           {after}
@@ -424,7 +424,7 @@ const Benefits = () => {
           <div className="absolute inset-0 bg-blue-500/2 blur-2xl pointer-events-none rounded-2xl"></div>
 
           <div className="space-y-4">
-            <motion.h2 variants={fadeInUp} className="text-3xl font-bold tracking-tight text-white">
+            <motion.h2 variants={fadeInUp} className="text-3xl font-bold tracking-tight text-primary">
               Focus on the problem. <br className="sm:hidden" />
               Let RouteMind choose the tool.
             </motion.h2>
@@ -451,7 +451,7 @@ const Benefits = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
             <Terminal size={14} className="text-[#3B82F6]" />
-            <span className="font-semibold text-white">RouteMind AI Engine</span>
+            <span className="font-semibold text-primary">RouteMind AI Engine</span>
             <span className="text-neutral-700">|</span>
             <span>Edge Nodes Enabled</span>
           </div>

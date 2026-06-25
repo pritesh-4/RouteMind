@@ -74,7 +74,7 @@ const Documetation = () => {
   }
 
   return (
-    <div className="min-h-screen bg-app-bg text-[#FAFAFA] flex flex-col font-sans selection:bg-blue-600/30 selection:text-white relative overflow-x-hidden">
+    <div className="min-h-screen bg-app-bg text-primary flex flex-col font-sans selection:bg-blue-600/30 selection:text-white relative overflow-x-hidden">
       {/* Navbar Header */}
       <Navbar />
 
@@ -96,10 +96,10 @@ const Documetation = () => {
                     <button
                       key={item.id}
                       onClick={() => handleNavClick(item.id)}
-                      className={`text-left text-xs transition-colors duration-150 py-1 cursor-pointer focus:outline-none focus-visible:text-white ${
+                      className={`text-left text-xs transition-colors duration-150 py-1 cursor-pointer focus:outline-none focus-visible:text-primary ${
                         isActive 
                           ? 'text-blue-400 font-semibold border-l-2 border-blue-500 -ml-[14px] pl-3' 
-                          : 'text-neutral-400 hover:text-white'
+                          : 'text-neutral-400 hover:text-primary'
                       }`}
                     >
                       {item.label}
@@ -143,7 +143,7 @@ const Documetation = () => {
             <motion.div variants={fadeInUp} className="inline-flex items-center gap-1.5 text-blue-400 font-mono text-[10px] uppercase font-semibold">
               <Info size={11} /> Overview
             </motion.div>
-            <motion.h2 variants={fadeInUp} className="text-2xl sm:text-3xl font-bold tracking-tight text-white">What is RouteMind?</motion.h2>
+            <motion.h2 variants={fadeInUp} className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">What is RouteMind?</motion.h2>
             <motion.div variants={fadeInUp} className="space-y-4 text-sm sm:text-[15px] text-secondary leading-relaxed font-medium">
               <p>
                 RouteMind is an AI model routing platform that automatically selects the best AI model for a user's task.
@@ -166,7 +166,7 @@ const Documetation = () => {
             <motion.div variants={fadeInUp} className="inline-flex items-center gap-1.5 text-blue-400 font-mono text-[10px] uppercase font-semibold">
               <Layers size={11} /> Context Analysis
             </motion.div>
-            <motion.h2 variants={fadeInUp} className="text-2xl sm:text-3xl font-bold tracking-tight text-white">The Problem</motion.h2>
+            <motion.h2 variants={fadeInUp} className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">The Problem</motion.h2>
             
             <motion.div variants={fadeInUp} className="space-y-4 text-sm sm:text-[15px] text-secondary leading-relaxed font-medium">
               <p>
@@ -214,7 +214,7 @@ const Documetation = () => {
               <motion.div variants={fadeInUp} className="inline-flex items-center gap-1.5 text-blue-400 font-mono text-[10px] uppercase font-semibold">
                 <Workflow size={11} /> Operations Flow
               </motion.div>
-              <motion.h2 variants={fadeInUp} className="text-2xl sm:text-3xl font-bold tracking-tight text-white">The Routing Process</motion.h2>
+              <motion.h2 variants={fadeInUp} className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">The Routing Process</motion.h2>
             </div>
 
             {/* Horizontal/Vertical Pipeline Step Graphics */}
@@ -229,7 +229,7 @@ const Documetation = () => {
                 <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 bg-sidebar-bg/60 border border-border-app/40 rounded-lg">
                   <div className="flex flex-col items-center flex-1">
                     <span className="text-blue-500 font-bold">{item.step}</span>
-                    <span className="text-white mt-1 text-[9px] uppercase font-semibold">{item.title}</span>
+                    <span className="text-primary mt-1 text-[9px] uppercase font-semibold">{item.title}</span>
                   </div>
                   {idx < 4 && (
                     <div className="hidden sm:flex items-center text-neutral-600 self-center">
@@ -272,7 +272,7 @@ const Documetation = () => {
             <motion.div variants={fadeInUp} className="inline-flex items-center gap-1.5 text-blue-400 font-mono text-[10px] uppercase font-semibold">
               <Cpu size={11} /> Model Ecosystem
             </motion.div>
-            <motion.h2 variants={fadeInUp} className="text-2xl sm:text-3xl font-bold tracking-tight text-white">Current Model Ecosystem</motion.h2>
+            <motion.h2 variants={fadeInUp} className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Current Model Ecosystem</motion.h2>
             <motion.p variants={fadeInUp} className="text-secondary text-sm leading-relaxed">
               RouteMind is completely provider-agnostic. We continuously benchmark and integrate primary endpoints to ensure your requests are routed to peak performers.
             </motion.p>
@@ -282,7 +282,7 @@ const Documetation = () => {
               {/* OpenAI Card */}
               <div className="p-4 bg-card-bg border border-border-app rounded-xl space-y-2">
                 <span className="text-neutral-500 uppercase tracking-wider text-[9px]">OpenAI Models</span>
-                <ul className="space-y-1 text-white">
+                <ul className="space-y-1 text-primary">
                   <li className="flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
                     <span>GPT-4o</span>
@@ -297,7 +297,7 @@ const Documetation = () => {
               {/* Claude Card */}
               <div className="p-4 bg-card-bg border border-border-app rounded-xl space-y-2">
                 <span className="text-neutral-500 uppercase tracking-wider text-[9px]">Claude Models</span>
-                <ul className="space-y-1 text-white">
+                <ul className="space-y-1 text-primary">
                   <li className="flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-orange-500"></span>
                     <span>Claude 3.5 Sonnet</span>
@@ -312,7 +312,7 @@ const Documetation = () => {
               {/* Google Card */}
               <div className="p-4 bg-card-bg border border-border-app rounded-xl space-y-2">
                 <span className="text-neutral-500 uppercase tracking-wider text-[9px]">Google Models</span>
-                <ul className="space-y-1 text-white">
+                <ul className="space-y-1 text-primary">
                   <li className="flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-red-500"></span>
                     <span>Gemini 1.5 Pro</span>
@@ -327,7 +327,7 @@ const Documetation = () => {
               {/* Custom Search Models */}
               <div className="p-4 bg-card-bg border border-border-app rounded-xl space-y-2">
                 <span className="text-neutral-500 uppercase tracking-wider text-[9px]">Search & Open Source</span>
-                <ul className="space-y-1 text-white">
+                <ul className="space-y-1 text-primary">
                   <li className="flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-green-500"></span>
                     <span>Web Search Models</span>
@@ -354,7 +354,7 @@ const Documetation = () => {
             <motion.div variants={fadeInUp} className="inline-flex items-center gap-1.5 text-blue-400 font-mono text-[10px] uppercase font-semibold">
               <Sliders size={11} /> Decision Engine
             </motion.div>
-            <motion.h2 variants={fadeInUp} className="text-2xl sm:text-3xl font-bold tracking-tight text-white">How RouteMind Chooses Models</motion.h2>
+            <motion.h2 variants={fadeInUp} className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">How RouteMind Chooses Models</motion.h2>
             <motion.p variants={fadeInUp} className="text-secondary text-sm leading-relaxed">
               Every routing outcome is a multi-dimensional optimization calculation targeting these core operational indexes:
             </motion.p>
@@ -365,7 +365,7 @@ const Documetation = () => {
               <div className="p-3 bg-card-bg border border-border-app rounded-xl space-y-1.5">
                 <div className="flex items-center gap-2 text-blue-400">
                   <BrainCircuit size={13} />
-                  <span className="font-semibold text-white">Intent Match</span>
+                  <span className="font-semibold text-primary">Intent Match</span>
                 </div>
                 <p className="text-[10px] text-neutral-400 leading-normal">
                   Identifies prompt classification parameters to route to corresponding specialists.
@@ -376,7 +376,7 @@ const Documetation = () => {
               <div className="p-3 bg-card-bg border border-border-app rounded-xl space-y-1.5">
                 <div className="flex items-center gap-2 text-green-400">
                   <Coins size={13} />
-                  <span className="font-semibold text-white">Cost Efficiency</span>
+                  <span className="font-semibold text-primary">Cost Efficiency</span>
                 </div>
                 <p className="text-[10px] text-neutral-400 leading-normal">
                   Selects lower-tier models if accuracy metrics match frontier standards for simple tasks.
@@ -387,7 +387,7 @@ const Documetation = () => {
               <div className="p-3 bg-card-bg border border-border-app rounded-xl space-y-1.5">
                 <div className="flex items-center gap-2 text-cyan-400">
                   <Clock size={13} />
-                  <span className="font-semibold text-white">Latency Index</span>
+                  <span className="font-semibold text-primary">Latency Index</span>
                 </div>
                 <p className="text-[10px] text-neutral-400 leading-normal">
                   Prioritizes high throughput endpoints for latency-critical application queries.
@@ -398,7 +398,7 @@ const Documetation = () => {
               <div className="p-3 bg-card-bg border border-border-app rounded-xl space-y-1.5">
                 <div className="flex items-center gap-2 text-purple-400">
                   <Database size={13} />
-                  <span className="font-semibold text-white">Context Length</span>
+                  <span className="font-semibold text-primary">Context Length</span>
                 </div>
                 <p className="text-[10px] text-neutral-400 leading-normal">
                   Handles massive file inputs by routing dynamically to models with large memory parameters.
@@ -421,7 +421,7 @@ const Documetation = () => {
               <motion.div variants={fadeInUp} className="inline-flex items-center gap-1.5 text-blue-400 font-mono text-[10px] uppercase font-semibold">
                 <Server size={11} /> Topology Diagram
               </motion.div>
-              <motion.h2 variants={fadeInUp} className="text-2xl sm:text-3xl font-bold tracking-tight text-white">System Architecture</motion.h2>
+              <motion.h2 variants={fadeInUp} className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">System Architecture</motion.h2>
             </div>
 
             {/* Architecture flow block representation */}
@@ -457,7 +457,7 @@ const Documetation = () => {
               <motion.div variants={fadeInUp} className="inline-flex items-center gap-1.5 text-blue-400 font-mono text-[10px] uppercase font-semibold">
                 <HelpCircle size={11} /> Knowledge Base
               </motion.div>
-              <motion.h2 variants={fadeInUp} className="text-2xl sm:text-3xl font-bold tracking-tight text-white">Frequently Asked Questions</motion.h2>
+              <motion.h2 variants={fadeInUp} className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Frequently Asked Questions</motion.h2>
             </div>
 
             {/* Accordion List */}
@@ -493,10 +493,10 @@ const Documetation = () => {
                   <div key={idx} className="bg-card-bg border border-border-app rounded-xl overflow-hidden">
                     <button
                       onClick={() => toggleFaq(idx)}
-                      className="w-full px-5 py-4 flex items-center justify-between text-left text-xs font-semibold text-white hover:bg-sidebar-bg/40 focus:outline-none focus-visible:bg-sidebar-bg/60 transition-colors cursor-pointer"
+                      className="w-full px-5 py-4 flex items-center justify-between text-left text-xs font-semibold text-primary hover:bg-sidebar-bg/40 focus:outline-none focus-visible:bg-sidebar-bg/60 transition-colors cursor-pointer"
                       aria-expanded={isOpen}
                     >
-                      <span>{faq.q}</span>
+                      <span className="text-primary">{faq.q}</span>
                       <ChevronDown size={14} className={`text-neutral-500 transition-transform duration-200 ${isOpen ? 'rotate-180 text-blue-400' : ''}`} />
                     </button>
                     {isOpen && (
@@ -522,7 +522,7 @@ const Documetation = () => {
             <motion.div variants={fadeInUp} className="inline-flex items-center gap-1.5 text-blue-400 font-mono text-[10px] uppercase font-semibold">
               <MapPin size={11} /> Milestones
             </motion.div>
-            <motion.h2 variants={fadeInUp} className="text-2xl sm:text-3xl font-bold tracking-tight text-white">What's Next</motion.h2>
+            <motion.h2 variants={fadeInUp} className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">What's Next</motion.h2>
             <motion.p variants={fadeInUp} className="text-secondary text-sm leading-relaxed">
               We are constantly refining the orchestration tier. Here is our product expansion plan:
             </motion.p>
@@ -561,7 +561,7 @@ const Documetation = () => {
             <div className="space-y-3">
               <motion.h2 
                 variants={fadeInUp}
-                className="text-2xl sm:text-3xl font-bold tracking-tight text-white"
+                className="text-2xl sm:text-3xl font-bold tracking-tight text-primary"
               >
                 The Future of AI Interaction
               </motion.h2>
@@ -593,7 +593,7 @@ const Documetation = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
             <Terminal size={14} className="text-[#3B82F6]" />
-            <span className="font-semibold text-white">RouteMind AI Engine</span>
+            <span className="font-semibold text-primary">RouteMind AI Engine</span>
             <span className="text-neutral-700">|</span>
             <span>Edge Nodes Enabled</span>
           </div>

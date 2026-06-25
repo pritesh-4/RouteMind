@@ -186,7 +186,7 @@ const InfoIcon = ({ size, className }) => (
 
 const Home = () => {
   return (
-    <div className="min-h-screen bg-app-bg text-[#FAFAFA] flex flex-col font-sans selection:bg-blue-600/30 selection:text-white relative overflow-x-hidden">
+    <div className="min-h-screen bg-app-bg text-primary flex flex-col font-sans selection:bg-blue-600/30 selection:text-white relative overflow-x-hidden">
       <Navbar />
 
       {/* Background grid */}
@@ -216,7 +216,7 @@ const Home = () => {
           <div className="space-y-4">
             <motion.h1
               variants={fadeInUp}
-              className="text-4xl sm:text-6xl font-bold tracking-tight text-white max-w-3xl leading-[1.08] sm:leading-[1.04]"
+              className="text-4xl sm:text-6xl font-bold tracking-tight text-primary max-w-3xl leading-[1.08] sm:leading-[1.04]"
             >
               One Interface. <br className="hidden sm:inline" />
               Every AI.{' '}
@@ -308,7 +308,7 @@ const Home = () => {
               <Sliders size={12} />
               <span>Core Engine Benefits</span>
             </div>
-            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-white">High-Performance Optimization</h2>
+            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-primary">High-Performance Optimization</h2>
             <p className="text-[#A1A1AA] text-sm sm:text-base leading-relaxed">
               We manage inference complexity. Reduce cost overheads without sacrificing coding and contextual depths.
             </p>
@@ -350,7 +350,7 @@ const Home = () => {
                 <div className={`p-2 rounded bg-${color}-950/20 border border-${color}-500/10 text-${color === 'yellow' ? '[#F59E0B]' : color === 'green' ? '[#22C55E]' : '[#3B82F6]'} w-9 h-9 flex items-center justify-center`}>
                   {icon}
                 </div>
-                <h3 className="text-base font-semibold text-[#FAFAFA]">{title}</h3>
+                <h3 className="text-base font-semibold text-primary">{title}</h3>
                 <p className="text-neutral-400 text-xs leading-relaxed">{desc}</p>
               </motion.div>
             ))}
@@ -367,7 +367,7 @@ const Home = () => {
         className="py-24 border-t border-border-app/40 bg-sidebar-bg/40 backdrop-blur-sm relative"
       >
         <div className="max-w-4xl mx-auto px-4 text-center space-y-8 select-none">
-          <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-white">Experience AI Optimization</h2>
+          <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-primary">Experience AI Optimization</h2>
           <p className="text-[#A1A1AA] text-sm sm:text-base max-w-md mx-auto leading-relaxed">
             Integrate our proxy layer and experience sub-10ms routing decisions without changing your workflow.
           </p>
@@ -388,7 +388,7 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
             <Terminal size={14} className="text-[#3B82F6]" />
-            <span className="font-semibold text-white">RouteMind AI Engine</span>
+            <span className="font-semibold text-primary">RouteMind AI Engine</span>
             <span className="text-neutral-700">|</span>
             <span>Edge Nodes Enabled</span>
           </div>
