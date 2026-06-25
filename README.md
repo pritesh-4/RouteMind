@@ -2,90 +2,187 @@
 
 > Intelligent AI model routing — one interface, the right model, every time.
 
-RouteMind eliminates the decision fatigue of choosing between AI tools. Instead of manually switching between ChatGPT, Claude, Gemini, and Perplexity depending on your task, RouteMind analyses your query and automatically routes it to the most suitable model — then explains why.
+RouteMind eliminates the decision fatigue of choosing between AI tools. Instead of manually switching between ChatGPT, Claude, Gemini, and Perplexity depending on your task, RouteMind analyzes your query and automatically routes it to the most suitable model — then explains why.
 
 ---
 
-## What it does
+## 🚀 Features
 
-- **Unified chat interface** — one place to interact with all major AI models
-- **Automatic routing** — intent classification dispatches each query to the best-fit model (coding → Claude, research → Perplexity, documents → Gemini, reasoning → o3-mini)
-- **Explainable decisions** — every response shows which model was selected, confidence, estimated cost, and latency
-- **Cost-aware** — avoids routing simple tasks to expensive frontier models
+RouteMind is packed with features designed to provide a premium, seamless AI experience:
+
+### 1. **Intelligent Query Routing**
+* **Intent Classification:** Dispatches each query to the best-fit model based on its nature (e.g., Coding $\rightarrow$ Claude, Research $\rightarrow$ Perplexity, Document Processing $\rightarrow$ Gemini, Reasoning $\rightarrow$ o3-mini).
+* **Multi-Step Simulated Routing Pipeline:** Real-time visual feedback indicating stages of intent analysis, model comparison, model selection, and response generation.
+* **Explainable AI Decisions:** Detailed routing stats including confidence score, estimated cost savings, and latency metrics displayed alongside the AI responses.
+* **Adaptive Routing Policies:** Toggle between *Cost-Effective*, *Balanced*, and *High-Performance* policies to prioritize speed, budget, or output depth.
+
+### 2. **Rich Chat Interface**
+* **Auto-Resizing Text Input:** Textarea automatically expands as you type (constrained between 56px and 200px) and features auto-focus on load.
+* **File Attachments & Uploads:** Drag-and-drop or select documents, code files, and images (up to 20MB) with dynamic validation for file extensions (PDF, DOC/DOCX, TXT/MD, PNG/JPG/JPEG/WEBP/GIF, and various programming source files).
+* **Dynamic File Icons:** Custom file icon helper matches format extensions and visualizes attachments cleanly in chat messages.
+* **Typing Indicator:** Dynamic steps visualization indicating which routing stage is currently active.
+
+### 3. **Premium User Experience & Design**
+* **Modern Aesthetic:** Curated dark-themed layout utilizing sleek glassmorphism, glowing accents, and smooth transitions powered by Framer Motion.
+* **Theme Management:** Fully supported Light, Dark, and System-preference themes managed via Context API.
+* **Global Notifications:** Toast system (`ToastContext`) dynamically triggers messages for errors, file validation warnings, or info notes.
+* **Accessibility-Compliant Modal:** Interactive modals (like Authentication Coming Soon) complete with focus traps and keyboard navigation (Escape to close).
+
+### 4. **Scalable Backend & Configuration**
+* **FastAPI Server:** Clean python backend skeleton equipped with server health monitoring checks and standard CORS setup.
+* **Production Configurations:** Production-ready single-page routing configurations (`vercel.json`) to prevent 404s on refresh.
 
 ---
 
-## Tech stack
+## 🛠️ Tech Stack
 
 | Layer | Choice |
-|---|---|
-| Framework | React 19 + Vite 8 |
-| Styling | Tailwind CSS v4 |
-| Routing | React Router v7 |
-| Animations | Framer Motion |
-| Markdown rendering | react-markdown + react-syntax-highlighter |
-| Unit tests | Vitest + Testing Library |
-| CI | GitHub Actions |
+| :--- | :--- |
+| **Frontend Framework** | React 19 + Vite 8 |
+| **Backend Framework** | FastAPI (Python 3.x) + Uvicorn |
+| **Styling** | Tailwind CSS v4 |
+| **Routing** | React Router v7 |
+| **Animations** | Framer Motion |
+| **Markdown Rendering** | `react-markdown` + `react-syntax-highlighter` + `remark-gfm` |
+| **Icons** | Lucide React |
+| **Unit Testing** | Vitest + React Testing Library + JSDOM |
+| **CI/CD** | GitHub Actions (`ci.yml`) |
+| **Deployment Routing** | Vercel SPA Rewrites (`vercel.json`) |
 
 ---
 
-## Getting started
+## 📂 Project Directory Structure
 
-```bash
-# Install dependencies
-pnpm install
-
-# Start dev server
-pnpm dev
-
-# Run linter
-pnpm lint
-
-# Run unit tests (single pass)
-pnpm test:run
-
-# Run unit tests (watch mode)
-pnpm test
-
-# Build for production
-pnpm build
+```
+RouteMind/
+├── .github/
+│   └── workflows/
+│       └── ci.yml               # GitHub Actions CI workflow (lint → test → build)
+├── backend/                     # Python FastAPI Backend API
+│   ├── app/
+│   │   ├── __init__.py
+│   │   └── main.py              # Main API setup with CORS & health checkpoints
+│   ├── .env                     # Local environment variables
+│   ├── .gitignore               # Python environment git ignores
+│   ├── requirements.txt         # Backend Python dependencies
+│   └── venv/                    # Python virtual environment (ignored)
+├── src/                         # React Frontend Application
+│   ├── assets/                  # Graphics and static resources
+│   ├── components/              # Shared UI components
+│   │   ├── AuthenticationComingSoonModal.jsx # Auth modal with accessibility focus trap
+│   │   ├── ChatInput.jsx        # Auto-resizing input, drag/drop file attachment
+│   │   ├── ChatMessage.jsx      # Message bubble rendering user files & RoutingCard
+│   │   ├── Footer.jsx           # Global landing page footer
+│   │   ├── Navbar.jsx           # Top navigation bar
+│   │   ├── RoutingCard.jsx      # UI displaying routing statistics & rationale
+│   │   ├── Sidebar.jsx          # Sidebar for history, policy selector & telemetry
+│   │   ├── Tooltip.jsx          # Light hover tooltip wrapper
+│   │   └── TypingIndicator.jsx  # Multi-step animated loading indicators
+│   ├── context/                 # Context providers for global state
+│   │   ├── ThemeContext.jsx     # Dark, light, and system themes configuration
+│   │   └── ToastContext.jsx     # Global toast notification wrapper
+│   ├── data/
+│   │   └── mockData.js          # Shared mock models definitions & default stats
+│   ├── utils/                   # Helper utilities
+│   │   ├── animations.js        # Framer Motion animations preset
+│   │   ├── fileHelpers.jsx      # File icon assignment and size formatting
+│   │   └── mockRouter.js        # Intent classification & routing core algorithm
+│   ├── test/                    # Front-end unit tests
+│   │   ├── mockRouter.test.js
+│   │   └── setup.js             # Vitest global setup configuration
+│   ├── App.jsx                  # Main router config & views wrapper
+│   ├── index.css                # Base tailwind styles and animation keyframes
+│   └── main.jsx                 # Entry point mounting App
+├── index.html                   # HTML Entry template
+├── eslint.config.js             # ESLint flat config file
+├── vite.config.js               # Vite configurations
+├── vercel.json                  # Single-Page App deployment rewrites
+├── package.json                 # Frontend scripts and Node packages
+└── README.md                    # Project documentation
 ```
 
 ---
 
-## Project structure
+## ⚡ Getting Started
 
-```
-src/
-├── components/       # Shared UI components (Sidebar, Navbar, ChatMessage, ...)
-├── pages/            # Route-level pages (Home, Chat, Benefits, Docs)
-├── data/             # Mock data and routing stats
-├── utils/
-│   └── mockRouter.js # Routing logic — maps query intent to AI model
-└── test/
-    ├── setup.js
-    └── mockRouter.test.js
-```
+Ensure you have Node.js (v18+) and Python (v3.9+) installed on your machine.
+
+### Frontend Setup
+
+1. **Install Frontend Dependencies:**
+   ```bash
+   pnpm install
+   ```
+
+2. **Start Frontend Development Server:**
+   ```bash
+   pnpm dev
+   ```
+   Open `http://localhost:5173` in your browser.
+
+3. **Production Build & Preview:**
+   ```bash
+   pnpm build
+   pnpm preview
+   ```
+
+4. **Linting and Testing:**
+   ```bash
+   # Run ESLint check
+   pnpm lint
+   
+   # Run Vitest unit tests (watch mode)
+   pnpm test
+   
+   # Run Vitest unit tests (single pass)
+   pnpm test:run
+   ```
+
+### Backend Setup
+
+1. **Create and Activate Python Virtual Environment:**
+   ```bash
+   cd backend
+   python -m venv venv
+   
+   # Windows (PowerShell/CMD):
+   venv\Scripts\activate
+   
+   # macOS/Linux:
+   source venv/bin/activate
+   ```
+
+2. **Install Python Dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Start the API Server:**
+   ```bash
+   uvicorn app.main:app --reload
+   ```
+   The backend API will be available at `http://127.0.0.1:8000`. You can inspect the health check at `http://127.0.0.1:8000/health`.
 
 ---
 
-## CI pipeline
+## ⚙️ CI/CD Pipeline
 
-Every push and pull request to `main` runs three checks in order:
+Every push and pull request targeting the `main` branch triggers the GitHub Actions workflow (`ci.yml`):
 
-1. **Lint** — ESLint with react-hooks and react-refresh rules
-2. **Test** — Vitest unit tests (non-watch)
-3. **Build** — Vite production build (catches bad imports and Tailwind issues)
-
----
-
-## Current status
-
-This is a hackathon project under active development. The routing engine currently uses a mock keyword-based classifier (`src/utils/mockRouter.js`). Real API integration is planned as the next milestone.
+1. **Lint** — ESLint with React guidelines verifies code styling constraints.
+2. **Test** — Vitest runs unit tests to ensure query intent logic works correctly.
+3. **Build** — Vite executes a production build to check for bundler or syntax issues.
 
 ---
 
-## Team
+## 🌐 Current Status & Deployment
 
-- [pritesh-4](https://github.com/pritesh-4)
-- [adarsh-67r](https://github.com/adarsh-67r)
+* **Current Status:** Hackathon prototype under active development. The query routing currently runs client-side keyword-based classifications, with backend endpoints ready for migration to production LLM APIs.
+* **Vercel Routing:** Custom `vercel.json` rewrite configuration allows single-page route paths to load smoothly on fresh refreshes.
+
+---
+
+## 👥 Team
+
+* [pritesh-4](https://github.com/pritesh-4)
+* [adarsh-67r](https://github.com/adarsh-67r)
