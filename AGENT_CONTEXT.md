@@ -9,9 +9,10 @@
 
 RouteMind is an **intelligent AI model routing platform** with a unified chat interface. A user types a query; a routing engine analyses the prompt and dispatches it to the most suitable AI model automatically, surfacing an explainability panel that tells the user which model was chosen and why.
 
-**Current status:** Hackathon prototype.
-- **Frontend** — React SPA, fully functional UI. All routing is client-side mock logic (`src/utils/mockRouter.js`). No real LLM API calls are made.
-- **Backend** — FastAPI scaffold committed (`backend/`). Routes and classifier logic are **not yet implemented** — only `/` and `/health` exist. This is the active development area.
+**Current status:** Fullstack integration complete.
+
+- **Frontend** — React SPA, fully functional UI. Replaced mock client router with a robust client service layer (`src/services/api.js` and `chatService.js`) querying the backend `/chat` endpoint.
+- **Backend** — FastAPI service, fully operational. Incorporates rule-based intent classification, model-policy router engine, lazy-cached provider managers, and adapter classes wrapping downstream SDK clients (e.g. OpenAI).
 - **Deployment** — Frontend deployed to Vercel (`vercel.json` present). Backend not yet deployed.
 
 ---
@@ -46,6 +47,7 @@ This section describes the **planned real architecture** the mock currently appr
 ### Routing Table
 
 Each task category maps to a ranked list of models with:
+
 - `cost_per_token` (from public provider pricing)
 - `avg_latency_ms`
 - `quality_score` (SWE-bench for code, MT-Bench for general tasks)
@@ -55,9 +57,11 @@ A **weighted scoring function** selects the winner. Weights are user-adjustable 
 ### Provider Adapter Layer
 
 Each provider (OpenAI, Anthropic, Google, etc.) has a thin adapter that normalises their streaming API into a common delta format:
+
 ```
 { token: string, done: boolean, metadata: object }
 ```
+
 Adding a new provider = write one adapter + add models to routing table. No other changes needed.
 
 ### Failure Handling
@@ -70,6 +74,7 @@ Adding a new provider = write one adapter + add models to routing table. No othe
 ### Data Storage (Supabase)
 
 Stores **routing decisions only** — not prompt content:
+
 - `prompt_hash`, `task_class`, `model_selected`, `confidence_score`, `latency_ms`, `cost_estimate_usd`, `user_feedback`
 - Real-time subscriptions used to push live cost/usage analytics to dashboard without polling.
 
@@ -164,45 +169,56 @@ The backend is refactored into a **Clean Architecture** structure, segregating c
 ### What exists
 
 #### 1. Composition Root (`app/main.py`)
+
 Initializes the `FastAPI` instance. It configures the CORS middleware using loaded settings, sets up basic console logs with `logging.basicConfig` inside an async `lifespan` manager, and registers routers.
 
 #### 2. Settings Configuration (`app/config.py`)
+
 Uses `python-dotenv` to parse settings from a local `.env` file into a Pydantic `Settings` model. Exposes CORS origins list, environment indicators, and API key placeholders.
 
 #### 3. Modular Routes (`app/routes/`)
-* **`health.py`** — GET `/` (Welcome greeting) and GET `/health` (Service operational status details).
-* **`chat.py`** — POST `/chat` (Mock routing endpoint verifying the schema and input validation).
+
+- **`health.py`** — GET `/` (Welcome greeting) and GET `/health` (Service operational status details).
+- **`chat.py`** — POST `/chat` (Mock routing endpoint verifying the schema and input validation).
 
 #### 4. Validated Schema Contracts (`app/schemas/`)
-* **`ChatRequest`** — Request schema validating `message` length/whitespaces, `conversation_id`, `routing_policy` (Literal: `balanced`, `speed`, `cost`, `quality`), list of `attachments`, `user_id`, and default ISO-8601 UTC `timestamp`.
-* **`ChatResponse`** — Output serialization contract tracking `response`, `selected_model`, `provider`, `reason`, `confidence`, `processing_time_ms`, `estimated_cost`, and `conversation_id`.
+
+- **`ChatRequest`** — Request schema validating `message` length/whitespaces, `conversation_id`, `routing_policy` (Literal: `balanced`, `speed`, `cost`, `quality`), list of `attachments`, `user_id`, and default ISO-8601 UTC `timestamp`.
+- **`ChatResponse`** — Output serialization contract tracking `response`, `selected_model`, `provider`, `reason`, `confidence`, `processing_time_ms`, `estimated_cost`, and `conversation_id`.
 
 #### 5. AI Provider Adapters (`app/providers/`)
-* **`base.py`** — Abstract base class `BaseProvider` and custom local exceptions (`ProviderError`, `ProviderAuthenticationError`, `ProviderAPIError`, `ProviderConnectionError`) mapping vendor SDK errors to RouteMind structures.
-* **`openai_provider.py`** — Live integration with official `openai` SDK client, supporting dynamic API keys, structured logging, latency tracking, and error mapping.
-* **`claude_provider.py`** — Structurally complete placeholder provider returning `NotImplementedError`.
-* **`gemini_provider.py`** — Structurally complete placeholder provider returning `NotImplementedError`.
+
+- **`base.py`** — Abstract base class `BaseProvider` and custom local exceptions (`ProviderError`, `ProviderAuthenticationError`, `ProviderAPIError`, `ProviderConnectionError`) mapping vendor SDK errors to RouteMind structures.
+- **`openai_provider.py`** — Live integration with official `openai` SDK client, supporting dynamic API keys, structured logging, latency tracking, and error mapping.
+- **`claude_provider.py`** — Structurally complete placeholder provider returning `NotImplementedError`.
+- **`gemini_provider.py`** — Structurally complete placeholder provider returning `NotImplementedError`.
 
 #### 6. Routing & Orchestration (`app/services/`)
-* **`provider_manager.py`** — Singleton-like manager loading, lazy-caching, and health-checking provider adapter instances.
-* **`router.py`** — Rule-based `LLMRouter` resolving task intent and policy into a `RoutingDecision`, with support for fallback providers when a preferred choice goes offline.
+
+- **`provider_manager.py`** — Singleton-like manager loading, lazy-caching, and health-checking provider adapter instances.
+- **`router.py`** — Rule-based `LLMRouter` resolving task intent and policy into a `RoutingDecision`, with support for fallback providers when a preferred choice goes offline.
 
 #### 7. Intent Classification (`app/classifier/`)
-* **`intent_classifier.py`** — Defines standard contract `BaseIntentClassifier` and `RuleBasedIntentClassifier` which uses keyword regex heuristics to detect intents and calculate scaling confidence scores.
 
-### What needs to be built
+- **`intent_classifier.py`** — Defines standard contract `BaseIntentClassifier` and `RuleBasedIntentClassifier` which uses keyword regex heuristics to detect intents and calculate scaling confidence scores.
 
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/chat` (Router/Classifier wiring) | POST | Replace static handler in `app/routes/chat.py` with the newly created classifier, router, and provider manager. |
-| `/chat` (SSE Streaming) | POST | Transition response delivery from synchronous JSON to Server-Sent Events (SSE). |
-| `/chat` (Supabase Logging) | POST | Log routing telemetry metadata (prompt hash, model, latency, cost) to Supabase db. |
-| `/feedback` | POST | Log user override/thumbs-down for classifier retraining signal. |
-| `/health/providers` | GET | Return cached provider health status (ping results). |
+### Implemented Routes & Future Work
+
+#### Completed Integrations
+
+- **`/chat` (Pipeline & Schema Refactor)** — Enforces production-ready Pydantic request and response shapes (subdivided into nested `response`, `routing`, and `metadata` objects). Orchestrates the sequence: validates request message $\rightarrow$ runs rule-based intent classifier $\rightarrow$ resolves routing decision $\rightarrow$ loads cached provider instance $\rightarrow$ performs model execution with safe mock fallback routing.
+
+#### Future Roadmap
+
+- **`/chat` (SSE Streaming)** — Transition final response output delivery from synchronous JSON to real-time Server-Sent Events (SSE).
+- **`/chat` (Supabase Logging)** — Store request telemetry metadata (prompt hash, policy, selected model, processing latency, estimated cost) dynamically to a Supabase database.
+- **`/feedback` (POST)** — Accept telemetry ratings (thumbs up/down) to generate training metrics for intent classifier tuning.
+- **`/health/providers` (GET)** — Query the cached health states (ping results) of all registered providers.
 
 ### Python dependencies (requirements.txt)
 
 Currently includes: `fastapi 0.138.0`, `uvicorn 0.49.0`, `pydantic 2.13.4`, `python-dotenv 1.2.2`, `openai>=1.0.0` (installed). Missing for full implementation:
+
 - `anthropic`, `google-generativeai` — provider SDKs (currently mock/placeholder)
 - `httpx` — async HTTP for provider calls + health pings
 - `supabase` — DB client for routing decision logging
@@ -281,35 +297,31 @@ All session state is owned by `Chat.jsx` and passed down as props. No global sta
 
 ---
 
-## `getMockRouting` — `src/utils/mockRouter.js`
+## Service Layer — `src/services/`
 
-**Signature:** `getMockRouting(query: string, file: File | null, policy: string): RoutingResult`
+This layer abstracts backend API network communication. It consists of:
 
-This is the **frontend mock** of the classifier. When the real backend `/route` endpoint is implemented, this module will be replaced by an API call.
+### 1. `api.js`
 
-**Policies** (read from `localStorage` key `routingPolicy`, default `'balanced'`):
+- **Abstractions:** Exposes generic, async `get(endpoint, timeout)` and `post(endpoint, body, timeout)` methods.
+- **Environment configuration:** Dynamically reads environment host variables (`import.meta.env.VITE_API_URL`) and defaults to local FastAPI (`http://localhost:8000`).
+- **Resiliency & Timeouts:** Implements a 15-second abort mechanism using standard JavaScript `AbortController` signals.
+- **Error wrapping:** Intercepts status faults, extracts backend detail messages (`detail`), and appends caught errors as `{ cause }`.
 
-- `'speed'` — biases toward low-latency models (Gemini Flash, GPT-4o mini)
-- `'cost'` — biases toward cheapest models (DeepSeek, Gemini Flash)
-- `'quality'` — biases toward frontier models (GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro)
-- `'balanced'` — default, weighted scoring across latency, cost, and capability
+### 2. `chatService.js`
 
-**Classification logic (keyword-based, in priority order):**
+- **Workflow mappings:** Contains `sendMessage(message, conversationId, routingPolicy, attachments, userId)` mapping directly to `POST /chat` payloads, and `healthCheck()` mapping to `GET /health`.
 
-1. File attachment present → `Gemini 1.5 Pro` (document) or `GPT-4o` (image)
-2. `code / rust / python / javascript / debug / function / algorithm` → `Claude 3.5 Sonnet`
-3. `react / next.js / remix / vue / svelte / frontend` → `Claude 3.5 Sonnet`
-4. `research / paper / study / analysis / compare` → `Perplexity`
-5. `explain / summarize / what is / how does` → `GPT-4o`
-6. `write / essay / blog / email / draft` → `GPT-4o`
-7. `math / calculate / equation / formula` → `GPT-4o` (with reasoning note)
-8. `translate / language / spanish / french` → `GPT-4o mini`
-9. `image / draw / generate / create a picture` → `DALL-E 3` (note: no real image generation)
-10. Default fallback → `GPT-4o` (balanced)
+---
 
-**Returns:** `{ model, cost, confidence, reason, latency }` — all strings for display.
+## Policies & Fallbacks (Backend `LLMRouter`)
 
-> **Migration note:** When the real backend is ready, replace calls to `getMockRouting()` in `Chat.jsx` with a `fetch('http://localhost:8000/route', { method: 'POST', body: JSON.stringify({ query, file_ref, policy }) })` call, consuming the SSE stream.
+Supported policies and mapping configurations:
+
+- `'speed'` — biases toward low-latency models (e.g. Gemini Flash, GPT-4o mini)
+- `'cost'` — biases toward cheapest models (e.g. DeepSeek, Gemini Flash)
+- `'quality'` — biases toward frontier reasoning models (e.g. GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro)
+- `'balanced'` — default policy optimizing cost, speed, and capabilities.
 
 ---
 
@@ -394,19 +406,19 @@ Shown while `isLoading === true`.
 
 ### `localStorage` keys
 
-| Key             | Written by              | Read by                 | Purpose                   |
-| --------------- | ----------------------- | ----------------------- | ------------------------- |
-| `routingPolicy` | Sidebar policy selector | `Chat.jsx` at send time | Active routing preference |
-| `routingStats`  | `Chat.jsx` post-response| Sidebar telemetry panel | Cumulative session stats  |
+| Key             | Written by               | Read by                 | Purpose                   |
+| --------------- | ------------------------ | ----------------------- | ------------------------- |
+| `routingPolicy` | Sidebar policy selector  | `Chat.jsx` at send time | Active routing preference |
+| `routingStats`  | `Chat.jsx` post-response | Sidebar telemetry panel | Cumulative session stats  |
 
 ---
 
 ## Test Suite — `src/test/`
 
-| File                 | What it covers                                                                               |
-| -------------------- | -------------------------------------------------------------------------------------------- |
+| File                 | What it covers                                                                                    |
+| -------------------- | ------------------------------------------------------------------------------------------------- |
 | `mockRouter.test.js` | `getMockRouting()` — code queries, research queries, file attachments, policy overrides, fallback |
-| `setup.js`           | `@testing-library/jest-dom` import                                                           |
+| `setup.js`           | `@testing-library/jest-dom` import                                                                |
 
 Run: `pnpm test:run` (single pass) or `pnpm test` (watch).
 CI runs `pnpm test:run` after `lint`.
@@ -432,16 +444,16 @@ Three sequential jobs:
 
 ## Known Issues & Pending Work
 
-| Area                | Issue                                                                                      | Priority |
-| ------------------- | ------------------------------------------------------------------------------------------ | -------- |
-| `backend/`          | Core LLM routing and classifier integration missing in `/chat` endpoint                     | **High** |
-| `backend/`          | `requirements.txt` missing provider SDKs (`openai`, `anthropic`, `httpx`, `supabase`)     | **High** |
-| `ChatInput.jsx`     | `text-[11px]` on helper text — below 12px a11y floor, should be `text-xs`                 | Low      |
-| `Sidebar.jsx`       | `Tooltip.jsx` not keyboard/screen-reader accessible                                        | Low      |
-| `Chat.jsx`          | `handleNewChat` in header button is an inline lambda; should call the shared function      | Low      |
-| All pages           | No real API integration — all routing is mock                                              | Future   |
-| Auth flow           | `AuthenticationComingSoonModal` is a placeholder; no auth system exists                    | Future   |
-| `Documentation.jsx` | Content is static/hardcoded                                                                | Future   |
+| Area                | Issue                                                                                     | Status / Priority      |
+| ------------------- | ----------------------------------------------------------------------------------------- | ---------------------- |
+| `backend/`          | Core LLM pipeline integration with rule routing & keyword classifier                      | **Resolved**           |
+| `ChatInput.jsx`     | `text-[11px]` on helper text — below 12px a11y floor                                      | **Resolved (text-xs)** |
+| All pages           | Live client-service layer communication between React & FastAPI over HTTP                 | **Resolved**           |
+| `backend/`          | SDK packages (`anthropic`, `google-generativeai`, `supabase`) needed for live vendor APIs | Medium                 |
+| `Sidebar.jsx`       | `Tooltip.jsx` not keyboard/screen-reader accessible                                       | Low                    |
+| `Chat.jsx`          | `handleNewChat` in header button is an inline lambda; should call the shared function     | Low                    |
+| Auth flow           | `AuthenticationComingSoonModal` is a placeholder; no auth system exists                   | Future                 |
+| `Documentation.jsx` | Content is static/hardcoded                                                               | Future                 |
 
 ---
 
@@ -461,12 +473,12 @@ Three sequential jobs:
 
 ### Backend (requirements.txt)
 
-| Package          | Purpose                    |
-| ---------------- | -------------------------- |
-| `fastapi 0.138`  | API framework              |
-| `uvicorn 0.49`   | ASGI server                |
-| `pydantic 2.13`  | Request/response schemas   |
-| `python-dotenv`  | `.env` loading             |
+| Package         | Purpose                  |
+| --------------- | ------------------------ |
+| `fastapi 0.138` | API framework            |
+| `uvicorn 0.49`  | ASGI server              |
+| `pydantic 2.13` | Request/response schemas |
+| `python-dotenv` | `.env` loading           |
 
 ---
 

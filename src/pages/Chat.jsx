@@ -5,10 +5,9 @@ import Sidebar from '../components/Sidebar'
 import ChatMessage from '../components/ChatMessage'
 import ChatInput from '../components/ChatInput'
 import TypingIndicator from '../components/TypingIndicator'
-import { getMockRouting } from '../utils/mockRouter'
+import { chatService } from '../services/chatService'
 import { useToast } from '../context/ToastContext'
 import { defaultStats } from '../data/mockData'
-
 
 const Chat = () => {
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -19,41 +18,55 @@ const Chat = () => {
   const [chatHistory, setChatHistory] = useState([
     { id: '1', title: 'RouteMind Introduction', timestamp: 'Just now' },
     { id: '2', title: 'Code Performance Tuning', timestamp: '2h ago' },
-    { id: '3', title: 'LLM Routing Benchmarks', timestamp: 'Yesterday' }
+    { id: '3', title: 'LLM Routing Benchmarks', timestamp: 'Yesterday' },
   ])
 
   const [conversationsMessages, setConversationsMessages] = useState({
-    '1': [],
-    '2': [
-      { id: 'm1', role: 'user', content: 'Explain how to write a simple fast async HTTP server in Rust.', time: '2h ago' },
+    1: [],
+    2: [
+      {
+        id: 'm1',
+        role: 'user',
+        content: 'Explain how to write a simple fast async HTTP server in Rust.',
+        time: '2h ago',
+      },
       {
         id: 'm2',
         role: 'assistant',
-        content: 'To build a fast, async HTTP server in Rust, we should use Tokio as the async runtime and Axum (built on top of hyper and tower) as the web framework. Here is a basic implementation:\n\n```rust\nuse axum::{routing::get, Router};\n\n#[tokio::main]\nasync fn main() {\n    let app = Router::new().route("/", get(|| async { "Hello from RouteMind!" }));\n    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();\n    axum::serve(listener, app).await.unwrap();\n}\n```',
+        content:
+          'To build a fast, async HTTP server in Rust, we should use Tokio as the async runtime and Axum (built on top of hyper and tower) as the web framework. Here is a basic implementation:\n\n```rust\nuse axum::{routing::get, Router};\n\n#[tokio::main]\nasync fn main() {\n    let app = Router::new().route("/", get(|| async { "Hello from RouteMind!" }));\n    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();\n    axum::serve(listener, app).await.unwrap();\n}\n```',
         time: '2h ago',
         routing: {
           model: 'Claude 3.5 Sonnet',
           cost: '$0.0058',
           confidence: '99%',
-          reason: 'Routed to Claude 3.5 Sonnet for precise code syntax formulation and optimized system design instructions.'
-        }
-      }
+          reason:
+            'Routed to Claude 3.5 Sonnet for precise code syntax formulation and optimized system design instructions.',
+        },
+      },
     ],
-    '3': [
-      { id: 'm3', role: 'user', content: 'What is the latency difference between Gemini 1.5 Flash and GPT-4o?', time: 'Yesterday' },
+    3: [
+      {
+        id: 'm3',
+        role: 'user',
+        content: 'What is the latency difference between Gemini 1.5 Flash and GPT-4o?',
+        time: 'Yesterday',
+      },
       {
         id: 'm4',
         role: 'assistant',
-        content: 'Gemini 1.5 Flash exhibits significantly lower latency for structured data tasks, typically landing under 300ms. GPT-4o has a higher latency overhead (~500-800ms) but offers superior reasoning depths for highly semantic contexts.',
+        content:
+          'Gemini 1.5 Flash exhibits significantly lower latency for structured data tasks, typically landing under 300ms. GPT-4o has a higher latency overhead (~500-800ms) but offers superior reasoning depths for highly semantic contexts.',
         time: 'Yesterday',
         routing: {
           model: 'Gemini 1.5 Flash',
           cost: '$0.00008',
           confidence: '94%',
-          reason: 'Routed to Gemini 1.5 Flash as cost constraints and simple latency inquiries benefit from faster token processing.'
-        }
-      }
-    ]
+          reason:
+            'Routed to Gemini 1.5 Flash as cost constraints and simple latency inquiries benefit from faster token processing.',
+        },
+      },
+    ],
   })
 
   const [isLoading, setIsLoading] = useState(false)
@@ -81,7 +94,9 @@ const Chat = () => {
   const currentMessages = conversationsMessages[activeChatId] || []
 
   useEffect(() => {
-    return () => { timeoutRefs.current.forEach(clearTimeout) }
+    return () => {
+      timeoutRefs.current.forEach(clearTimeout)
+    }
   }, [])
 
   useEffect(() => {
@@ -89,13 +104,13 @@ const Chat = () => {
   }, [currentMessages.length, isLoading])
 
   const handleNewChat = (newChat) => {
-    setChatHistory(prev => [newChat, ...prev])
+    setChatHistory((prev) => [newChat, ...prev])
     setActiveChatId(newChat.id)
-    setConversationsMessages(prev => ({ ...prev, [newChat.id]: [] }))
+    setConversationsMessages((prev) => ({ ...prev, [newChat.id]: [] }))
   }
 
   const handleDeleteChat = (id) => {
-    const updated = chatHistory.filter(c => c.id !== id)
+    const updated = chatHistory.filter((c) => c.id !== id)
     const newMessages = { ...conversationsMessages }
     delete newMessages[id]
     setConversationsMessages(newMessages)
@@ -113,10 +128,10 @@ const Chat = () => {
   }
 
   const handleRenameChat = (id, newTitle) => {
-    setChatHistory(prev => prev.map(c => c.id === id ? { ...c, title: newTitle } : c))
+    setChatHistory((prev) => prev.map((c) => (c.id === id ? { ...c, title: newTitle } : c)))
   }
 
-  const handleSendMessage = (content, attachedFiles = []) => {
+  const handleSendMessage = async (content, attachedFiles = []) => {
     const hasText = !!content.trim()
     const hasFiles = attachedFiles && attachedFiles.length > 0
     if ((!hasText && !hasFiles) || isLoading) return
@@ -126,15 +141,14 @@ const Chat = () => {
     timeoutRefs.current.forEach(clearTimeout)
     timeoutRefs.current = []
 
-
     const chatIdAtSend = activeChatId
     messageIdRef.current += 1
-    
+
     const filesMetadata = hasFiles
-      ? attachedFiles.map(f => ({
+      ? attachedFiles.map((f) => ({
           name: f.name,
           size: f.size,
-          type: f.type || f.name.split('.').pop()
+          type: f.type || f.name.split('.').pop(),
         }))
       : []
 
@@ -143,128 +157,166 @@ const Chat = () => {
       role: 'user',
       content: content.trim(),
       time: 'Just now',
-      files: filesMetadata
+      files: filesMetadata,
     }
 
-    setConversationsMessages(prev => ({
+    setConversationsMessages((prev) => ({
       ...prev,
-      [chatIdAtSend]: [...(prev[chatIdAtSend] || []), userMsg]
+      [chatIdAtSend]: [...(prev[chatIdAtSend] || []), userMsg],
     }))
 
     setIsLoading(true)
     setPendingModel(null)
     setLoadingStep(hasFiles ? 'Reading attachments...' : 'Analyzing Intent...')
 
-    // Fetch optimal routing parameters based on active preference
-    const routingResult = getMockRouting(content.trim(), hasFiles ? attachedFiles[0] : null, routingPolicy)
-    const { model, cost, confidence, reason } = routingResult
+    // Extract attachments string array if present
+    const attachments = hasFiles ? attachedFiles.map((f) => f.name) : null
 
-    let reply = `I have analyzed your query and successfully routed it to **${model}**. Let me know if you would like me to unpack these suggestions further!`
-    
-    if (model === 'Gemini 1.5 Pro' && hasFiles) {
-      reply = `I have successfully analyzed the attached document: **${attachedFiles[0].name}** (${(attachedFiles[0].size / 1024).toFixed(1)} KB).\n\nBased on its structural context, I have routed it to **Gemini 1.5 Pro** due to its 1M-token context window. Here is the response layout generated.`
-    } else if (model === 'GPT-4o' && hasFiles && attachedFiles[0].name.split('.').pop().toLowerCase().match(/(png|jpg|jpeg|webp)/)) {
-      reply = `I have processed the uploaded image: **${attachedFiles[0].name}** using **GPT-4o**'s vision model capabilities. RouteMind decided this model fits best for multimodal and canvas processing parameters.`
-    } else {
-      const query = content.toLowerCase()
-      if (query.includes('react') || query.includes('next.js') || query.includes('remix')) {
-        reply = 'When structural modularity is required, React components should be separated by concerns. Using Next.js or Remix allows you to leverage server rendering to optimize load times and bundle sizes. Here is a recommended architectural flow.'
-      } else if (query.includes('rust') || query.includes('code')) {
-        reply = 'Rust async programming model relies on Futures, which are polled by a runtime like Tokio. To maximize throughput, minimize mutex contention and write lock-free state managers where appropriate.'
-      } else if (query.includes('explain') || query.includes('summarize')) {
-        reply = 'The self-attention mechanism computes representations of sequence elements by relating different positions of a single sequence. This allows the model to process context globally rather than sequentially.'
+    // Trigger API call to the backend concurrently
+    const apiCallPromise = chatService.sendMessage(
+      content.trim(),
+      chatIdAtSend,
+      routingPolicy,
+      attachments
+    )
+
+    // Timeline stages execution helper
+    const delay = (ms) =>
+      new Promise((resolve) => {
+        const t = setTimeout(resolve, ms)
+        timeoutRefs.current.push(t)
+      })
+
+    try {
+      // Stage 1: Wait 1s and show Step 2
+      await delay(1000)
+      setLoadingStep(hasFiles ? 'Extracting semantic metadata...' : 'Comparing Models...')
+
+      // Stage 2: Wait 1s and show Step 3 (Selecting Best Model)
+      await delay(1000)
+      setLoadingStep('Selecting Best Model...')
+
+      // Await backend response here if it hasn't completed yet
+      const backendResponse = await apiCallPromise
+
+      const { response: backendResponseDetail, routing: backendRoutingDetail } = backendResponse
+      const model = backendRoutingDetail.selected_model
+      const reply = backendResponseDetail.content
+
+      // Reveal selected model preview badge in loading indicator
+      setPendingModel(model)
+
+      // Stage 3: Wait 1s and show Step 4 (Generating Response)
+      await delay(1000)
+      setLoadingStep('Generating Response...')
+
+      // Append assistant streaming placeholder message
+      const assistantMsgId = `assistant-${messageIdRef.current + 1}`
+      const assistantMsgPlaceholder = {
+        id: assistantMsgId,
+        role: 'assistant',
+        content: '',
+        time: 'Just now',
+        isStreaming: true,
+        routing: backendRoutingDetail, // Pass the direct backend routing object!
       }
+
+      setConversationsMessages((prev) => {
+        const existingMsgs = prev[chatIdAtSend] || []
+        return { ...prev, [chatIdAtSend]: [...existingMsgs, assistantMsgPlaceholder] }
+      })
+
+      // Stage 4: Wait 1.2s and reveal full answer
+      await delay(1200)
+      messageIdRef.current += 1
+
+      const assistantMsg = {
+        id: assistantMsgId,
+        role: 'assistant',
+        content: reply,
+        time: 'Just now',
+        isStreaming: false,
+        routing: backendRoutingDetail, // Pass the direct backend routing object!
+      }
+
+      setConversationsMessages((prev) => {
+        const existingMsgs = prev[chatIdAtSend] || []
+        return {
+          ...prev,
+          [chatIdAtSend]: existingMsgs.map((m) => (m.id === assistantMsgId ? assistantMsg : m)),
+        }
+      })
+
+      // Update live telemetry stats in localStorage
+      const storedStats = localStorage.getItem('routingStats')
+      const stats = storedStats ? JSON.parse(storedStats) : defaultStats
+      stats.totalQueries += 1
+
+      // Calculate savings metrics dynamically based on provider
+      let savedAmount = 0.0025
+      if (
+        model.includes('mini') ||
+        model.includes('Flash') ||
+        model.includes('Haiku') ||
+        model.includes('DeepSeek')
+      ) {
+        savedAmount = 0.0038
+      } else if (model.includes('Pro') || model.includes('Sonnet')) {
+        savedAmount = 0.001
+      }
+      stats.savings = parseFloat((stats.savings + savedAmount).toFixed(4))
+      stats.models[model] = (stats.models[model] || 0) + 1
+      localStorage.setItem('routingStats', JSON.stringify(stats))
+      window.dispatchEvent(new Event('telemetry-updated'))
+
+      // Update chat title on first message using content or file
+      setChatHistory((prevHistory) => {
+        const chatIndex = prevHistory.findIndex((c) => c.id === chatIdAtSend)
+        if (chatIndex === -1) return prevHistory
+        const chat = prevHistory[chatIndex]
+        if (isFirstMessage && chat.title === 'New Workspace Chat') {
+          const titleText = content.trim()
+            ? content
+            : hasFiles
+              ? `File: ${attachedFiles[0].name}`
+              : 'New Workspace Chat'
+          const shortened = titleText.length > 25 ? `${titleText.substring(0, 25)}...` : titleText
+          const updated = [...prevHistory]
+          updated[chatIndex] = { ...chat, title: shortened }
+          return updated
+        }
+        return prevHistory
+      })
+    } catch (err) {
+      console.error('API request failed:', err)
+      showToast(err.message || 'Failed to communicate with RouteMind API.', 'error')
+
+      // Append assistant error message
+      const assistantMsgId = `assistant-err-${messageIdRef.current + 1}`
+      const assistantMsg = {
+        id: assistantMsgId,
+        role: 'assistant',
+        content: `⚠️ **RouteMind API Error:** ${err.message || 'The server returned an unexpected error or is offline. Please check that the backend is running at http://localhost:8000.'}`,
+        time: 'Just now',
+        isStreaming: false,
+      }
+
+      setConversationsMessages((prev) => {
+        const existingMsgs = prev[chatIdAtSend] || []
+        return { ...prev, [chatIdAtSend]: [...existingMsgs, assistantMsg] }
+      })
+    } finally {
+      setIsLoading(false)
+      setPendingModel(null)
     }
-
-    const step2 = hasFiles ? 'Extracting semantic metadata...' : 'Comparing Models...'
-    const step3 = hasFiles ? 'Selecting Best Model...' : 'Selecting Best Model...'
-
-    const t1 = setTimeout(() => {
-      setLoadingStep(step2)
-      const t2 = setTimeout(() => {
-        setLoadingStep(step3)
-        setPendingModel(model)
-        const t3 = setTimeout(() => {
-          setLoadingStep('Generating Response...')
-          
-          // Append streaming placeholder message
-          const assistantMsgId = `assistant-${messageIdRef.current + 1}`
-          const assistantMsgPlaceholder = {
-            id: assistantMsgId,
-            role: 'assistant',
-            content: '',
-            time: 'Just now',
-            isStreaming: true,
-            routing: { model, cost, confidence, reason }
-          }
-          setConversationsMessages(prev => {
-            const existingMsgs = prev[chatIdAtSend] || []
-            return { ...prev, [chatIdAtSend]: [...existingMsgs, assistantMsgPlaceholder] }
-          })
-
-          const t4 = setTimeout(() => {
-            messageIdRef.current += 1
-            const assistantMsg = {
-              id: assistantMsgId,
-              role: 'assistant',
-              content: reply,
-              time: 'Just now',
-              isStreaming: false,
-              routing: { model, cost, confidence, reason }
-            }
-            setConversationsMessages(prev => {
-              const existingMsgs = prev[chatIdAtSend] || []
-              return {
-                ...prev,
-                [chatIdAtSend]: existingMsgs.map(m => m.id === assistantMsgId ? assistantMsg : m)
-              }
-            })
-            
-            // Update live telemetry stats in localStorage
-            const storedStats = localStorage.getItem('routingStats')
-            const stats = storedStats ? JSON.parse(storedStats) : defaultStats
-            stats.totalQueries += 1
-            let savedAmount = 0.0025
-            if (model.includes('mini') || model.includes('Flash') || model.includes('DeepSeek')) {
-              savedAmount = 0.0038
-            } else if (model.includes('Pro') || model.includes('Sonnet')) {
-              savedAmount = 0.0010
-            }
-            stats.savings = parseFloat((stats.savings + savedAmount).toFixed(4))
-            stats.models[model] = (stats.models[model] || 0) + 1
-            localStorage.setItem('routingStats', JSON.stringify(stats))
-            window.dispatchEvent(new Event('telemetry-updated'))
-            setChatHistory(prevHistory => {
-              const chatIndex = prevHistory.findIndex(c => c.id === chatIdAtSend)
-              if (chatIndex === -1) return prevHistory
-              const chat = prevHistory[chatIndex]
-              if (isFirstMessage && chat.title === 'New Workspace Chat') {
-                const titleText = content.trim() ? content : (hasFiles ? `File: ${attachedFiles[0].name}` : 'New Workspace Chat')
-                const shortened = titleText.length > 25 ? `${titleText.substring(0, 25)}...` : titleText
-                const updated = [...prevHistory]
-                updated[chatIndex] = { ...chat, title: shortened }
-                return updated
-              }
-              return prevHistory
-            })
-            setIsLoading(false)
-            setPendingModel(null)
-          }, 1200)
-          timeoutRefs.current.push(t4)
-        }, 1000)
-        timeoutRefs.current.push(t3)
-      }, 1000)
-      timeoutRefs.current.push(t2)
-    }, 1000)
-    timeoutRefs.current.push(t1)
   }
 
   const handleRegenerateResponse = (messageId) => {
     if (isLoading) return
     const messages = conversationsMessages[activeChatId] || []
-    const index = messages.findIndex(m => m.id === messageId)
+    const index = messages.findIndex((m) => m.id === messageId)
     if (index === -1) return
-    
+
     // Find the user prompt preceding this message
     let promptMsg = null
     for (let i = index - 1; i >= 0; i--) {
@@ -273,30 +325,32 @@ const Chat = () => {
         break
       }
     }
-    
+
     if (!promptMsg) return
-    
-    setConversationsMessages(prev => {
+
+    setConversationsMessages((prev) => {
       const chatMsgs = prev[activeChatId] || []
       return {
         ...prev,
-        [activeChatId]: chatMsgs.slice(0, index)
+        [activeChatId]: chatMsgs.slice(0, index),
       }
     })
-    
-    const originalFiles = promptMsg.files ? promptMsg.files.map(f => ({
-      name: f.name,
-      size: f.size,
-      type: f.type
-    })) : []
-    
+
+    const originalFiles = promptMsg.files
+      ? promptMsg.files.map((f) => ({
+          name: f.name,
+          size: f.size,
+          type: f.type,
+        }))
+      : []
+
     handleSendMessage(promptMsg.content, originalFiles)
   }
 
   const handleClearConversation = () => {
-    setConversationsMessages(prev => ({
+    setConversationsMessages((prev) => ({
       ...prev,
-      [activeChatId]: []
+      [activeChatId]: [],
     }))
     showToast('Conversation cleared.', 'info')
   }
@@ -353,7 +407,7 @@ const Chat = () => {
               <span className="text-neutral-300 dark:text-neutral-700 text-xs shrink-0">/</span>
               {/* Truncate long chat titles gracefully on small screens */}
               <span className="text-secondary text-xs font-medium truncate max-w-[110px] xs:max-w-[160px] sm:max-w-[240px]">
-                {chatHistory.find(c => c.id === activeChatId)?.title || 'Workspace'}
+                {chatHistory.find((c) => c.id === activeChatId)?.title || 'Workspace'}
               </span>
             </div>
           </div>
@@ -410,18 +464,22 @@ const Chat = () => {
               {/* Prompt suggestion cards with staggered entrance */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full max-w-2xl pt-2">
                 {[
-                  "Debug my React project",
-                  "Summarize this research paper",
-                  "Explain transformers simply",
-                  "Compare Next.js and Remix"
+                  'Debug my React project',
+                  'Summarize this research paper',
+                  'Explain transformers simply',
+                  'Compare Next.js and Remix',
                 ].map((prompt, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleSendMessage(prompt)}
                     className={`p-4 bg-card-bg hover:bg-sidebar-bg border border-border-app hover:border-blue-500/30 rounded-xl text-left transition-all duration-200 hover:-translate-y-0.5 group focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 cursor-pointer animate-slide-up-fade ${cardDelays[idx]}`}
                   >
-                    <p className="text-xs font-semibold text-primary group-hover:text-primary transition-colors">{prompt}</p>
-                    <p className="text-[10px] text-neutral-600 dark:text-neutral-500 mt-1 leading-normal">Click to submit query directly to RouteMind proxy.</p>
+                    <p className="text-xs font-semibold text-primary group-hover:text-primary transition-colors">
+                      {prompt}
+                    </p>
+                    <p className="text-[10px] text-neutral-600 dark:text-neutral-500 mt-1 leading-normal">
+                      Click to submit query directly to RouteMind proxy.
+                    </p>
                   </button>
                 ))}
               </div>
@@ -429,17 +487,10 @@ const Chat = () => {
           ) : (
             <div className="pb-32">
               {currentMessages.map((msg) => (
-                <ChatMessage 
-                  key={msg.id} 
-                  message={msg} 
-                  onRegenerate={handleRegenerateResponse}
-                />
+                <ChatMessage key={msg.id} message={msg} onRegenerate={handleRegenerateResponse} />
               ))}
               {isLoading && (
-                <TypingIndicator
-                  loadingStep={loadingStep}
-                  selectedModel={pendingModel}
-                />
+                <TypingIndicator loadingStep={loadingStep} selectedModel={pendingModel} />
               )}
               <div ref={messagesEndRef} />
             </div>
@@ -448,11 +499,7 @@ const Chat = () => {
 
         {/* Footer input — safe-area padding for mobile browsers */}
         <div className="bg-app-bg border-t border-border-app/40 shrink-0 pb-safe">
-          <ChatInput
-            onSubmit={handleSendMessage}
-            isLoading={isLoading}
-            loadingStep={loadingStep}
-          />
+          <ChatInput onSubmit={handleSendMessage} isLoading={isLoading} loadingStep={loadingStep} />
         </div>
       </div>
     </div>
