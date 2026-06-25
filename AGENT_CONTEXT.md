@@ -24,7 +24,7 @@ RouteMind is a **React + Vite** single-page app that simulates an intelligent AI
 | Markdown | react-markdown v10 + remark-gfm v4 |
 | Syntax Highlighting | react-syntax-highlighter v16 |
 | State | `useState` / `useRef` (no Redux/Zustand) |
-| Persistence | `localStorage` (routing policy + telemetry stats) |
+| Persistence | `localStorage` (routing policy + telemetry stats + theme) |
 | Testing | Vitest v4 + React Testing Library v16 |
 | CI | GitHub Actions (lint → test → build) |
 
@@ -37,19 +37,23 @@ src/
 ├── components/
 │   ├── ChatInput.jsx       # Text input + file attachment UI
 │   ├── ChatMessage.jsx     # Renders user & assistant messages
-│   ├── Sidebar.jsx         # Nav, chat history, settings modal, telemetry modal
+│   ├── Footer.jsx          # Shared footer used across Home, Benefits, Documentation pages
+│   ├── Navbar.jsx          # Top navigation with mobile menu (GitHub link fixed)
+│   ├── Sidebar.jsx         # Nav, chat history, settings modal, telemetry modal, theme cycle button
 │   ├── Tooltip.jsx         # Centralized tooltip hover helper
 │   ├── TypingIndicator.jsx # Animated "thinking" indicator
-│   └── RoutingCard.jsx     # (Currently unused — dead import removed)
+│   ├── RoutingCard.jsx     # Routing decision explainer card (used in chat messages)
+│   └── AuthenticationComingSoonModal.jsx  # "Auth coming soon" modal (light mode fixed)
 ├── context/
-│   ├── ThemeContext.jsx     # Light/dark/system theme provider
+│   ├── ThemeContext.jsx     # Light/dark/system theme provider — persists to localStorage
 │   └── ToastContext.jsx     # Global toast notification system
 ├── pages/
 │   ├── Chat.jsx            # Main chat page — holds all app state
 │   ├── Home.jsx            # Landing page with terminal simulator
-│   ├── Benefits.jsx        # Features/benefits page
-│   └── Documetation.jsx    # Documentation page (note: filename has typo)
+│   ├── Benefits.jsx        # Features/benefits page (uses shared Footer + animations)
+│   └── Documentation.jsx   # Documentation page (typo fixed from Documetation.jsx)
 ├── utils/
+│   ├── animations.js       # Shared Framer Motion variants (fadeInUp, stagger) — import from here
 │   ├── fileHelpers.jsx     # Centralized file size formatting and icon matching helpers
 │   └── mockRouter.js       # Routing logic (keyword matching → model selection)
 ├── data/
@@ -82,6 +86,7 @@ Chat.jsx (top-level state owner)
 |---|---|---|
 | `routingPolicy` | `string` | `'balanced'` \| `'cost'` \| `'accuracy'` — set in Sidebar settings modal |
 | `routingStats` | `JSON string` | `{ totalQueries, savings, models: {} }` — updated by Chat.jsx after each message |
+| `theme` | `string` | `'light'` \| `'dark'` \| `'system'` — set by ThemeContext, read on init |
 
 **Custom events (for localStorage → React sync):**
 - `telemetry-updated` — dispatched by Chat.jsx after updating `routingStats`; Sidebar listens and re-reads localStorage to update its `stats` state
@@ -175,9 +180,10 @@ Located in `src/context/ToastContext.jsx`.
 ## 9. Theme System
 
 - `ThemeContext.jsx` manages `'light' | 'dark' | 'system'` mode
-- Applied as a `data-theme` attribute on `<html>`
-- Tailwind classes use `dark:` prefix for dark mode variants
-- The Sidebar settings modal has a theme picker (3 options)
+- Applied as a `dark` class on `<html>` (Tailwind `dark:` prefix strategy)
+- Persisted to `localStorage` under the key `theme`
+- **Theme switcher UX:** Single button in the Sidebar footer — cycles `dark → light → system → dark` on each click. No dropdown. Icon updates to reflect current mode (Moon / Sun / Laptop). `aria-label` updates dynamically to show what the next click will switch to.
+- Tailwind classes use `dark:` prefix for dark-mode variants throughout all components
 
 ---
 
@@ -213,6 +219,7 @@ Located in `src/context/ToastContext.jsx`.
 | 6 | `RoutingCard.jsx` | Imported in `Chat.jsx` but rendered with `aria-hidden="true"` and never shown — remove the import | Resolved ✅ |
 | 7 | `ChatInput.jsx` | `text-[11px]` on helper labels is below 12px accessibility floor; use `text-xs` | Resolved ✅ |
 | 8 | `mockRouter.js` | `policy-updated` event dispatched by Sidebar is never consumed — wire it up if real-time policy switching mid-session is needed | 🟡 Incomplete |
+| 9 | `Sidebar.jsx` | Theme dropdown replaced with a cycle-on-click button (`dark → light → system → dark`). No dropdown UI, no `themeDropdownOpen` state, no click-outside listener needed. | Resolved ✅ |
 
 ---
 
@@ -221,9 +228,11 @@ Located in `src/context/ToastContext.jsx`.
 - **No real API calls exist yet.** Every model response is a hardcoded string in `Chat.jsx`'s `handleSendMessage`.
 - **File objects are not persisted.** Only metadata (`name`, `size`, `type`) is stored in message state. If you add server-side file processing, upload the raw `File` before serialising.
 - **Commit messages are informal** — use them as rough labels, not precise changelogs. See this document for details.
-- **localStorage is the cross-component bus** — `routingPolicy` and `routingStats` are the only shared state outside React. Use custom events (`dispatchEvent`) to notify React components of changes.
+- **localStorage is the cross-component bus** — `routingPolicy`, `routingStats`, and `theme` are the only shared state outside React. Use custom events (`dispatchEvent`) to notify React components of changes.
 - **`timeoutRefs.current`** must be cleared at the start of every `handleSendMessage` call (already done) to prevent stale callbacks from previous sends running out of order.
 - **Test files** live alongside source or in `__tests__/` — check `vitest.config.js` for the pattern.
+- **Shared Framer Motion variants** (`fadeInUp`, `stagger`) live in `src/utils/animations.js` — import from there, do not redefine locally in page components.
+- **Shared footer** lives in `src/components/Footer.jsx` — import and use in all marketing pages (Home, Benefits, Documentation).
 
 ---
 
@@ -246,5 +255,6 @@ A complete frontend production-readiness audit was conducted. The following impr
 - **Shared Footer**: Extracted the custom copy-pasted footer markup from multiple pages into a reusable `Footer.jsx` component.
 - **Shared Animation System**: Consolidated duplicate Framer Motion variants into a single module `src/utils/animations.js`.
 - **404 Route handling**: App.jsx imports were corrected, and a proper 404 Route (`NotFound`) was set up instead of silently redirecting users to `/`.
+- **Theme Switcher UX**: Replaced the theme dropdown in the Sidebar footer with a single cycle button — clicking rotates `dark → light → system → dark`. The selection is persisted to `localStorage` via `ThemeContext`. No dropdown state or click-outside listener needed.
 
 The entire codebase is verified against ESLint standards, unit tests are passing (100%), and Vite bundles the production build correctly.
