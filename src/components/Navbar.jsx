@@ -193,34 +193,18 @@ const Navbar = () => {
           </nav>
 
           <div className="pt-4 border-t border-border-app flex flex-col gap-3">
-            {/* Mobile Theme Segment Picker */}
-            <div className="flex flex-col gap-2 py-1.5 border-b border-border-app/40 pb-4">
-              <span className="text-secondary text-[11px] font-semibold uppercase tracking-wider font-mono">Theme Preference</span>
-              <div className="grid grid-cols-3 gap-1 bg-card-bg border border-border-app rounded-lg p-0.5">
-                {[
-                  { id: 'light', label: 'Light', icon: Sun },
-                  { id: 'dark', label: 'Dark', icon: Moon },
-                  { id: 'system', label: 'System', icon: Laptop },
-                ].map((opt) => {
-                  const Icon = opt.icon
-                  const isSelected = theme === opt.id
-                  return (
-                    <button
-                      key={opt.id}
-                      onClick={() => setTheme(opt.id)}
-                      className={`flex items-center justify-center gap-1.5 py-2 rounded-md text-xs transition-all cursor-pointer focus:outline-none ${
-                        isSelected
-                          ? 'bg-sidebar-bg text-blue-400 font-semibold shadow-sm border border-border-app/20'
-                          : 'text-neutral-500 hover:text-primary'
-                      }`}
-                    >
-                      <Icon size={13} />
-                      <span>{opt.label}</span>
-                    </button>
-                  )
-                })}
+            {/* Mobile Theme Cycle Button */}
+            <button
+              onClick={handleCycleTheme}
+              className="flex items-center justify-between w-full px-3 py-2.5 rounded-lg border border-border-app bg-card-bg/40 hover:bg-card-bg text-secondary hover:text-primary transition-colors focus:outline-none cursor-pointer"
+              aria-label={`Theme: ${themeLabel}. Click to switch to ${themeNext}`}
+            >
+              <div className="flex items-center gap-2.5">
+                <ThemeIcon size={16} />
+                <span className="text-[15px] font-medium">Theme: {themeLabel}</span>
               </div>
-            </div>
+              <span className="text-xs text-neutral-500 font-mono">→ {themeNext}</span>
+            </button>
 
             <a
               href="https://github.com/pritesh-4/RouteMind"
