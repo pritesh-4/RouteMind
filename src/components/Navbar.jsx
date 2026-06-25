@@ -1,88 +1,62 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Menu, X, Sun, Moon, Laptop } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { useTheme } from '../context/ThemeContext'
 import AuthenticationComingSoonModal from './AuthenticationComingSoonModal'
+
+const THEME_CYCLE = ['dark', 'light', 'system']
+
+const THEME_META = {
+  dark:   { icon: Moon,   label: 'Dark',   next: 'Light' },
+  light:  { icon: Sun,    label: 'Light',  next: 'System' },
+  system: { icon: Laptop, label: 'System', next: 'Dark' },
+}
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const { theme, setTheme } = useTheme()
-  const [themeDropdownOpen, setThemeDropdownOpen] = useState(false)
-  const themeDropdownRef = useRef(null)
+
+  const handleCycleTheme = () => {
+    const next = THEME_CYCLE[(THEME_CYCLE.indexOf(theme) + 1) % THEME_CYCLE.length]
+    setTheme(next)
+  }
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (themeDropdownRef.current && !themeDropdownRef.current.contains(event.target)) {
-        setThemeDropdownOpen(false)
-      }
-    }
-    if (themeDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [themeDropdownOpen])
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 10) {
-        setScrolled(true)
-      } else {
-        setScrolled(false)
-      }
-    }
+    const handleScroll = () => setScrolled(window.scrollY > 10)
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  const { icon: ThemeIcon, label: themeLabel, next: themeNext } = THEME_META[theme] ?? THEME_META.dark
+
   return (
-    <header 
+    <header
       className={`sticky top-0 z-50 w-full h-[76px] flex items-center transition-all duration-300 ${
-        scrolled 
-          ? 'bg-app-bg/90 backdrop-blur-md border-b border-border-app/60 shadow-[0_4px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.4)]' 
+        scrolled
+          ? 'bg-app-bg/90 backdrop-blur-md border-b border-border-app/60 shadow-[0_4px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.4)]'
           : 'bg-app-bg border-b border-border-app/30'
       }`}
     >
       <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
-        
+
         {/* Left Section: Logo & Brand */}
-        <Link 
-          to="/" 
+        <Link
+          to="/"
           className="flex items-center gap-3 group focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 rounded-lg p-1"
           aria-label="RouteMind Home"
         >
           <div className="relative flex items-center justify-center w-9 h-9 rounded-lg bg-neutral-900 border border-neutral-800 group-hover:border-blue-500/40 transition-colors duration-300">
-            <svg 
-              className="w-[22px] h-[22px] text-neutral-400 group-hover:text-blue-400 transition-colors duration-300" 
-              viewBox="0 0 32 32" 
-              fill="none" 
+            <svg
+              className="w-[22px] h-[22px] text-neutral-400 group-hover:text-blue-400 transition-colors duration-300"
+              viewBox="0 0 32 32"
+              fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <path 
-                d="M8 10C12 10 14 6 18 6H24" 
-                stroke="currentColor" 
-                strokeWidth="1.5" 
-                strokeLinecap="round" 
-                className="text-neutral-700 group-hover:text-neutral-600 transition-colors duration-300" 
-              />
-              <path 
-                d="M8 16H24" 
-                stroke="#0066FF" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
-                className="drop-shadow-[0_0_4px_rgba(0,102,255,0.6)]" 
-              />
-              <path 
-                d="M8 22C12 22 14 26 18 26H24" 
-                stroke="currentColor" 
-                strokeWidth="1.5" 
-                strokeLinecap="round" 
-                className="text-neutral-700 group-hover:text-neutral-600 transition-colors duration-300" 
-              />
+              <path d="M8 10C12 10 14 6 18 6H24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-neutral-700 group-hover:text-neutral-600 transition-colors duration-300" />
+              <path d="M8 16H24" stroke="#0066FF" strokeWidth="2" strokeLinecap="round" className="drop-shadow-[0_0_4px_rgba(0,102,255,0.6)]" />
+              <path d="M8 22C12 22 14 26 18 26H24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-neutral-700 group-hover:text-neutral-600 transition-colors duration-300" />
               <rect x="6" y="8" width="4" height="16" rx="1" fill="#171717" stroke="currentColor" strokeWidth="1.5" className="text-neutral-600 group-hover:text-neutral-500 transition-colors duration-300" />
               <circle cx="8" cy="16" r="1.5" fill="#0066FF" />
               <circle cx="24" cy="6" r="2" fill="#404040" />
@@ -103,16 +77,13 @@ const Navbar = () => {
         </Link>
 
         {/* Center Section: Navigation Links */}
-        <nav 
-          className="hidden md:flex items-center gap-x-6 lg:gap-x-8"
-          aria-label="Global navigation"
-        >
+        <nav className="hidden md:flex items-center gap-x-6 lg:gap-x-8" aria-label="Global navigation">
           {[
             { label: 'Features', href: '/#features' },
             { label: 'Benefits', href: '/benefits' },
-            { label: 'Documentation', href: '/docs' }
+            { label: 'Documentation', href: '/docs' },
           ].map((link) => {
-            const isInternal = link.href.startsWith('/');
+            const isInternal = link.href.startsWith('/')
             return isInternal ? (
               <Link
                 key={link.label}
@@ -129,7 +100,7 @@ const Navbar = () => {
               >
                 {link.label}
               </a>
-            );
+            )
           })}
         </nav>
 
@@ -142,67 +113,20 @@ const Navbar = () => {
             className="text-secondary hover:text-primary p-2 rounded-lg hover:bg-card-bg border border-transparent hover:border-border-app transition-all duration-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500"
             aria-label="GitHub Repository"
           >
-            <svg 
-              className="w-[19px] h-[19px]" 
-              viewBox="0 0 24 24" 
-              fill="currentColor" 
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-            >
+            <svg className="w-[19px] h-[19px]" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.167 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.137 20.164 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
             </svg>
           </a>
 
-          {/* Theme Dropdown Selector */}
-          <div className="relative flex items-center" ref={themeDropdownRef}>
-            <button
-              onClick={() => setThemeDropdownOpen(!themeDropdownOpen)}
-              className={`p-2 rounded-lg text-secondary hover:text-primary hover:bg-card-bg border border-transparent hover:border-border-app transition-all duration-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 cursor-pointer ${themeDropdownOpen ? 'bg-card-bg text-primary border-border-app' : ''}`}
-              aria-label="Toggle visual theme"
-              aria-haspopup="true"
-              aria-expanded={themeDropdownOpen}
-            >
-              {theme === 'dark' ? <Moon size={18} /> : theme === 'light' ? <Sun size={18} /> : <Laptop size={18} />}
-            </button>
-
-            <AnimatePresence>
-              {themeDropdownOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                  transition={{ duration: 0.15, ease: 'easeOut' }}
-                  className="absolute right-0 top-full z-50 mt-2 bg-sidebar-bg border border-border-app rounded-lg shadow-xl p-1 w-32 animate-in fade-in duration-100"
-                >
-                  {[
-                    { id: 'light', label: 'Light', icon: Sun },
-                    { id: 'dark', label: 'Dark', icon: Moon },
-                    { id: 'system', label: 'System', icon: Laptop },
-                  ].map((opt) => {
-                    const Icon = opt.icon
-                    const isSelected = theme === opt.id
-                    return (
-                      <button
-                        key={opt.id}
-                        onClick={() => {
-                          setTheme(opt.id)
-                          setThemeDropdownOpen(false)
-                        }}
-                        className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs text-left cursor-pointer focus:outline-none focus:bg-card-bg transition-colors ${
-                          isSelected 
-                            ? 'bg-blue-600/10 text-blue-400 font-medium' 
-                            : 'text-neutral-400 hover:bg-card-bg/50 hover:text-primary'
-                        }`}
-                      >
-                        <Icon size={13} className={isSelected ? 'text-blue-400' : 'text-neutral-500'} />
-                        <span>{opt.label}</span>
-                      </button>
-                    )
-                  })}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          {/* Theme cycle button — dark → light → system → dark */}
+          <button
+            onClick={handleCycleTheme}
+            title={`Theme: ${themeLabel} (click for ${themeNext})`}
+            aria-label={`Theme: ${themeLabel}. Click to switch to ${themeNext}`}
+            className="p-2 rounded-lg text-secondary hover:text-primary hover:bg-card-bg border border-transparent hover:border-border-app transition-all duration-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 cursor-pointer"
+          >
+            <ThemeIcon size={18} />
+          </button>
 
           <button
             onClick={() => setAuthModalOpen(true)}
@@ -225,7 +149,7 @@ const Navbar = () => {
             onClick={() => setIsOpen(!isOpen)}
             className="text-secondary hover:text-primary p-2 rounded-lg hover:bg-card-bg transition-all focus:outline-none focus:ring-1 focus:ring-border-app"
             aria-expanded={isOpen}
-            aria-label={isOpen ? "Close menu" : "Open menu"}
+            aria-label={isOpen ? 'Close menu' : 'Open menu'}
           >
             {isOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
@@ -233,7 +157,7 @@ const Navbar = () => {
       </div>
 
       {/* Mobile Dropdown */}
-      <div 
+      <div
         className={`absolute top-[76px] left-0 w-full bg-app-bg border-b border-border-app transition-all duration-300 ease-in-out z-40 md:hidden overflow-hidden ${
           isOpen ? 'max-h-[360px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
         }`}
@@ -243,9 +167,9 @@ const Navbar = () => {
             {[
               { label: 'Features', href: '/#features' },
               { label: 'Benefits', href: '/benefits' },
-              { label: 'Documentation', href: '/docs' }
+              { label: 'Documentation', href: '/docs' },
             ].map((link) => {
-              const isInternal = link.href.startsWith('/');
+              const isInternal = link.href.startsWith('/')
               return isInternal ? (
                 <Link
                   key={link.label}
@@ -264,12 +188,12 @@ const Navbar = () => {
                 >
                   {link.label}
                 </a>
-              );
+              )
             })}
           </nav>
 
           <div className="pt-4 border-t border-border-app flex flex-col gap-3">
-            {/* Mobile Theme Preference Selector Segment */}
+            {/* Mobile Theme Segment Picker */}
             <div className="flex flex-col gap-2 py-1.5 border-b border-border-app/40 pb-4">
               <span className="text-secondary text-[11px] font-semibold uppercase tracking-wider font-mono">Theme Preference</span>
               <div className="grid grid-cols-3 gap-1 bg-card-bg border border-border-app rounded-lg p-0.5">
@@ -285,8 +209,8 @@ const Navbar = () => {
                       key={opt.id}
                       onClick={() => setTheme(opt.id)}
                       className={`flex items-center justify-center gap-1.5 py-2 rounded-md text-xs transition-all cursor-pointer focus:outline-none ${
-                        isSelected 
-                          ? 'bg-sidebar-bg text-blue-400 font-semibold shadow-sm border border-border-app/20' 
+                        isSelected
+                          ? 'bg-sidebar-bg text-blue-400 font-semibold shadow-sm border border-border-app/20'
                           : 'text-neutral-500 hover:text-primary'
                       }`}
                     >
@@ -304,17 +228,12 @@ const Navbar = () => {
               rel="noopener noreferrer"
               className="flex items-center gap-2.5 text-secondary hover:text-primary text-[15px] font-medium py-1"
             >
-              <svg 
-                className="w-[18px] h-[18px]" 
-                viewBox="0 0 24 24" 
-                fill="currentColor"
-                aria-hidden="true"
-              >
+              <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.167 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.137 20.164 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
               </svg>
               <span>GitHub Repository</span>
             </a>
-            
+
             <div className="grid grid-cols-2 gap-3 pt-2">
               <button
                 onClick={() => {
@@ -336,7 +255,8 @@ const Navbar = () => {
           </div>
         </div>
       </div>
-      <AuthenticationComingSoonModal 
+
+      <AuthenticationComingSoonModal
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
       />
