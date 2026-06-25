@@ -81,12 +81,19 @@ const Chat = () => {
 
   const handleDeleteChat = (id) => {
     const updated = chatHistory.filter(c => c.id !== id)
-    setChatHistory(updated)
     const newMessages = { ...conversationsMessages }
     delete newMessages[id]
     setConversationsMessages(newMessages)
-    if (activeChatId === id && updated.length > 0) {
-      setActiveChatId(updated[0].id)
+    if (updated.length === 0) {
+      const newId = Date.now().toString()
+      const newChat = { id: newId, title: 'New Workspace Chat', timestamp: 'Just now' }
+      setChatHistory([newChat])
+      setActiveChatId(newId)
+    } else {
+      setChatHistory(updated)
+      if (activeChatId === id) {
+        setActiveChatId(updated[0].id)
+      }
     }
   }
 
@@ -351,17 +358,17 @@ const Chat = () => {
             // Welcome state — staggered entrance on each card
             <div className="min-h-full flex flex-col items-center justify-center max-w-[850px] mx-auto px-4 sm:px-6 py-16 sm:py-20 text-center space-y-10 sm:space-y-12 select-none">
               <div className="space-y-4 animate-slide-up-fade">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-950/20 text-xs font-medium text-blue-400 font-mono">
-                  <span className="flex h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse"></span>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-50 dark:bg-blue-950/20 text-xs font-medium text-blue-600 dark:text-blue-400 font-mono">
+                  <span className="flex h-1.5 w-1.5 rounded-full bg-blue-500 dark:bg-blue-400 animate-pulse"></span>
                   Active Proxy Node: US-East-1 Edge
                 </div>
                 <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-primary leading-tight font-sans">
                   RouteMind
                 </h2>
-                <p className="text-base sm:text-xl font-medium text-neutral-300">
+                <p className="text-base sm:text-xl font-medium text-neutral-700 dark:text-neutral-300">
                   One Interface. Every AI. Zero Guesswork.
                 </p>
-                <p className="text-sm text-neutral-400 max-w-md mx-auto leading-relaxed">
+                <p className="text-sm text-neutral-600 dark:text-neutral-400 max-w-md mx-auto leading-relaxed">
                   Ask naturally. RouteMind automatically chooses the best AI model for every task.
                 </p>
               </div>
@@ -380,7 +387,7 @@ const Chat = () => {
                     className={`p-4 bg-card-bg hover:bg-sidebar-bg border border-border-app hover:border-blue-500/30 rounded-xl text-left transition-all duration-200 hover:-translate-y-0.5 group focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 cursor-pointer animate-slide-up-fade ${cardDelays[idx]}`}
                   >
                     <p className="text-xs font-semibold text-primary group-hover:text-primary transition-colors">{prompt}</p>
-                    <p className="text-[10px] text-neutral-500 mt-1 leading-normal">Click to submit query directly to RouteMind proxy.</p>
+                    <p className="text-[10px] text-neutral-600 dark:text-neutral-500 mt-1 leading-normal">Click to submit query directly to RouteMind proxy.</p>
                   </button>
                 ))}
               </div>

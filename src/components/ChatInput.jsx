@@ -235,9 +235,9 @@ const ChatInput = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-[#141414]/95 backdrop-blur-sm border-2 border-dashed border-blue-500 rounded-2xl flex flex-col items-center justify-center gap-1.5 z-50 pointer-events-none select-none text-blue-500 font-mono text-xs"
+              className="absolute inset-0 bg-sidebar-bg/95 backdrop-blur-sm border-2 border-dashed border-blue-500 rounded-2xl flex flex-col items-center justify-center gap-1.5 z-50 pointer-events-none select-none text-blue-500 dark:text-blue-400 font-mono text-xs"
             >
-              <Sparkles size={20} className="text-blue-500 animate-pulse" />
+              <Sparkles size={20} className="text-blue-500 dark:text-blue-400 animate-pulse" />
               <span className="font-semibold">Drop files here</span>
             </motion.div>
           )}

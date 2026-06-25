@@ -14,16 +14,8 @@ import {
   TrendingDown
 } from 'lucide-react'
 import Navbar from '../components/Navbar'
-
-const fadeInUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.21, 0.47, 0.32, 0.98] } }
-}
-
-const stagger = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.08 } }
-}
+import Footer from '../components/Footer'
+import { fadeInUp, stagger } from '../utils/animations'
 
 // Reusable scroll-reveal wrapper so we don't repeat viewport props
 const Reveal = ({ children, className = '', delay = 0 }) => (
@@ -120,10 +112,10 @@ const Benefits = () => {
                       <span className="px-1.5 py-0.5 rounded bg-blue-950/40 text-[9px] text-blue-400 font-semibold border border-blue-500/10 animate-pulse">Active Node</span>
                     </div>
                     <div className="flex items-center gap-2 mb-2">
-                      <Cpu size={13} className="text-blue-400" />
+                      <Cpu size={13} className="text-blue-500 dark:text-blue-400" />
                       <span className="text-primary font-bold">GPT-4o</span>
                     </div>
-                    <div className="text-[10px] text-neutral-400 leading-normal">
+                    <div className="text-[10px] text-neutral-600 dark:text-neutral-400 leading-normal">
                       Reason: Strong coding and debugging performance for React 19 concurrent render states.
                     </div>
                   </div>
@@ -141,7 +133,7 @@ const Benefits = () => {
                   <div className="p-3.5 bg-sidebar-bg/70 backdrop-blur-sm border border-border-app rounded-lg flex flex-col justify-between min-h-[160px]">
                     <div>
                       <div className="text-[9px] text-red-400 font-semibold tracking-wider uppercase mb-2">Manual Workflow</div>
-                      <div className="space-y-1.5 text-[10px] text-neutral-400">
+                      <div className="space-y-1.5 text-[10px] text-neutral-600 dark:text-neutral-400">
                         {['Open ChatGPT tab', 'Open Claude tab', 'Open Gemini tab', 'Compare outputs'].map(s => (
                           <div key={s} className="flex items-center gap-1.5">
                             <span className="h-1.5 w-1.5 rounded-full bg-red-400/40 shrink-0"></span>
@@ -150,18 +142,18 @@ const Benefits = () => {
                         ))}
                       </div>
                     </div>
-                    <span className="text-[9px] text-neutral-600 mt-3 font-semibold">Cognitive overhead</span>
+                    <span className="text-[9px] text-neutral-500 dark:text-neutral-400 mt-3 font-semibold">Cognitive overhead</span>
                   </div>
 
                   <div className="p-3.5 bg-sidebar-bg/60 backdrop-blur-sm border border-green-500/20 rounded-lg flex flex-col justify-between min-h-[160px]">
                     <div>
                       <div className="text-[9px] text-green-400 font-semibold tracking-wider uppercase mb-2">RouteMind</div>
-                      <div className="space-y-1.5 text-[10px] text-neutral-200">
-                        <div className="flex items-center gap-1.5 text-blue-400">
+                      <div className="space-y-1.5 text-[10px] text-neutral-700 dark:text-neutral-200">
+                        <div className="flex items-center gap-1.5 text-blue-500 dark:text-blue-400">
                           <span className="h-1.5 w-1.5 rounded-full bg-blue-400 shrink-0"></span>
                           <span>Ask once</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-neutral-400">
+                        <div className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">
                           <span className="h-1.5 w-1.5 rounded-full bg-green-500 shrink-0 animate-pulse"></span>
                           <span>Orchestrator routes</span>
                         </div>
@@ -213,8 +205,8 @@ const Benefits = () => {
                     <span className="text-green-400 font-semibold">95%</span>
                   </div>
                   <div className="py-1">
-                    <span className="text-neutral-500 block mb-1">Selection Parameter</span>
-                    <span className="text-neutral-300 leading-normal block bg-sidebar-bg/60 backdrop-blur-sm p-2 rounded border border-border-app/40">
+                    <span className="text-neutral-600 dark:text-neutral-500 block mb-1">Selection Parameter</span>
+                    <span className="text-neutral-700 dark:text-neutral-300 leading-normal block bg-sidebar-bg/60 backdrop-blur-sm p-2 rounded border border-border-app/40">
                       Large context requirements (32,450 tokens matched) processed via Google low-latency node.
                     </span>
                   </div>
@@ -237,20 +229,20 @@ const Benefits = () => {
                   </div>
                   <div className="space-y-3">
                     <div>
-                      <div className="flex justify-between text-[10px] text-neutral-500 mb-1">
+                      <div className="flex justify-between text-[10px] text-neutral-600 dark:text-neutral-500 mb-1">
                         <span>Frontier Default Option (GPT-4o)</span>
                         <span>$0.0150</span>
                       </div>
-                      <div className="h-2 bg-neutral-900 rounded-full overflow-hidden">
-                        <div className="h-full bg-neutral-700 w-full rounded-full"></div>
+                      <div className="h-2 bg-neutral-200 dark:bg-neutral-900 rounded-full overflow-hidden">
+                        <div className="h-full bg-neutral-400 dark:bg-neutral-700 w-full rounded-full"></div>
                       </div>
                     </div>
                     <div>
-                      <div className="flex justify-between text-[10px] text-green-400 font-medium mb-1">
+                      <div className="flex justify-between text-[10px] text-green-600 dark:text-green-400 font-medium mb-1">
                         <span>Intelligent Proxy Route (Gemini Flash)</span>
                         <span>$0.0003</span>
                       </div>
-                      <div className="h-2 bg-neutral-900 rounded-full overflow-hidden">
+                      <div className="h-2 bg-neutral-200 dark:bg-neutral-900 rounded-full overflow-hidden">
                         <div className="h-full bg-blue-500 w-[4%] rounded-full animate-[pulse_1s_infinite]"></div>
                       </div>
                     </div>
@@ -286,7 +278,7 @@ const Benefits = () => {
                 </p>
                 <ul className="space-y-2 pt-2 select-none">
                   {['One workflow', 'One interface', 'Multiple AI providers', 'Less context switching'].map((item, idx) => (
-                    <li key={idx} className="flex items-center gap-2 text-xs text-neutral-300">
+                    <li key={idx} className="flex items-center gap-2 text-xs text-neutral-700 dark:text-neutral-300">
                       <Check size={12} className="text-blue-500" />
                       <span>{item}</span>
                     </li>
@@ -336,38 +328,46 @@ const Benefits = () => {
               { tag: 'RES', color: 'green', role: 'Researcher', sub: 'Document Parsing', task: 'Analyze 50-page PDF report', model: 'Gemini Pro', reason: 'Selected for massive context window capabilities and semantic retrieval accuracy.' },
               { tag: 'STU', color: 'purple', role: 'Student', sub: 'Concept Explanation', task: 'Explain Quantum Physics', model: 'GPT-4o', reason: 'Selected for general reasoning, clear analogical pedagogics, and step descriptions.' },
               { tag: 'FND', color: 'yellow', role: 'Founder', sub: 'Creative Copywriting', task: 'Draft pitch email templates', model: 'Claude Sonnet', reason: 'Selected for highly polished prose style and narrative structure flow.' },
-            ].map(({ tag, color, role, sub, task, model, reason }) => (
-              <motion.div
-                key={role}
-                variants={fadeInUp}
-                className="bg-card-bg/50 backdrop-blur-md border border-border-app rounded-xl p-5 space-y-4 flex flex-col justify-between hover:border-border-app/80 hover:-translate-y-1 transition-all duration-200 shadow-sm"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-8 h-8 rounded-lg bg-${color}-950/20 border border-${color}-500/20 text-${color}-400 flex items-center justify-center font-mono text-xs font-bold`}>
-                      {tag}
+            ].map(({ tag, color, role, sub, task, model, reason }) => {
+              const scenarioColors = {
+                blue: 'bg-blue-100 dark:bg-blue-950/20 border-blue-200 dark:border-blue-500/20 text-blue-700 dark:text-blue-400',
+                green: 'bg-green-100 dark:bg-green-950/20 border-green-200 dark:border-green-500/20 text-green-700 dark:text-green-400',
+                purple: 'bg-purple-100 dark:bg-purple-950/20 border-purple-200 dark:border-purple-500/20 text-purple-700 dark:text-purple-400',
+                yellow: 'bg-amber-100 dark:bg-yellow-950/20 border-amber-200 dark:border-yellow-500/20 text-amber-700 dark:text-yellow-400'
+              }
+              return (
+                <motion.div
+                  key={role}
+                  variants={fadeInUp}
+                  className="bg-card-bg/50 backdrop-blur-md border border-border-app rounded-xl p-5 space-y-4 flex flex-col justify-between hover:border-border-app/80 hover:-translate-y-1 transition-all duration-200 shadow-sm"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-8 h-8 rounded-lg border flex items-center justify-center font-mono text-xs font-bold ${scenarioColors[color]}`}>
+                        {tag}
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-semibold text-primary">{role}</h3>
+                        <p className="text-[9px] text-neutral-600 dark:text-neutral-500">{sub}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-xs font-semibold text-primary">{role}</h3>
-                      <p className="text-[9px] text-neutral-500">{sub}</p>
+                    <div className="space-y-1.5 font-mono text-[10px]">
+                      <div>
+                        <span className="text-neutral-600 dark:text-neutral-500">Task:</span>
+                        <p className="text-primary mt-0.5">{task}</p>
+                      </div>
+                      <div>
+                        <span className="text-neutral-600 dark:text-neutral-500">Selected Model:</span>
+                        <p className="text-blue-600 dark:text-blue-400 font-semibold mt-0.5 flex items-center gap-1">
+                          <Cpu size={10} /> {model}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  <div className="space-y-1.5 font-mono text-[10px]">
-                    <div>
-                      <span className="text-neutral-500">Task:</span>
-                      <p className="text-primary mt-0.5">{task}</p>
-                    </div>
-                    <div>
-                      <span className="text-neutral-500">Selected Model:</span>
-                      <p className="text-blue-400 font-semibold mt-0.5 flex items-center gap-1">
-                        <Cpu size={10} /> {model}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <p className="text-[10px] text-neutral-400 leading-relaxed border-t border-border-app/30 pt-3">{reason}</p>
-              </motion.div>
-            ))}
+                  <p className="text-[10px] text-neutral-600 dark:text-neutral-400 leading-relaxed border-t border-border-app/30 pt-3">{reason}</p>
+                </motion.div>
+              )
+            })}
           </motion.div>
         </section>
 
@@ -384,12 +384,12 @@ const Benefits = () => {
               <table className="w-full border-collapse text-left text-sm font-sans">
                 <thead className="bg-card-bg/70 border-b border-border-app text-xs font-semibold text-primary uppercase select-none">
                   <tr>
-                    <th className="px-6 py-4 font-semibold text-neutral-300">Feature Parameter</th>
-                    <th className="px-6 py-4 font-semibold text-red-400/90">Traditional Workflow</th>
-                    <th className="px-6 py-4 font-semibold text-blue-400/90">RouteMind Workflow</th>
+                    <th className="px-6 py-4 font-semibold text-neutral-700 dark:text-neutral-300">Feature Parameter</th>
+                    <th className="px-6 py-4 font-semibold text-red-500 dark:text-red-400/90">Traditional Workflow</th>
+                    <th className="px-6 py-4 font-semibold text-blue-600 dark:text-blue-400/90">RouteMind Workflow</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#262626]/40">
+                <tbody className="divide-y divide-border-app/40">
                   {[
                     ['Interface Model', 'Multiple tabs & developer keys', 'One unified console'],
                     ['Model Selection', 'Manual evaluation', 'Automatic proxy routing'],
@@ -397,11 +397,11 @@ const Benefits = () => {
                     ['Orchestration Visibility', 'Hidden decisions & scores', 'Explainable routing decisions'],
                   ].map(([feature, before, after]) => (
                     <tr key={feature} className="hover:bg-card-bg/30 transition-colors">
-                      <td className="px-6 py-4 text-neutral-300 font-medium">{feature}</td>
-                      <td className="px-6 py-4 text-neutral-500">{before}</td>
+                      <td className="px-6 py-4 text-neutral-700 dark:text-neutral-300 font-medium">{feature}</td>
+                      <td className="px-6 py-4 text-neutral-600 dark:text-neutral-400">{before}</td>
                       <td className="px-6 py-4 text-primary font-medium">
                         <span className="flex items-center gap-2">
-                          <span className="h-1.5 w-1.5 rounded-full bg-blue-400 shrink-0" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-blue-500 dark:bg-blue-400 shrink-0" />
                           {after}
                         </span>
                       </td>
@@ -446,20 +446,7 @@ const Benefits = () => {
 
       </main>
 
-      {/* ── Footer ── */}
-      <footer className="py-12 border-t border-border-app/40 bg-app-bg text-neutral-500 text-xs relative select-none">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
-            <Terminal size={14} className="text-[#3B82F6]" />
-            <span className="font-semibold text-primary">RouteMind AI Engine</span>
-            <span className="text-neutral-700">|</span>
-            <span>Edge Nodes Enabled</span>
-          </div>
-          <p className="text-neutral-600 font-mono">
-            &copy; {new Date().getFullYear()} RouteMind Proxy Corp. Production Grade.
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }

@@ -102,7 +102,7 @@ const RoutingCard = ({
   }
 
   return (
-    <div className="w-full max-w-[500px] bg-card-bg border border-border-app rounded-xl p-4 shadow-sm select-none text-left transition-all duration-200 hover:border-[#333333] hover:shadow-lg group/card">
+    <div className="w-full max-w-[500px] bg-card-bg border border-border-app rounded-xl p-4 shadow-sm select-none text-left transition-all duration-200 hover:border-neutral-400 dark:hover:border-neutral-700 hover:shadow-lg group/card">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border-app/60 pb-3 mb-3.5">
         <div className="flex items-center gap-2">
@@ -171,7 +171,7 @@ const RoutingCard = ({
 
       {/* Scoring Factor Bars */}
       <div className="space-y-2 mb-4 bg-sidebar-bg border border-border-app/40 rounded-lg p-3">
-        <div className="flex justify-between items-center text-[10px] font-mono text-neutral-500 mb-1">
+        <div className="flex justify-between items-center text-[10px] font-mono text-neutral-600 dark:text-neutral-400 mb-1">
           <span className="uppercase tracking-wider">Evaluation Factors</span>
           <span>Proximal Score</span>
         </div>
@@ -263,27 +263,27 @@ const RoutingCard = ({
       {isExpanded && (
         <div className="mt-3.5 pt-3.5 border-t border-border-app/80 grid grid-cols-2 gap-x-4 gap-y-3.5 text-[11px] animate-in fade-in slide-in-from-top-1 duration-200">
           <div>
-            <div className="text-neutral-500 font-mono text-[9px] uppercase tracking-wider mb-0.5">Intent Category</div>
+            <div className="text-neutral-600 dark:text-neutral-400 font-mono text-[9px] uppercase tracking-wider mb-0.5">Intent Category</div>
             <div className="text-primary font-medium">{detailsVal.intent}</div>
           </div>
           <div>
-            <div className="text-neutral-500 font-mono text-[9px] uppercase tracking-wider mb-0.5">Context Length</div>
+            <div className="text-neutral-600 dark:text-neutral-400 font-mono text-[9px] uppercase tracking-wider mb-0.5">Context Length</div>
             <div className="text-primary font-mono font-medium">{detailsVal.contextLength}</div>
           </div>
           <div>
-            <div className="text-neutral-500 font-mono text-[9px] uppercase tracking-wider mb-0.5">Provider Entity</div>
+            <div className="text-neutral-600 dark:text-neutral-400 font-mono text-[9px] uppercase tracking-wider mb-0.5">Provider Entity</div>
             <div className="text-primary font-medium">{detailsVal.provider}</div>
           </div>
           <div>
-            <div className="text-neutral-500 font-mono text-[9px] uppercase tracking-wider mb-0.5">Model Version</div>
+            <div className="text-neutral-600 dark:text-neutral-400 font-mono text-[9px] uppercase tracking-wider mb-0.5">Model Version</div>
             <div className="text-primary font-mono font-medium truncate" title={detailsVal.version}>{detailsVal.version}</div>
           </div>
           <div>
-            <div className="text-neutral-500 font-mono text-[9px] uppercase tracking-wider mb-0.5">Composite Score</div>
+            <div className="text-neutral-600 dark:text-neutral-400 font-mono text-[9px] uppercase tracking-wider mb-0.5">Composite Score</div>
             <div className="text-blue-600 dark:text-blue-400 font-mono font-semibold">{detailsVal.score}</div>
           </div>
           <div>
-            <div className="text-neutral-500 font-mono text-[9px] uppercase tracking-wider mb-0.5">Fallbacks Evaluated</div>
+            <div className="text-neutral-600 dark:text-neutral-400 font-mono text-[9px] uppercase tracking-wider mb-0.5">Fallbacks Evaluated</div>
             <div className="flex flex-wrap gap-1 mt-0.5">
               {detailsVal.fallbacks.map((fallback, idx) => (
                 <span

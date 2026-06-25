@@ -224,3 +224,27 @@ Located in `src/context/ToastContext.jsx`.
 - **localStorage is the cross-component bus** — `routingPolicy` and `routingStats` are the only shared state outside React. Use custom events (`dispatchEvent`) to notify React components of changes.
 - **`timeoutRefs.current`** must be cleared at the start of every `handleSendMessage` call (already done) to prevent stale callbacks from previous sends running out of order.
 - **Test files** live alongside source or in `__tests__/` — check `vitest.config.js` for the pattern.
+
+---
+
+## 14. Production-Readiness Audit & Launch Preparation (June 2026)
+
+A complete frontend production-readiness audit was conducted. The following improvements and fixes were successfully implemented:
+
+### 🔴 Critical Production-Breaking Bugs Fixed
+- **Tailwind Purge Mitigation**: Dynamic class names like `bg-${color}-950/20` in `Home.jsx` (feature cards) and `Benefits.jsx` (scenario cards) were replaced with static CSS mapping maps. This prevents Tailwind CSS from purging these essential color classes during production builds.
+- **Ghost Chat on Delete-All**: Fixed a critical edge-case in `Chat.jsx` where deleting all conversations left the user in a broken active state with no workspace. Now, if the user deletes the last chat, a fresh clean conversation workspace is automatically initialized.
+
+### 🟡 High-Priority Improvements
+- **SEO & Metadata**: Added meta descriptions, theme-color tags, and corrected the lowercase `<title>` in `index.html`.
+- **Light Mode Aesthetics**: Resolved several dark-mode-only hardcoded text, background, and border classes (such as `#FAFAFA` texts, `#141414` backgrounds, progress bar tracks, and dark borders) in components like `TypingIndicator.jsx`, `RoutingCard.jsx`, `ChatInput.jsx`, `Benefits.jsx`, and `Chat.jsx`.
+- **Keyboard Shortcuts & Modal Closures**: Refactored the global shortcut listener in `Sidebar.jsx` to use functional state updates, preventing unnecessary event listener re-binding and potential stale closures. Added backdrop click dismiss to both the Settings modal and Telemetry modal.
+- **Navbar Integration**: Repaired a broken GitHub URL in the mobile navigation menu which was pointing to a placeholder organization instead of the main repo.
+- **Typo Corrections**: Re-routed, renamed, and corrected the component `Documetation.jsx` to `Documentation.jsx`.
+
+### 🟢 Refactoring & Dryness
+- **Shared Footer**: Extracted the custom copy-pasted footer markup from multiple pages into a reusable `Footer.jsx` component.
+- **Shared Animation System**: Consolidated duplicate Framer Motion variants into a single module `src/utils/animations.js`.
+- **404 Route handling**: App.jsx imports were corrected, and a proper 404 Route (`NotFound`) was set up instead of silently redirecting users to `/`.
+
+The entire codebase is verified against ESLint standards, unit tests are passing (100%), and Vite bundles the production build correctly.

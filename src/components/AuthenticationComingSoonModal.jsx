@@ -97,31 +97,31 @@ const AuthenticationComingSoonModal = ({ isOpen, onClose }) => {
             {/* Elegant upper status badge */}
             <div className="flex items-center justify-between border-b border-border-app/40 pb-4">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-blue-950/30 border border-blue-500/20 text-blue-400">
+                <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-500/10 text-blue-600 dark:text-blue-400">
                   <Lock size={15} />
                 </div>
                 <div>
-                  <h3 id="modal-title" className="text-sm font-semibold text-white font-sans">RouteMind Accounts</h3>
+                  <h3 id="modal-title" className="text-sm font-semibold text-primary font-sans">RouteMind Accounts</h3>
                 </div>
               </div>
-              <span className="px-2 py-0.5 rounded bg-blue-950/40 border border-blue-500/20 text-[9px] font-mono text-blue-400 select-none">
+              <span className="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-500/20 text-[9px] font-mono text-blue-600 dark:text-blue-400 select-none font-semibold">
                 Coming Soon
               </span>
             </div>
 
             {/* Subtitle / Context info */}
             <div className="space-y-1.5 text-left">
-              <p id="modal-subtitle" className="text-xs text-neutral-400 font-medium leading-relaxed">
+              <p id="modal-subtitle" className="text-xs text-neutral-600 dark:text-neutral-400 font-medium leading-relaxed">
                 Authentication and account features are currently in development.
               </p>
             </div>
 
             {/* Futures list section wrapper */}
             <div className="space-y-3">
-              <div className="text-[10px] font-mono text-neutral-500 font-semibold tracking-wider uppercase text-left">
+              <div className="text-[10px] font-mono text-neutral-600 dark:text-neutral-500 font-semibold tracking-wider uppercase text-left">
                 Planned features in next build release:
               </div>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left text-xs text-neutral-300 font-sans font-medium">
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left text-xs text-neutral-700 dark:text-neutral-300 font-sans font-medium">
                 {FUTURE_FEATURES.map((feature, idx) => (
                   <li key={idx} className="flex items-center gap-2.5 bg-sidebar-bg/40 border border-border-app/30 p-2.5 rounded-lg">
                     <Check size={12} className="text-blue-500 shrink-0" />
@@ -132,8 +132,8 @@ const AuthenticationComingSoonModal = ({ isOpen, onClose }) => {
             </div>
 
             {/* Modal footer text */}
-            <div className="flex gap-2 p-3 bg-sidebar-bg/60 border border-border-app/40 rounded-xl text-left select-none text-[11px] text-neutral-400 leading-normal">
-              <ShieldAlert size={15} className="text-neutral-500 shrink-0 mt-0.5" />
+            <div className="flex gap-2 p-3 bg-sidebar-bg/60 border border-border-app/40 rounded-xl text-left select-none text-[11px] text-neutral-600 dark:text-neutral-400 leading-normal">
+              <ShieldAlert size={15} className="text-neutral-500 dark:text-neutral-400 shrink-0 mt-0.5" />
               <p>
                 RouteMind is currently focused on delivering the best AI routing experience. Account functionality will be introduced in a future release.
               </p>
@@ -144,7 +144,7 @@ const AuthenticationComingSoonModal = ({ isOpen, onClose }) => {
               <Link 
                 to="/docs#roadmap"
                 onClick={onClose}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-neutral-400 hover:text-white hover:bg-sidebar-bg text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-neutral-500 dark:text-neutral-400 hover:text-primary hover:bg-sidebar-bg text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50"
               >
                 <span>View Roadmap</span>
                 <ArrowRight size={12} />
@@ -161,7 +161,7 @@ const AuthenticationComingSoonModal = ({ isOpen, onClose }) => {
             {/* Close trigger button in top right */}
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 p-1.5 text-neutral-500 hover:text-white rounded-lg hover:bg-sidebar-bg transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 cursor-pointer"
+              className="absolute top-4 right-4 p-1.5 text-neutral-500 hover:text-primary rounded-lg hover:bg-sidebar-bg transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 cursor-pointer"
               aria-label="Dismiss accounts info modal"
             >
               <X size={15} />

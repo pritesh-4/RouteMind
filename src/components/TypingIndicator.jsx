@@ -70,10 +70,10 @@ const TypingIndicator = ({ loadingStep, selectedModel, selectionReason }) => {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border-app/60 pb-3 mb-3.5">
         <div className="flex items-center gap-2">
-          <div className="p-1 rounded bg-blue-950/30 border border-blue-500/10 text-blue-400">
+          <div className="p-1 rounded bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-500/10 text-blue-600 dark:text-blue-400">
             <Sliders size={12} />
           </div>
-          <span className="text-[11px] font-semibold text-[#FAFAFA] tracking-wider uppercase font-mono">
+          <span className="text-[11px] font-semibold text-primary tracking-wider uppercase font-mono">
             RouteMind Processing
           </span>
         </div>
@@ -93,10 +93,10 @@ const TypingIndicator = ({ loadingStep, selectedModel, selectionReason }) => {
             exit={{ opacity: 0, y: -3 }}
             className="flex items-center justify-between py-2 text-xs"
           >
-            <div className="flex items-center gap-2 text-neutral-300">
+            <div className="flex items-center gap-2 text-neutral-700 dark:text-neutral-300">
               <Loader2 size={13} className="animate-spin text-blue-500" />
               <span>Generating response via</span>
-              <span className="font-semibold text-blue-400 font-mono text-[11px] bg-neutral-900 border border-border-app px-2 py-0.5 rounded">
+              <span className="font-semibold text-blue-600 dark:text-blue-400 font-mono text-[11px] bg-sidebar-bg border border-border-app px-2 py-0.5 rounded animate-pulse">
                 {selectedModelVal}
               </span>
             </div>
@@ -120,11 +120,11 @@ const TypingIndicator = ({ loadingStep, selectedModel, selectionReason }) => {
                         <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-500"></span>
                       </div>
                     ) : (
-                      <div className="h-1.5 w-1.5 rounded-full bg-neutral-800 border border-neutral-700/60 ml-0.5 shrink-0"></div>
+                      <div className="h-1.5 w-1.5 rounded-full bg-neutral-300 dark:bg-neutral-800 border border-neutral-400/40 dark:border-neutral-700/60 ml-0.5 shrink-0"></div>
                     )}
                     <span className={`font-medium transition-colors duration-200 ${
-                      isCompleted ? 'text-neutral-500 line-through decoration-neutral-800' :
-                      isActive ? 'text-[#FAFAFA] font-semibold' : 'text-neutral-600'
+                      isCompleted ? 'text-neutral-400 dark:text-neutral-500 line-through decoration-neutral-300 dark:decoration-neutral-800' :
+                      isActive ? 'text-primary font-semibold' : 'text-neutral-500 dark:text-neutral-600'
                     }`}>
                       {stage.label}
                     </span>
@@ -141,7 +141,7 @@ const TypingIndicator = ({ loadingStep, selectedModel, selectionReason }) => {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -3 }}
                           transition={{ duration: 0.12 }}
-                          className="px-1.5 py-0.5 rounded bg-blue-950/20 border border-blue-500/20 text-blue-400 font-mono text-[9px] font-semibold"
+                          className="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 font-mono text-[9px] font-semibold"
                         >
                           {CANDIDATES[candidateIndex]}
                         </motion.span>
@@ -172,9 +172,9 @@ const TypingIndicator = ({ loadingStep, selectedModel, selectionReason }) => {
             </div>
             <div className="flex items-center gap-1.5">
               <Cpu size={12} className="text-blue-500" />
-              <span className="font-semibold text-[#FAFAFA] font-mono">{selectedModelVal}</span>
+              <span className="font-semibold text-primary font-mono">{selectedModelVal}</span>
             </div>
-            <div className="text-[#A1A1AA] leading-relaxed text-[11px] bg-sidebar-bg border border-border-app rounded-lg p-2.5 mt-0.5">
+            <div className="text-secondary leading-relaxed text-[11px] bg-sidebar-bg border border-border-app rounded-lg p-2.5 mt-0.5">
               {selectedReasonVal}
             </div>
           </motion.div>

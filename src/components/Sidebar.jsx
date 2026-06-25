@@ -100,8 +100,8 @@ const Sidebar = ({
     const handleGlobalShortcuts = (e) => {
       // Escape closes settings/telemetry modals
       if (e.key === 'Escape') {
-        if (settingsOpen) setSettingsOpen(false)
-        if (telemetryOpen) setTelemetryOpen(false)
+        setSettingsOpen(prev => prev ? false : prev)
+        setTelemetryOpen(prev => prev ? false : prev)
       }
       
       // CMD/CTRL+K to focus search input
@@ -123,13 +123,13 @@ const Sidebar = ({
       // CMD/CTRL+\ to toggle sidebar open state
       if ((e.ctrlKey || e.metaKey) && e.key === '\\') {
         e.preventDefault()
-        setIsCollapsed(!isCollapsed)
+        setIsCollapsed(prev => !prev)
       }
     }
 
     window.addEventListener('keydown', handleGlobalShortcuts)
     return () => window.removeEventListener('keydown', handleGlobalShortcuts)
-  }, [settingsOpen, telemetryOpen, isCollapsed, chatHistory, handleCreateNewChat, setIsCollapsed])
+  }, [handleCreateNewChat, setIsCollapsed])
 
   const handleStartRename = (id, title, e) => {
     e.stopPropagation()
@@ -471,8 +471,12 @@ const Sidebar = ({
         </div>
 
         {settingsOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+          <div 
+            onClick={() => setSettingsOpen(false)}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4"
+          >
             <div 
+              onClick={(e) => e.stopPropagation()}
               className="bg-sidebar-bg border border-border-app rounded-xl w-full max-w-lg shadow-2xl overflow-hidden animate-fade-in"
               role="dialog"
               aria-modal="true"

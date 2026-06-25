@@ -9,22 +9,13 @@ import {
   Sliders,
   Coins,
   ArrowUpRight,
-  Terminal,
-  Activity
+  Activity,
+  Info
 } from 'lucide-react'
 import Navbar from '../components/Navbar'
+import Footer from '../components/Footer'
 import { TERMINAL_EXAMPLES as EXAMPLES } from '../data/mockData'
-
-// Reusable animation variants
-const fadeInUp = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.21, 0.47, 0.32, 0.98] } }
-}
-
-const stagger = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.1 } }
-}
+import { fadeInUp, stagger } from '../utils/animations'
 
 // Terminal Simulator Component
 const TerminalSimulator = () => {
@@ -160,7 +151,7 @@ const TerminalSimulator = () => {
                 </div>
               </div>
               <div className="text-neutral-400 text-xs leading-relaxed bg-sidebar-bg border border-border-app/80 p-3 rounded-lg flex items-start gap-2">
-                <InfoIcon size={12} className="text-neutral-500 shrink-0 mt-0.5" />
+                <Info size={12} className="text-neutral-500 shrink-0 mt-0.5" />
                 <p>{current.reason}</p>
               </div>
             </motion.div>
@@ -176,13 +167,6 @@ const TerminalSimulator = () => {
   )
 }
 
-const InfoIcon = ({ size, className }) => (
-  <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" />
-    <path d="M12 16v-4" />
-    <path d="M12 8h.01" />
-  </svg>
-)
 
 const Home = () => {
   return (
@@ -247,7 +231,7 @@ const Home = () => {
             </Link>
             <a
               href="#features"
-              className="bg-neutral-900/80 backdrop-blur-sm hover:bg-neutral-800 text-[#FAFAFA] font-medium text-sm px-6 py-3 rounded-lg border border-border-app flex items-center gap-1.5 transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-neutral-700/50"
+              className="bg-card-bg backdrop-blur-sm hover:bg-sidebar-bg text-primary font-medium text-sm px-6 py-3 rounded-lg border border-border-app flex items-center gap-1.5 transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-neutral-700/50"
             >
               <span>View Architecture</span>
             </a>
@@ -282,7 +266,7 @@ const Home = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.08, duration: 0.4 }}
-                className="flex items-center gap-2 hover:text-[#FAFAFA] transition-colors duration-200"
+                className="flex items-center gap-2 hover:text-primary transition-colors duration-200"
               >
                 <span className={`h-1.5 w-1.5 rounded-full ${
                   i === 0 ? 'bg-blue-500/60' : i === 1 ? 'bg-orange-500/60' : i === 2 ? 'bg-red-500/60' : 'bg-green-500/60'
@@ -325,29 +309,29 @@ const Home = () => {
             {[
               {
                 icon: <Zap size={16} />,
-                color: 'blue',
+                iconBg: 'bg-blue-950/20 border-blue-500/10 text-[#3B82F6]',
                 title: 'Intelligent Routing',
                 desc: 'Automatically analyze code prompts and long documents to match with optimal model specifications on the fly.',
               },
               {
                 icon: <ShieldCheck size={16} />,
-                color: 'green',
+                iconBg: 'bg-green-950/20 border-green-500/10 text-[#22C55E]',
                 title: 'Explainable Decisions',
                 desc: 'Full transparency. Every decision shows model comparisons, latency measurements, and scoring logic breakdown.',
               },
               {
                 icon: <Coins size={16} />,
-                color: 'yellow',
+                iconBg: 'bg-yellow-950/20 border-yellow-500/10 text-[#F59E0B]',
                 title: 'Cost Optimization',
                 desc: 'Route simpler intent queries to fast, cost-efficient models. Save up to 80% on standard inference pricing.',
               },
-            ].map(({ icon, color, title, desc }) => (
+            ].map(({ icon, iconBg, title, desc }) => (
               <motion.div
                 key={title}
                 variants={fadeInUp}
                 className="bg-card-bg/60 backdrop-blur-md border border-border-app rounded-xl p-6 space-y-4 transition-all duration-200 hover:border-border-app/80 hover:shadow-lg hover:-translate-y-1 group"
               >
-                <div className={`p-2 rounded bg-${color}-950/20 border border-${color}-500/10 text-${color === 'yellow' ? '[#F59E0B]' : color === 'green' ? '[#22C55E]' : '[#3B82F6]'} w-9 h-9 flex items-center justify-center`}>
+                <div className={`p-2 rounded border w-9 h-9 flex items-center justify-center ${iconBg}`}>
                   {icon}
                 </div>
                 <h3 className="text-base font-semibold text-primary">{title}</h3>
@@ -383,20 +367,7 @@ const Home = () => {
         </div>
       </motion.section>
 
-      {/* ── Footer ── */}
-      <footer className="py-12 border-t border-border-app/40 bg-app-bg text-neutral-500 text-xs relative select-none">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
-            <Terminal size={14} className="text-[#3B82F6]" />
-            <span className="font-semibold text-primary">RouteMind AI Engine</span>
-            <span className="text-neutral-700">|</span>
-            <span>Edge Nodes Enabled</span>
-          </div>
-          <p className="text-neutral-600 font-mono">
-            &copy; {new Date().getFullYear()} RouteMind Proxy Corp. Production Grade.
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }

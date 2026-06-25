@@ -48,7 +48,7 @@ const NAV_ITEMS = [
   { label: 'Future Roadmap', id: 'roadmap' }
 ]
 
-const Documetation = () => {
+const Documentation = () => {
   const [activeSection, setActiveSection] = useState('overview')
   const [expandedFaq, setExpandedFaq] = useState(null)
 
@@ -120,7 +120,7 @@ const Documetation = () => {
               className={`px-3 py-1 rounded-full text-[11px] font-mono whitespace-nowrap border shrink-0 transition-colors ${
                 activeSection === item.id
                   ? 'bg-blue-600 border-blue-500 text-white'
-                  : 'bg-[#141414] border-border-app text-neutral-400'
+                  : 'bg-card-bg border-border-app text-neutral-400'
               }`}
             >
               {item.label}
@@ -606,4 +606,4 @@ const Documetation = () => {
   )
 }
 
-export default Documetation
+export default Documentation

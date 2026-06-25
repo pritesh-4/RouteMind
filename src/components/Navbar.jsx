@@ -299,7 +299,7 @@ const Navbar = () => {
             </div>
 
             <a
-              href="https://github.com/routemind"
+              href="https://github.com/pritesh-4/RouteMind"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2.5 text-secondary hover:text-primary text-[15px] font-medium py-1"
