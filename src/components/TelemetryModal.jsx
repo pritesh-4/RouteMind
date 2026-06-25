@@ -64,8 +64,7 @@ const TelemetryModal = ({ isOpen, onClose, stats }) => {
             </h4>
             <div className="space-y-2.5">
               {Object.entries(stats.models).map(([modelName, count]) => {
-                const percentage =
-                  stats.totalQueries > 0 ? (count / stats.totalQueries) * 100 : 0
+                const percentage = stats.totalQueries > 0 ? (count / stats.totalQueries) * 100 : 0
 
                 let colorClass = 'bg-blue-500'
                 if (modelName.includes('Claude')) colorClass = 'bg-orange-500'
