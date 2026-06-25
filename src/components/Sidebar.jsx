@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
 // routingStats imported on demand from localStorage where appropriate
 import { 
   MessageSquare, Plus, Settings, Sun, Moon, 
@@ -569,7 +568,6 @@ const Sidebar = ({
               </div>
               
               <div className="p-5 space-y-5 text-xs">
-                {/* Upper Telemetry Badges */}
                 <div className="grid grid-cols-3 gap-3">
                   <div className="p-3 bg-card-bg border border-border-app rounded-lg text-center">
                     <p className="text-[9px] text-neutral-500 font-mono uppercase tracking-wider mb-1">Total Routed</p>
@@ -587,14 +585,12 @@ const Sidebar = ({
                   </div>
                 </div>
 
-                {/* Model Distribution bars */}
                 <div className="space-y-3 bg-card-bg border border-border-app rounded-lg p-4">
                   <h4 className="text-neutral-400 font-semibold uppercase tracking-wider text-[10px] mb-2 font-mono">Model Utilization Distribution</h4>
                   <div className="space-y-2.5">
                     {Object.entries(stats.models).map(([modelName, count]) => {
                       const percentage = stats.totalQueries > 0 ? (count / stats.totalQueries) * 100 : 0
                       
-                      // Theme-tailored colors for progress bars
                       let colorClass = 'bg-blue-500'
                       if (modelName.includes('Claude')) colorClass = 'bg-orange-500'
                       else if (modelName.includes('Gemini')) colorClass = 'bg-red-500'
@@ -616,7 +612,6 @@ const Sidebar = ({
                   </div>
                 </div>
 
-                {/* Node Status Grid */}
                 <div className="space-y-2">
                   <h4 className="text-neutral-400 font-semibold uppercase tracking-wider text-[10px] font-mono">Edge Deployment Status</h4>
                   <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
