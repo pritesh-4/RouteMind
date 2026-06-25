@@ -1,0 +1,15 @@
+# Build output
+dist/
+build/
+
+# Dependencies
+node_modules/
+
+# Backend (Python — not Prettier's domain)
+backend/
+
+# Auto-generated
+pnpm-lock.yaml
+
+# Env files
+.env*
