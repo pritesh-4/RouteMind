@@ -1,397 +1,317 @@
-# RouteMind — AI Agent Context Document
+# RouteMind — Agent Context
 
-> **Purpose:** This document is written for AI coding agents (Copilot, Claude, Gemini, Cursor, Perplexity, etc.) assisting either team member on this codebase. It captures the current architecture, data flows, recent changes, known issues, and working conventions so any agent can get up to speed without reading every file.
->
-> **Last updated:** 2026-06-25
-
----
-
-## 1. Project Overview
-
-RouteMind is a **React + Vite** single-page app that simulates an intelligent AI model router. Users type a query (and optionally attach files), and the app selects the "best" AI model for that task — showing which model was picked, why, what it costs, and how confident the router is.
-
-**Current status:** The routing engine is fully mocked (`src/utils/mockRouter.js`). No real API calls are made to any LLM. All responses are pre-written strings in `Chat.jsx`'s `handleSendMessage`.
+> Last updated: 2026-06-25  
+> This file is the single source of truth for any AI agent or contributor onboarding to this repository. Keep it in sync with the codebase.
 
 ---
 
-## 2. Tech Stack
+## Project Overview
 
-| Layer | Choice |
+RouteMind is a **single-page React application** that demos an intelligent AI model routing platform. A user types a query in a unified chat interface; the frontend classifies intent and dispatches the request to the "best" AI model (currently mocked). The routing decision is displayed inline next to the response so users understand _why_ a particular model was chosen.
+
+**Status:** Hackathon prototype. All AI routing is client-side mock logic. No real API calls to any LLM are made.
+
+---
+
+## Repository Layout
+
+```
+RouteMind/
+├── .github/
+│   └── workflows/          # CI pipeline (lint → test → build)
+├── src/
+│   ├── main.jsx            # React entry point — mounts App inside StrictMode
+│   ├── App.jsx             # Router setup (react-router-dom), context providers
+│   ├── index.css           # Tailwind base + custom keyframes/animations
+│   ├── pages/
+│   │   ├── Chat.jsx        # PRIMARY PAGE — all chat/session state lives here
+│   │   ├── Home.jsx        # Landing page (your teammate's frontend work)
+│   │   ├── Benefits.jsx    # Benefits/features marketing page
+│   │   └── Documentation.jsx # Docs page
+│   ├── components/
+│   │   ├── Sidebar.jsx         # Chat history list, new/delete/rename chat, routing policy selector, telemetry panel
+│   │   ├── ChatMessage.jsx     # Renders user + assistant messages; inline RoutingCard; feedback buttons
+│   │   ├── ChatInput.jsx       # Auto-resizing textarea, file attachment, keyboard shortcuts
+│   │   ├── TypingIndicator.jsx # Animated loading state with step labels and model preview
+│   │   ├── RoutingCard.jsx     # Expandable card showing model, confidence, cost, reasoning
+│   │   ├── Navbar.jsx          # Top nav for landing/marketing pages; AuthComingSoonModal trigger
+│   │   ├── Footer.jsx          # Simple footer used on marketing pages
+│   │   ├── Tooltip.jsx         # Lightweight tooltip wrapper (hover-based)
+│   │   └── AuthenticationComingSoonModal.jsx  # Modal shown when auth is clicked
+│   ├── context/
+│   │   ├── ThemeContext.jsx    # Dark/light/system theme — applied to <html> via data-theme attribute
+│   │   └── ToastContext.jsx    # Global toast notification system (showToast(message, type))
+│   ├── data/
+│   │   └── mockData.js        # defaultStats object (seed for localStorage telemetry); mock model list
+│   ├── utils/
+│   │   ├── mockRouter.js      # getMockRouting(query, file, policy) — intent classification + model selection
+│   │   ├── fileHelpers.jsx    # formatFileSize(), getFileIcon() — used in ChatMessage file attachment display
+│   │   └── animations.js      # Framer Motion variant presets (currently only used by a few pages)
+│   └── test/
+│       ├── mockRouter.test.js # Vitest unit tests for getMockRouting()
+│       └── setup.js           # Vitest global setup (jsdom)
+├── index.html              # Vite entry HTML
+├── vite.config.js          # Vite + Vitest config; path alias @ → src/
+├── eslint.config.js        # ESLint flat config (react + hooks rules)
+├── package.json            # Scripts: dev, build, preview, lint, test, test:run
+├── AGENT_CONTEXT.md        # This file
+└── README.md               # Public-facing project overview
+```
+
+---
+
+## Routing & Page Structure
+
+`App.jsx` wraps everything in `ThemeProvider` and `ToastProvider`, then uses `react-router-dom` for client-side routing:
+
+| Route       | Component           | Notes                                    |
+| ----------- | ------------------- | ---------------------------------------- |
+| `/`         | `Home.jsx`          | Landing page with Navbar + Footer        |
+| `/chat`     | `Chat.jsx`          | Main product interface; no Navbar/Footer |
+| `/benefits` | `Benefits.jsx`      | Marketing page                           |
+| `/docs`     | `Documentation.jsx` | Docs page                                |
+
+---
+
+## Core State — `Chat.jsx`
+
+All session state is owned by `Chat.jsx` and passed down as props. There is no global state store (no Redux, no Zustand).
+
+### State Variables
+
+| Variable                | Type                            | Purpose                                                                      |
+| ----------------------- | ------------------------------- | ---------------------------------------------------------------------------- |
+| `activeChatId`          | `string`                        | ID of the currently visible conversation                                     |
+| `chatHistory`           | `Array<{id, title, timestamp}>` | Sidebar list of all sessions                                                 |
+| `conversationsMessages` | `Record<chatId, Message[]>`     | All messages keyed by chat ID                                                |
+| `isLoading`             | `boolean`                       | True while the simulated routing pipeline runs                               |
+| `loadingStep`           | `string`                        | Current step label shown in `TypingIndicator`                                |
+| `pendingModel`          | `string \| null`                | Model name revealed partway through loading animation                        |
+| `timeoutRefs`           | `useRef(Array)`                 | All active `setTimeout` handles; cleared on unmount and before each new send |
+
+### Message Shape
+
+```js
+{
+  id: string,           // e.g. "user-101", "assistant-102"
+  role: 'user' | 'assistant',
+  content: string,
+  time: string,         // display string, e.g. "Just now" or "2h ago"
+  files?: Array<{       // only on user messages with attachments
+    name: string,
+    size: number,
+    type: string
+  }>,
+  routing?: {           // only on assistant messages
+    model: string,
+    cost: string,       // e.g. "$0.0048"
+    confidence: string, // e.g. "99%"
+    reason: string
+  }
+}
+```
+
+### Key Handlers
+
+- **`handleSendMessage(content, attachedFiles)`** — main dispatch function. Captures `activeChatId` at send time (`chatIdAtSend`) to prevent stale-closure bugs when user switches chats mid-loading. Runs a 4-step `setTimeout` chain (~4.2s total) simulating: intent analysis → model comparison → model selection → response generation. On completion, updates `conversationsMessages`, writes telemetry to `localStorage`, and auto-renames the chat if it's the first message.
+- **`handleRegenerateResponse(messageId)`** — slices the message array back to before the target assistant message, then calls `handleSendMessage` with the preceding user message's content and files.
+- **`handleNewChat(newChat)`** — adds a new entry to `chatHistory`, sets it active, and initialises its messages array.
+- **`handleDeleteChat(id)`** — removes the chat and its messages. If all chats are deleted, creates a new blank one.
+- **`handleRenameChat(id, newTitle)`** — updates the title in `chatHistory`.
+- **`handleClearConversation()`** — empties messages for the active chat; shows a toast.
+
+---
+
+## `getMockRouting` — `src/utils/mockRouter.js`
+
+**Signature:** `getMockRouting(query: string, file: File | null, policy: string): RoutingResult`
+
+**Policies** (read from `localStorage` key `routingPolicy`, default `'balanced'`):
+
+- `'speed'` — biases toward low-latency models (Gemini Flash, GPT-4o mini)
+- `'cost'` — biases toward cheapest models (DeepSeek, Gemini Flash)
+- `'quality'` — biases toward frontier models (GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro)
+- `'balanced'` — default, weighted scoring across latency, cost, and capability
+
+**Classification logic (keyword-based, in priority order):**
+
+1. File attachment present → `Gemini 1.5 Pro` (document) or `GPT-4o` (image)
+2. `code / rust / python / javascript / debug / function / algorithm` → `Claude 3.5 Sonnet`
+3. `react / next.js / remix / vue / svelte / frontend` → `Claude 3.5 Sonnet`
+4. `research / paper / study / analysis / compare` → `Perplexity`
+5. `explain / summarize / what is / how does` → `GPT-4o`
+6. `write / essay / blog / email / draft` → `GPT-4o`
+7. `math / calculate / equation / formula` → `GPT-4o` (with reasoning note)
+8. `translate / language / spanish / french` → `GPT-4o mini`
+9. `image / draw / generate / create a picture` → `DALL-E 3` (note: no real image generation)
+10. Default fallback → `GPT-4o` (balanced)
+
+**Returns:** `{ model, cost, confidence, reason, latency }` — all strings for display.
+
+---
+
+## `Sidebar.jsx` — Detailed Notes
+
+The sidebar is the most complex component (~33KB). Key sub-sections:
+
+- **Chat list** — scrollable list of `chatHistory`, with inline rename (double-click title) and delete (hover → trash icon). Active item is highlighted with `bg-blue-950/30 text-white` (no colored side border — clean active state).
+- **Routing policy selector** — `<select>` that reads/writes `localStorage('routingPolicy')`. Emits `storage` event on change so `Chat.jsx` reads the latest value at send time.
+- **Telemetry panel** — shows `totalQueries`, `savings`, and a model breakdown pie. Reads from `localStorage('routingStats')` on mount and on a custom `telemetry-updated` window event (fired by `Chat.jsx` after each assistant response). `defaultStats` from `src/data/mockData.js` is used as the seed when no stored data exists.
+- **Theme toggle** — wired to `ThemeContext`. Cycles through `'light'`, `'dark'`, `'system'`. Applied to `<html data-theme="...">` by `ThemeContext.jsx`.
+- **`Tooltip.jsx`** — the sidebar imports from `src/components/Tooltip.jsx` (extracted to its own file). It is a simple hover wrapper; not accessible for keyboard/screen reader use yet.
+- **Mobile behaviour** — controlled by `mobileOpen` prop from `Chat.jsx`. Renders as a fixed overlay with a backdrop on screens below `md` breakpoint.
+
+---
+
+## `ChatMessage.jsx` — Detailed Notes
+
+Handles both `role: 'user'` and `role: 'assistant'` in a single component with an `isUser` branch.
+
+- **Prop contract:** accepts a single `message` object (the dual-prop API from an earlier version has been removed).
+- **`CodeBlock`** — internal sub-component. Uses `react-syntax-highlighter` (Prism / `vscDarkPlus` theme). Inline vs. block detection: `!match || !String(children).includes('\n')`.
+- **`markdownComponents`** — full set of custom renderers for `react-markdown` + `remark-gfm`: headings, paragraphs, lists, blockquotes, links (with `ExternalLink` icon), tables, and code.
+- **`SkeletonMessage`** — rendered when `role === 'assistant'` and content is empty and not streaming. Uses `animate-pulse`.
+- **Action toolbar** — appears on hover (`opacity-0 group-hover:opacity-100`). User messages: Copy + Share. Assistant messages: Copy + Regenerate + ThumbsUp + ThumbsDown + Share.
+- **`RoutingCard`** is rendered inline below the assistant message content when `message.routing` is present.
+
+---
+
+## `RoutingCard.jsx` — Detailed Notes
+
+An expandable card that displays the routing decision for an assistant message.
+
+- Takes a single `routing` prop: `{ model, cost, confidence, reason }`.
+- Collapsed state shows model badge, cost, confidence percentage.
+- Expanded state adds the `reason` text and a visual model indicator.
+- **Status:** Actively used — rendered inside `ChatMessage.jsx` for every assistant message that has a `routing` object. The component is NOT dead code; an earlier version of this codebase had it imported but hidden in `Chat.jsx` — that has since been corrected.
+
+---
+
+## `ChatInput.jsx` — Detailed Notes
+
+- Auto-resizing `<textarea>` via `useEffect` on `value`. Clamped between 56px and 200px.
+- File attachment via hidden `<input type="file">`. Multiple files supported. Accepted types: `.pdf`, `.txt`, `.md`, `.doc`, `.docx`, `.csv`, `.json`, `.png`, `.jpg`, `.jpeg`, `.webp`.
+- Attached file previews rendered above the textarea with name, size, and `getFileIcon()`.
+- **Keyboard shortcuts:** `Enter` submits; `Shift+Enter` inserts newline.
+- **Note:** Helper text at the bottom uses `text-[11px]` which is below the 12px accessibility floor. Should be changed to `text-xs` (12px).
+
+---
+
+## `TypingIndicator.jsx` — Detailed Notes
+
+Shown in the message list while `isLoading === true`.
+
+- Accepts `loadingStep` (current step label string) and `selectedModel` (null until step 3).
+- Renders animated step pills cycling through: "Analyzing Intent…" → "Comparing Models…" → "Selecting Best Model…" → "Generating Response…"
+- When `selectedModel` becomes non-null (step 3), it renders a model badge preview inside the indicator.
+
+---
+
+## Context Providers
+
+### `ThemeContext.jsx`
+
+- Provides `{ theme, setTheme }` — values: `'light'`, `'dark'`, `'system'`.
+- On mount and on every `theme` change, sets `document.documentElement.setAttribute('data-theme', resolved)` where `resolved` is `'light'` or `'dark'` (system preference resolved via `matchMedia`).
+- Used by: `Sidebar.jsx` (toggle button), `Navbar.jsx` (toggle button).
+
+### `ToastContext.jsx`
+
+- Provides `showToast(message: string, type: 'success' | 'error' | 'info')`.
+- Renders a stack of toast notifications in a fixed portal at the bottom-right.
+- Used by: `Chat.jsx`, `ChatMessage.jsx`, `ChatInput.jsx`, `Sidebar.jsx`.
+
+---
+
+## Data Layer
+
+### `src/data/mockData.js`
+
+Exports:
+
+- `defaultStats` — `{ totalQueries: 0, savings: 0, models: {} }` — used as the seed when `localStorage('routingStats')` is empty.
+- `modelList` — array of model descriptor objects used in various UI dropdowns.
+
+### `localStorage` keys used at runtime
+
+| Key             | Written by                     | Read by                 | Purpose                   |
+| --------------- | ------------------------------ | ----------------------- | ------------------------- |
+| `routingPolicy` | Sidebar policy selector        | `Chat.jsx` at send time | Active routing preference |
+| `routingStats`  | `Chat.jsx` after each response | Sidebar telemetry panel | Cumulative session stats  |
+
+---
+
+## Test Suite — `src/test/`
+
+| File                 | What it covers                                                                                                                                                              |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mockRouter.test.js` | `getMockRouting()` — verifies correct model selection for code queries, research queries, file attachments, policy overrides (speed/cost/quality), and the default fallback |
+| `setup.js`           | `@testing-library/jest-dom` import for extended matchers                                                                                                                    |
+
+Run tests: `pnpm test:run` (single pass) or `pnpm test` (watch mode).  
+CI runs `pnpm test:run` in the `test` job after `lint`.
+
+---
+
+## CI Pipeline — `.github/workflows/`
+
+Three jobs, sequential:
+
+1. **lint** — `pnpm lint` (ESLint flat config)
+2. **test** — `pnpm test:run` (Vitest)
+3. **build** — `pnpm build` (Vite production build)
+
+---
+
+## Known Issues & Pending Work
+
+| Area                | Issue                                                                                                                           | Priority |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `ChatInput.jsx`     | `text-[11px]` on helper text — below 12px a11y floor                                                                            | Low      |
+| `ChatMessage.jsx`   | `RoutingCard` import still present even though the component renders correctly — no action needed, just noting it's intentional | —        |
+| `Sidebar.jsx`       | `Tooltip.jsx` is not keyboard/screen-reader accessible                                                                          | Low      |
+| `Chat.jsx`          | `handleNewChat` in header button is an inline lambda; should call the same `handleNewChat` function used by Sidebar             | Low      |
+| All pages           | No real API integration — all routing is mock                                                                                   | Future   |
+| Auth flow           | `AuthenticationComingSoonModal` is a placeholder; no auth system exists                                                         | Future   |
+| `Documentation.jsx` | Content is static/hardcoded, not generated from code                                                                            | Future   |
+
+---
+
+## Dependency Notes
+
+Key runtime dependencies (from `package.json`):
+
+| Package                         | Purpose                                                         |
+| ------------------------------- | --------------------------------------------------------------- |
+| `react` + `react-dom`           | UI framework                                                    |
+| `react-router-dom`              | Client-side routing                                             |
+| `react-markdown` + `remark-gfm` | Markdown rendering in assistant messages                        |
+| `react-syntax-highlighter`      | Code block syntax highlighting (Prism / vscDarkPlus)            |
+| `lucide-react`                  | Icon set used throughout                                        |
+| `framer-motion`                 | Animation — used in landing/benefits pages and some transitions |
+| `tailwindcss` (v4)              | Styling — utility classes + custom design tokens in `index.css` |
+
+Key dev dependencies:
+| Package | Purpose |
 |---|---|
-| Framework | React 19 + Vite 8 |
-| Routing | React Router v7 |
-| Styling | Tailwind CSS v4 |
-| Animation | Framer Motion v12 |
-| Icons | Lucide React v1 |
-| Markdown | react-markdown v10 + remark-gfm v4 |
-| Syntax Highlighting | react-syntax-highlighter v16 |
-| State | `useState` / `useRef` (no Redux/Zustand) |
-| Persistence | `localStorage` (routing policy + telemetry stats + theme) |
-| Testing | Vitest v4 + React Testing Library v16 |
-| CI | GitHub Actions (lint → test → build) |
+| `vite` | Build tool + dev server |
+| `vitest` | Unit test runner |
+| `@testing-library/jest-dom` | Extended DOM matchers for tests |
+| `eslint` + `eslint-plugin-react-hooks` | Linting |
 
 ---
 
-## 3. Directory Structure
-
-```
-src/
-├── components/
-│   ├── AuthenticationComingSoonModal.jsx  # "Auth coming soon" modal (focus trap, future features list, light mode safe)
-│   ├── ChatInput.jsx       # Text input + file attachment UI (drag/drop, paste, file validation)
-│   ├── ChatMessage.jsx     # Renders user & assistant messages (markdown, code blocks, routing info inline)
-│   ├── Footer.jsx          # Shared footer — import this, do NOT inline footer markup in pages
-│   ├── Navbar.jsx          # Top navigation: scroll blur, theme cycle, mobile menu, auth modal trigger
-│   ├── RoutingCard.jsx     # ⚠️ ORPHANED — not imported anywhere. Rich routing decision card (321 lines). See Known Issues #1.
-│   ├── Sidebar.jsx         # Nav, chat history, settings modal, telemetry modal, theme cycle, keyboard shortcuts
-│   ├── Tooltip.jsx         # Tooltip hover helper (collapsed sidebar only). ⚠️ Has light-mode bug, see Known Issues #5.
-│   └── TypingIndicator.jsx # Animated multi-stage "processing" indicator with model candidate rotation
-├── context/
-│   ├── ThemeContext.jsx     # Light/dark/system theme provider — persists to localStorage, applies `dark` class on <html>
-│   └── ToastContext.jsx     # Global toast notification system (success/error/info, auto-dismiss, manual close)
-├── pages/
-│   ├── Benefits.jsx        # Features/benefits marketing page (uses shared Footer + shared animations)
-│   ├── Chat.jsx            # Main chat page — holds ALL app state (messages, history, routing, loading)
-│   ├── Documentation.jsx   # Documentation page. ⚠️ Has local animation variants + inline footer (convention violations). See Known Issues #2, #3.
-│   └── Home.jsx            # Landing page with terminal simulator demo
-├── utils/
-│   ├── animations.js       # Shared Framer Motion variants (fadeInUp, stagger) — ALWAYS import from here
-│   ├── fileHelpers.jsx     # Centralized file size formatting and icon matching helpers
-│   └── mockRouter.js       # Routing logic (keyword matching → model selection + policy overrides)
-├── data/
-│   └── mockData.js         # Static data & defaultStats. ⚠️ Contains dead exports, see Known Issues #4.
-├── test/
-│   ├── setup.js            # Vitest setup (imports @testing-library/jest-dom)
-│   └── mockRouter.test.js  # Unit tests for getMockRouting (7 tests)
-├── index.css               # Global CSS: Tailwind v4 config, CSS custom properties, theme variables, keyframes
-├── main.jsx                # Entry point: BrowserRouter > ThemeProvider > ToastProvider > App
-└── App.jsx                 # Route definitions: /, /chat, /benefits, /docs, * (404 NotFound)
-```
-
----
-
-## 4. State Architecture
-
-All meaningful state lives in `src/pages/Chat.jsx`. There is no global state manager.
-
-```
-Chat.jsx (top-level state owner)
-├── chatHistory[]               — list of chat sessions {id, title, timestamp}
-├── conversationsMessages{}     — map of chatId → message[]
-├── activeChatId                — which chat is open
-├── isLoading                   — controls input disable + TypingIndicator visibility
-├── loadingStep                 — string shown in TypingIndicator during routing sim
-├── pendingModel                — model name shown during the fake "routing" delay
-└── timeoutRefs (useRef)        — holds setTimeout IDs so they can be cancelled on unmount
-```
-
-**Derived state** (computed from the above, not stored):
-- `currentMessages` = `conversationsMessages[activeChatId] || []`
-
-**localStorage keys (cross-component sync):**
-| Key | Type | Description |
-|---|---|---|
-| `routingPolicy` | `string` | `'balanced'` \| `'cost'` \| `'accuracy'` — set in Sidebar settings modal |
-| `routingStats` | `JSON string` | `{ totalQueries, savings, models: {} }` — updated by Chat.jsx after each message |
-| `theme` | `string` | `'light'` \| `'dark'` \| `'system'` — set by ThemeContext, read on init |
-
-**Custom events (for localStorage → React sync):**
-- `telemetry-updated` — dispatched by Chat.jsx after updating `routingStats`; Sidebar listens and re-reads localStorage to update its `stats` state
-- `policy-updated` — dispatched by Sidebar when routing policy changes. **⚠️ Currently unconsumed** — no component listens for this event yet. See Known Issues #7.
-
----
-
-## 5. Core Data Flow — Sending a Message
-
-```
-User types → handleSendMessage(content, files[]) in Chat.jsx
-    │
-    ├─ 1. Creates userMsg object: { id, role:'user', content, time, files: [{name,size,type}] }
-    │      Files are stored as metadata only (name/size/type) — NOT as File objects (not serialisable)
-    │
-    ├─ 2. Reads routingPolicy from localStorage
-    │
-    ├─ 3. Calls getMockRouting(query, file, policy) → { model, cost, confidence, reason, latency }
-    │
-    ├─ 4. Starts 4-step timeout chain (simulates routing latency):
-    │      t1 (1000ms) → setLoadingStep(step2)
-    │      t2 (1000ms) → setLoadingStep(step3), setPendingModel(model)
-    │      t3 (1000ms) → setLoadingStep('Generating Response...')
-    │      t4 (1200ms) → appends assistantMsg to conversationsMessages
-    │                   → updates routingStats in localStorage
-    │                   → dispatches 'telemetry-updated' event
-    │                   → auto-renames chat if it's first message
-    │
-    └─ All timeout IDs pushed to timeoutRefs.current for cleanup
-```
-
-### Regenerate Response Flow
-
-```
-User clicks regenerate → handleRegenerateResponse(messageId) in Chat.jsx
-    │
-    ├─ 1. Finds the assistant message by ID in current conversation
-    ├─ 2. Walks backwards to find the preceding user message (prompt)
-    ├─ 3. Truncates conversation to remove the old assistant message
-    └─ 4. Re-calls handleSendMessage(prompt.content, prompt.files)
-```
-
-### Clear Conversation Flow
-
-```
-User clicks clear → handleClearConversation() in Chat.jsx
-    │
-    ├─ 1. Sets active chat's messages to empty array
-    └─ 2. Shows toast: "Conversation cleared."
-```
-
----
-
-## 6. Routing Logic — `src/utils/mockRouter.js`
-
-The `getMockRouting(query, file, policy)` function uses keyword matching — **not** a real ML classifier.
-
-**Policy hierarchy (evaluated in order):**
-
-1. **`accuracy`** — Forces premium models regardless of query type:
-   - Code/debug keywords → `Claude 3.5 Sonnet`
-   - Search/news keywords → `Perplexity Sonar Pro`
-   - Image files → `GPT-4o`
-   - Documents → `Gemini 1.5 Pro`
-   - Default → `GPT-4o`
-
-2. **`cost`** — Forces cheap models:
-   - Code → `DeepSeek Coder`
-   - Search → `Perplexity Sonar`
-   - Image/doc files → `Gemini 1.5 Flash`
-   - Default → `GPT-4o-mini`
-
-3. **`balanced`** (default) — Heuristic matching:
-   - Image files → `GPT-4o` (vision)
-   - PDF/DOCX files → `Gemini 1.5 Pro` (long context)
-   - Code/debug → `Claude 3.5 Sonnet`
-   - Search/research → `Perplexity Sonar`
-   - Documents/summarize → `Gemini 1.5 Pro`
-   - Math/logic → `o3-mini`
-   - General → `GPT-4o` (fallback)
-
-**To replace with a real router:** swap the `getMockRouting` export with an async function that hits your backend and return the same `{ model, cost, confidence, reason, latency }` shape. Chat.jsx consumes this synchronously right now — you will need to add `await` and make `handleSendMessage` async.
-
----
-
-## 7. File Attachment System
-
-- `ChatInput.jsx` manages `selectedFiles[]` state locally
-- Files can be added via: click (hidden `<input type="file">`), drag-and-drop on the form, or paste from clipboard
-- Supported extensions: `pdf, txt, md, doc, docx, png, jpg, jpeg, webp, js, jsx, ts, tsx, py, cpp, java, json`
-- Max file size: 20 MB per file
-- Duplicate detection by `name + size`
-- On submit: `onSubmit(content, selectedFiles)` passes raw `File[]` up to `Chat.jsx`
-- In `Chat.jsx`: files are serialised to `{ name, size, type }` metadata before storing in state (raw `File` objects cannot be stored in React state safely across re-renders)
-- `ChatMessage.jsx` renders attached files as a stack inside the user bubble using the stored metadata
-
----
-
-## 8. Toast Notification System
-
-Located in `src/context/ToastContext.jsx`.
-
-- `ToastProvider` wraps the whole app in `main.jsx` (inside `ThemeProvider`)
-- Use anywhere with: `const { showToast } = useToast()`
-- API: `showToast(message: string, type: 'success' | 'error' | 'info', duration?: number)`
-- Default duration: 3000ms
-- Toasts auto-dismiss; also have a manual `X` close button
-- Positioned fixed bottom-right
-
----
-
-## 9. Theme System
-
-- `ThemeContext.jsx` manages `'light' | 'dark' | 'system'` mode
-- Applied as a `dark` class on `<html>` (Tailwind `dark:` prefix strategy)
-- Persisted to `localStorage` under the key `theme`
-- Exposes `resolvedTheme` ('light' | 'dark') for components that need to know the actual active mode
-- Smooth transitions via temporary `theme-transition` class on `<html>` (200ms ease, removed after 300ms)
-- **Theme switcher UX:** Single cycle-on-click button used in **two places**:
-  - **Sidebar footer** — cycles `dark → light → system → dark`. Icon updates (Moon / Sun / Laptop). `aria-label` reflects next theme.
-  - **Navbar** (desktop and mobile) — same cycle behavior.
-- Tailwind classes use `dark:` prefix for dark-mode variants throughout all components
-
----
-
-## 10. Telemetry Dashboard
-
-- Clicking the "TELEMETRY" badge at the bottom of the Sidebar opens a modal
-- Shows: total queries routed, estimated cost savings, per-model utilisation bars, edge node status
-- Data source: `routingStats` in `localStorage`, synced via the `telemetry-updated` custom event
-- **All data is simulated** — the savings calculation is a hardcoded formula in Chat.jsx, not real API billing data
-
----
-
-## 11. Keyboard Shortcuts
-
-| Shortcut | Action |
-|---|---|
-| `Ctrl/Cmd + N` | New conversation |
-| `Ctrl/Cmd + K` | Focus sidebar search |
-| `Ctrl/Cmd + \` | Toggle sidebar collapse |
-| `Escape` | Close settings or telemetry modal |
-
-Registered globally in `Sidebar.jsx` via `useEffect` + `window.addEventListener('keydown', ...)`. Uses functional state updates to avoid stale closures.
-
----
-
-## 12. Navbar & Authentication Modal
-
-### Navbar (`src/components/Navbar.jsx`)
-
-- **Scroll detection:** Adds backdrop blur + stronger border + shadow when `window.scrollY > 10`
-- **Desktop:** Logo, nav links (Features, Benefits, Documentation), GitHub link, theme cycle button, Sign In button, "Get Started" CTA
-- **Mobile:** Hamburger menu → full-width dropdown with nav links, theme cycle button, GitHub link, Sign In, Get Started
-- **Auth trigger:** "Sign In" button opens `AuthenticationComingSoonModal`
-
-### AuthenticationComingSoonModal (`src/components/AuthenticationComingSoonModal.jsx`)
-
-- Framer Motion animated modal with backdrop
-- **Focus trap** implemented: Tab cycles within modal, Escape closes
-- Shows planned features list: Cloud Chat History, Personalized Routing Preferences, Saved Conversations, Cross-Device Sync, Team Collaboration, Usage Analytics
-- Backdrop click dismisses
-- Links to `/docs#roadmap`
-
----
-
-## 13. Component Import Map
-
-Quick reference showing which components are imported where. Useful for identifying orphaned code.
-
-| Component | Imported by |
-|---|---|
-| `App.jsx` | `main.jsx` |
-| `Navbar.jsx` | `Home.jsx`, `Benefits.jsx`, `Documentation.jsx` |
-| `Footer.jsx` | `Home.jsx`, `Benefits.jsx` (**NOT** `Documentation.jsx` — see Known Issues #3) |
-| `Sidebar.jsx` | `Chat.jsx` |
-| `ChatInput.jsx` | `Chat.jsx` |
-| `ChatMessage.jsx` | `Chat.jsx` |
-| `TypingIndicator.jsx` | `Chat.jsx` |
-| `Tooltip.jsx` | `Sidebar.jsx` |
-| `AuthenticationComingSoonModal.jsx` | `Navbar.jsx` |
-| `RoutingCard.jsx` | **⚠️ NOWHERE — orphaned dead code** |
-| `ThemeContext.jsx` | `main.jsx`, `Sidebar.jsx`, `Navbar.jsx` |
-| `ToastContext.jsx` | `main.jsx`, `Chat.jsx`, `ChatInput.jsx`, `ChatMessage.jsx` |
-| `mockRouter.js` | `Chat.jsx`, `mockRouter.test.js` |
-| `animations.js` | `Home.jsx`, `Benefits.jsx` (**NOT** `Documentation.jsx` — see Known Issues #2) |
-| `fileHelpers.jsx` | `ChatInput.jsx`, `ChatMessage.jsx` |
-| `mockData.js` | `Home.jsx`, `Chat.jsx`, `Sidebar.jsx`, `TypingIndicator.jsx` |
-
----
-
-## 14. Known Issues & TODOs
-
-| # | File(s) | Issue | Severity |
-|---|---|---|---|
-| 8 | `Chat.jsx` | **Hardcoded response strings** — all assistant replies are static strings. Needs real API integration to become functional. *(Note: streaming UI was wired up in June 2026).* | 🔵 Planned |
-
-### Previously Resolved Issues (kept for history)
-
-| # | Issue | Resolution |
-|---|---|---|
-| 1 | `RoutingCard.jsx` | **Orphaned dead code** — Integrated into `ChatMessage.jsx` as a richer, dynamic routing decision card. |
-| 2 | `Documentation.jsx` | **Re-defines `fadeInUp` and `stagger` locally** — Replaced with imports from the shared `animations.js`. |
-| 3 | `Documentation.jsx` | **Hardcodes its own footer markup** — Replaced with the shared `<Footer />` component. |
-| 4 | `mockData.js` | **Dead exports that are never imported** — Cleaned unused exports from the file. |
-| 5 | `Tooltip.jsx` | **Hardcodes `bg-[#181818]`** — Made theme-aware using `bg-card-bg`. |
-| 6 | `Navbar.jsx` / `Sidebar.jsx` | **Logo container uses hardcoded dark colors** — Replaced with theme-aware background/border wrapper and adapted SVGs. |
-| 7 | `Sidebar.jsx` / `mockRouter.js` | **`policy-updated` event is dispatched but never consumed** — Added listener in `Chat.jsx` to update policy state reactively. |
-| 9 | `main.jsx` | **No `React.StrictMode` wrapping** — Wrapped application in React `StrictMode`. |
-| A | Stale `currentMessages` closure in auto-rename logic | Fixed — uses functional `setChatHistory` callback |
-| B | `defaultStats` object duplicated in Chat.jsx and Sidebar.jsx | Fixed — extracted to `src/data/mockData.js` |
-| C | Dual prop API on `ChatMessage.jsx` | Fixed — uses only `message={}` prop |
-| D | `formatFileSize` / `getFileIcon` duplicated in ChatInput + ChatMessage | Fixed — moved to `src/utils/fileHelpers.jsx` |
-| E | `Tooltip` defined inside Sidebar.jsx | Fixed — moved to `src/components/Tooltip.jsx` |
-| F | `RoutingCard` import with `aria-hidden` in Chat.jsx | Fixed — import removed (but file still exists, see #1) |
-| G | `text-[11px]` below 12px accessibility floor in ChatInput | Fixed — uses `text-xs` |
-| H | Theme dropdown complexity in Sidebar | Fixed — replaced with single cycle-on-click button |
-| I | `Documetation.jsx` typo in filename | Fixed — renamed to `Documentation.jsx` |
-
----
-
-## 15. Working Conventions
-
-### Code Organization
-- **No real API calls exist yet.** Every model response is a hardcoded string in `Chat.jsx`'s `handleSendMessage`.
-- **File objects are not persisted.** Only metadata (`name`, `size`, `type`) is stored in message state. If you add server-side file processing, upload the raw `File` before serialising.
-- **State lives in `Chat.jsx`** — there is no global state manager. Do not introduce Redux/Zustand unless explicitly discussed.
-- **localStorage is the cross-component bus** — `routingPolicy`, `routingStats`, and `theme` are the only shared state outside React. Use custom events (`dispatchEvent`) to notify React components of changes.
-
-### Import Conventions — DO NOT VIOLATE
-- **Shared animations:** Import `fadeInUp` and `stagger` from `src/utils/animations.js` — **never redefine locally** in page components.
-- **Shared footer:** Import `Footer` from `src/components/Footer.jsx` — **never inline footer markup**.
-- **Shared file helpers:** Import `formatFileSize` and `getFileIcon` from `src/utils/fileHelpers.jsx` — **never duplicate**.
-
-### Styling Conventions
-- **Use CSS custom properties for theme-aware colors:** `bg-app-bg`, `bg-sidebar-bg`, `bg-card-bg`, `border-border-app`, `text-primary`, `text-secondary`, `text-accent-blue`. These are defined in `src/index.css` with light/dark variants.
-- **Never hardcode hex values** for colors that should change between themes (e.g., don't use `bg-[#181818]` for backgrounds — use `bg-card-bg`).
-- **Use `dark:` prefix** for any Tailwind class that needs dark-mode variants.
-- **Static class names only** — never construct dynamic Tailwind class names like `` bg-${color}-500 `` (Tailwind purges them in production). Use static mapping objects instead.
-
-### Code Quality
-- **`timeoutRefs.current`** must be cleared at the start of every `handleSendMessage` call (already done) to prevent stale callbacks from previous sends running out of order.
-- **Commit messages are informal** — use them as rough labels, not precise changelogs.
-- **Test files** live in `src/test/` — check `vite.config.js` for the vitest pattern.
-
----
-
-## 16. Next Development Milestones
-
-Prioritized list of what to work on next. Agents should consult this before starting work.
-
-### Phase 1 — Cleanup & Polish (No new features)
-1. **Delete or integrate `RoutingCard.jsx`** — It's 321 lines of dead code. Either wire it into `ChatMessage.jsx` as a richer routing explainer, or delete the file entirely.
-2. **Fix `Documentation.jsx` convention violations** — Import shared `animations.js` and shared `Footer.jsx`. Note the animation variant key difference (`initial/animate` vs `hidden/show`) needs reconciling.
-3. **Clean dead `mockData.js` exports** — Remove unused `chatHistory`, `messages`, `routingInfo`, `routingStages`, `terminalQueries`, `suggestedPrompts`, `routingStats`.
-4. **Fix light-mode bugs** — `Tooltip.jsx` hardcoded background, `Navbar.jsx` logo dark colors.
-
-### Phase 2 — Feature Wiring
-5. **Wire up `policy-updated` event** — Add listener in `Chat.jsx` so changing routing policy mid-session affects the next message immediately.
-6. **Enable streaming UI** — `ChatMessage.jsx` already accepts `isStreaming` prop. Set it to `true` during the response generation phase.
-
-### Phase 3 — Real Integration
-7. **Real API integration** — Replace `getMockRouting` with async backend calls. Make `handleSendMessage` async. Return the same `{ model, cost, confidence, reason, latency }` shape.
-8. **Authentication** — Implement real auth flow (currently just the "coming soon" modal).
-9. **Chat persistence** — Save conversations to backend or structured localStorage.
-10. **More tests** — Only `mockRouter.test.js` exists. Add component tests for `ChatInput`, `ChatMessage`, `Sidebar`.
-
----
-
-## 17. CI Pipeline
-
-Every push and pull request to `main` runs three checks in order:
-
-1. **Lint** — `pnpm lint` (ESLint with react-hooks and react-refresh rules)
-2. **Test** — `pnpm test:run` (Vitest unit tests, non-watch mode)
-3. **Build** — `pnpm build` (Vite production build — catches bad imports and Tailwind purge issues)
-
-CI config: `.github/workflows/ci.yml` — uses pnpm v9, Node 20, with pnpm store caching.
-
----
-
-## 18. Production-Readiness Audit History (June 2026)
-
-A complete frontend production-readiness audit was conducted previously. The following improvements and fixes were successfully implemented:
-
-### 🔴 Critical Production-Breaking Bugs Fixed
-- **Tailwind Purge Mitigation**: Dynamic class names like `` bg-${color}-950/20 `` in `Home.jsx` (feature cards) and `Benefits.jsx` (scenario cards) were replaced with static CSS mapping maps.
-- **Ghost Chat on Delete-All**: Fixed edge-case in `Chat.jsx` where deleting all conversations left the user in a broken active state. Now auto-initializes a fresh workspace.
-
-### 🟡 High-Priority Improvements
-- **SEO & Metadata**: Added meta descriptions, theme-color tags, and corrected the `<title>` in `index.html`.
-- **Light Mode Aesthetics**: Resolved several dark-mode-only hardcoded colors in `TypingIndicator.jsx`, `RoutingCard.jsx`, `ChatInput.jsx`, `Benefits.jsx`, and `Chat.jsx`.
-- **Keyboard Shortcuts & Modal Closures**: Refactored global shortcut listener in `Sidebar.jsx` to use functional state updates. Added backdrop click dismiss to Settings and Telemetry modals.
-- **Navbar Integration**: Fixed broken GitHub URL in mobile navigation menu.
-- **Typo Corrections**: Renamed `Documetation.jsx` to `Documentation.jsx`.
-
-### 🟢 Refactoring & DRYness
-- **Shared Footer**: Extracted footer into reusable `Footer.jsx` (note: `Documentation.jsx` was missed — see Known Issues #3).
-- **Shared Animation System**: Consolidated Framer Motion variants into `src/utils/animations.js` (note: `Documentation.jsx` was missed — see Known Issues #2).
-- **404 Route**: Added proper `NotFound` component in `App.jsx`.
-- **Theme Switcher UX**: Replaced theme dropdown with single cycle button.
+## Design Tokens (index.css)
+
+Custom Tailwind tokens defined in `src/index.css` under `@theme`:
+
+| Token               | Usage                             |
+| ------------------- | --------------------------------- |
+| `bg-app-bg`         | Page background (dark: `#0E0E0E`) |
+| `bg-card-bg`        | Card/input surfaces               |
+| `bg-sidebar-bg`     | Sidebar background                |
+| `border-border-app` | All borders                       |
+| `text-primary`      | Primary text                      |
+| `text-secondary`    | Muted/secondary text              |
+
+Custom animation classes: `animate-slide-up-fade`, `animate-slide-in-right`, `stagger-1` through `stagger-4` — all defined as `@keyframes` in `index.css`.

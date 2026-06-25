@@ -48,4 +48,4 @@ export const defaultStats = {
     'Gemini 1.5 Flash': 1,
     'DeepSeek Coder': 1
   }
-};
+};
