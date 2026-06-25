@@ -1,15 +1,83 @@
 # RouteMind — Agent Context
 
-> Last updated: 2026-06-25  
+> Last updated: 2026-06-25
 > This file is the single source of truth for any AI agent or contributor onboarding to this repository. Keep it in sync with the codebase.
 
 ---
 
 ## Project Overview
 
-RouteMind is a **single-page React application** that demos an intelligent AI model routing platform. A user types a query in a unified chat interface; the frontend classifies intent and dispatches the request to the "best" AI model (currently mocked). The routing decision is displayed inline next to the response so users understand _why_ a particular model was chosen.
+RouteMind is an **intelligent AI model routing platform** with a unified chat interface. A user types a query; a routing engine analyses the prompt and dispatches it to the most suitable AI model automatically, surfacing an explainability panel that tells the user which model was chosen and why.
 
-**Status:** Hackathon prototype. All AI routing is client-side mock logic. No real API calls to any LLM are made.
+**Current status:** Hackathon prototype.
+- **Frontend** — React SPA, fully functional UI. All routing is client-side mock logic (`src/utils/mockRouter.js`). No real LLM API calls are made.
+- **Backend** — FastAPI scaffold committed (`backend/`). Routes and classifier logic are **not yet implemented** — only `/` and `/health` exist. This is the active development area.
+- **Deployment** — Frontend deployed to Vercel (`vercel.json` present). Backend not yet deployed.
+
+---
+
+## Architecture Intent (From Pitch Docs)
+
+This section describes the **planned real architecture** the mock currently approximates. Use this when building out the backend.
+
+### Request Lifecycle (target)
+
+1. User submits prompt via React frontend
+2. `POST /route` hits the FastAPI backend
+3. Feature extraction runs synchronously on the prompt text
+4. Classifier inference (fine-tuned DistilBERT-class model) produces a task-class probability distribution
+5. Routing engine queries the model scoring table; selects winning provider + model via weighted score (cost × latency × quality benchmark)
+6. API call dispatched to selected provider endpoint (OpenAI / Anthropic / Google / etc.)
+7. Response streams back through backend → frontend via **SSE**
+8. Routing decision metadata written to **Supabase**: model used, confidence score, task class, cost estimate
+9. Frontend renders response + explainability panel side by side
+
+### Classifier Design
+
+- **Model type:** Fine-tuned lightweight transformer (DistilBERT-class). NOT an LLM — must run in under 20ms on CPU.
+- **Task categories:** `code`, `writing`, `long-document`, `research`, `general-qa`
+- **Features extracted per prompt:**
+  - Lexical: domain vocabulary, keyword density for code tokens, citation patterns
+  - Structural: prompt length, presence of code blocks, file references, URLs
+  - Contextual: prior turn task type in multi-turn conversations
+- **Confidence threshold:** ~0.7. Below threshold → fallback to default general-purpose model.
+- **Compound prompts:** When no single class clears threshold (e.g. code+writing), route to a model that ranks well on both dimensions. Multi-step decomposition is roadmap, not v1.
+
+### Routing Table
+
+Each task category maps to a ranked list of models with:
+- `cost_per_token` (from public provider pricing)
+- `avg_latency_ms`
+- `quality_score` (SWE-bench for code, MT-Bench for general tasks)
+
+A **weighted scoring function** selects the winner. Weights are user-adjustable via a preference slider (speed vs quality vs cost) — maps to the `routingPolicy` concept already in the frontend.
+
+### Provider Adapter Layer
+
+Each provider (OpenAI, Anthropic, Google, etc.) has a thin adapter that normalises their streaming API into a common delta format:
+```
+{ token: string, done: boolean, metadata: object }
+```
+Adding a new provider = write one adapter + add models to routing table. No other changes needed.
+
+### Failure Handling
+
+- **Primary model fails (5xx / timeout after 8s):** retry with second-ranked model in same category. Frontend shows "switching model" indicator.
+- **All models in category fail:** fall back to default general-purpose model with error note in explainability panel.
+- **Provider health:** lightweight ping every 60s, cached. Avoid routing to known-down provider.
+- **Rate limits:** track `x-ratelimit-remaining-requests` headers; soft circuit-breaker at 10% of limit.
+
+### Data Storage (Supabase)
+
+Stores **routing decisions only** — not prompt content:
+- `prompt_hash`, `task_class`, `model_selected`, `confidence_score`, `latency_ms`, `cost_estimate_usd`, `user_feedback`
+- Real-time subscriptions used to push live cost/usage analytics to dashboard without polling.
+
+### Security
+
+- Provider API keys: environment variables on backend — never in the frontend bundle.
+- Frontend requests authenticated via Supabase JWT; backend validates token before any provider call.
+- Production target: secrets manager (AWS Secrets Manager / HashiCorp Vault), per-user BYOK support.
 
 ---
 
@@ -18,51 +86,97 @@ RouteMind is a **single-page React application** that demos an intelligent AI mo
 ```
 RouteMind/
 ├── .github/
-│   └── workflows/          # CI pipeline (lint → test → build)
+│   └── workflows/              # CI pipeline (lint → test → build)
+├── backend/                    # FastAPI backend (scaffold — in progress)
+│   ├── app/
+│   │   ├── __init__.py
+│   │   └── main.py             # FastAPI app entry: CORS config, / and /health routes only
+│   ├── requirements.txt        # Python deps: fastapi, uvicorn, pydantic, python-dotenv
+│   └── .gitignore
 ├── src/
-│   ├── main.jsx            # React entry point — mounts App inside StrictMode
-│   ├── App.jsx             # Router setup (react-router-dom), context providers
-│   ├── index.css           # Tailwind base + custom keyframes/animations
+│   ├── main.jsx                # React entry point — mounts App inside StrictMode
+│   ├── App.jsx                 # Router setup (react-router-dom), context providers
+│   ├── index.css               # Tailwind base + custom keyframes/animations
 │   ├── pages/
-│   │   ├── Chat.jsx        # PRIMARY PAGE — all chat/session state lives here
-│   │   ├── Home.jsx        # Landing page (your teammate's frontend work)
-│   │   ├── Benefits.jsx    # Benefits/features marketing page
-│   │   └── Documentation.jsx # Docs page
+│   │   ├── Chat.jsx            # PRIMARY PAGE — all chat/session state lives here
+│   │   ├── Home.jsx            # Landing page (teammate's frontend work)
+│   │   ├── Benefits.jsx        # Benefits/features marketing page
+│   │   └── Documentation.jsx  # Docs page
 │   ├── components/
-│   │   ├── Sidebar.jsx         # Chat history list, new/delete/rename chat, routing policy selector, telemetry panel
+│   │   ├── Sidebar.jsx         # Chat history, rename/delete, routing policy, telemetry panel
 │   │   ├── ChatMessage.jsx     # Renders user + assistant messages; inline RoutingCard; feedback buttons
 │   │   ├── ChatInput.jsx       # Auto-resizing textarea, file attachment, keyboard shortcuts
 │   │   ├── TypingIndicator.jsx # Animated loading state with step labels and model preview
-│   │   ├── RoutingCard.jsx     # Expandable card showing model, confidence, cost, reasoning
-│   │   ├── Navbar.jsx          # Top nav for landing/marketing pages; AuthComingSoonModal trigger
-│   │   ├── Footer.jsx          # Simple footer used on marketing pages
+│   │   ├── RoutingCard.jsx     # Expandable card: model, confidence, cost, reasoning
+│   │   ├── Navbar.jsx          # Top nav for marketing pages; AuthComingSoonModal trigger
+│   │   ├── Footer.jsx          # Simple footer for marketing pages
 │   │   ├── Tooltip.jsx         # Lightweight tooltip wrapper (hover-based)
-│   │   └── AuthenticationComingSoonModal.jsx  # Modal shown when auth is clicked
+│   │   └── AuthenticationComingSoonModal.jsx
 │   ├── context/
-│   │   ├── ThemeContext.jsx    # Dark/light/system theme — applied to <html> via data-theme attribute
-│   │   └── ToastContext.jsx    # Global toast notification system (showToast(message, type))
+│   │   ├── ThemeContext.jsx    # Dark/light/system — applied to <html data-theme="...">
+│   │   └── ToastContext.jsx    # Global toast system: showToast(message, type)
 │   ├── data/
-│   │   └── mockData.js        # defaultStats object (seed for localStorage telemetry); mock model list
+│   │   └── mockData.js        # defaultStats seed for localStorage telemetry; mock model list
 │   ├── utils/
-│   │   ├── mockRouter.js      # getMockRouting(query, file, policy) — intent classification + model selection
-│   │   ├── fileHelpers.jsx    # formatFileSize(), getFileIcon() — used in ChatMessage file attachment display
-│   │   └── animations.js      # Framer Motion variant presets (currently only used by a few pages)
+│   │   ├── mockRouter.js      # getMockRouting(query, file, policy) — keyword-based mock classifier
+│   │   ├── fileHelpers.jsx    # formatFileSize(), getFileIcon()
+│   │   └── animations.js      # Framer Motion variant presets
 │   └── test/
 │       ├── mockRouter.test.js # Vitest unit tests for getMockRouting()
 │       └── setup.js           # Vitest global setup (jsdom)
-├── index.html              # Vite entry HTML
-├── vite.config.js          # Vite + Vitest config; path alias @ → src/
-├── eslint.config.js        # ESLint flat config (react + hooks rules)
-├── package.json            # Scripts: dev, build, preview, lint, test, test:run
-├── AGENT_CONTEXT.md        # This file
-└── README.md               # Public-facing project overview
+├── index.html                 # Vite entry HTML
+├── vercel.json                # Vercel deployment config (rewrites for SPA routing)
+├── vite.config.js             # Vite + Vitest config; path alias @ → src/
+├── eslint.config.js           # ESLint flat config (react + hooks rules)
+├── package.json               # Scripts: dev, build, preview, lint, test, test:run
+├── AGENT_CONTEXT.md           # This file
+└── README.md                  # Public-facing project overview
 ```
 
 ---
 
-## Routing & Page Structure
+## Backend — Current State (`backend/`)
 
-`App.jsx` wraps everything in `ThemeProvider` and `ToastProvider`, then uses `react-router-dom` for client-side routing:
+The backend is a **FastAPI scaffold** committed in the `df51ee7` commit. It is intentionally minimal — the structure is correct but the core routing logic is not yet implemented.
+
+### What exists
+
+```python
+# backend/app/main.py
+GET /        → {"message": "Welcome to RouteMind API"}
+GET /health  → {"status": "healthy"}
+```
+
+CORS is configured with `allow_origins=["*"]` — acceptable for hackathon, must be locked to frontend domain before any public deployment.
+
+### What needs to be built
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/route` | POST | Main routing endpoint. Accepts `{ query, file_ref, policy }`. Returns `{ response, routing_metadata }` via SSE. |
+| `/feedback` | POST | Log user override/thumbs-down for classifier retraining signal. |
+| `/health/providers` | GET | Return cached provider health status (ping results). |
+
+### Python dependencies (requirements.txt)
+
+Currently includes: `fastapi 0.138.0`, `uvicorn 0.49.0`, `pydantic 2.13.4`, `python-dotenv 1.2.2`. Missing for full implementation:
+- `openai`, `anthropic`, `google-generativeai` — provider SDKs
+- `httpx` — async HTTP for provider calls + health pings
+- `supabase` — DB client for routing decision logging
+
+### Running locally
+
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
+
+---
+
+## Frontend — Routing & Page Structure
+
+`App.jsx` wraps everything in `ThemeProvider` and `ToastProvider`, then uses `react-router-dom`:
 
 | Route       | Component           | Notes                                    |
 | ----------- | ------------------- | ---------------------------------------- |
@@ -71,11 +185,13 @@ RouteMind/
 | `/benefits` | `Benefits.jsx`      | Marketing page                           |
 | `/docs`     | `Documentation.jsx` | Docs page                                |
 
+`vercel.json` contains a rewrite rule so all routes return `index.html` (standard SPA deployment pattern).
+
 ---
 
 ## Core State — `Chat.jsx`
 
-All session state is owned by `Chat.jsx` and passed down as props. There is no global state store (no Redux, no Zustand).
+All session state is owned by `Chat.jsx` and passed down as props. No global state store (no Redux, no Zustand).
 
 ### State Variables
 
@@ -113,18 +229,20 @@ All session state is owned by `Chat.jsx` and passed down as props. There is no g
 
 ### Key Handlers
 
-- **`handleSendMessage(content, attachedFiles)`** — main dispatch function. Captures `activeChatId` at send time (`chatIdAtSend`) to prevent stale-closure bugs when user switches chats mid-loading. Runs a 4-step `setTimeout` chain (~4.2s total) simulating: intent analysis → model comparison → model selection → response generation. On completion, updates `conversationsMessages`, writes telemetry to `localStorage`, and auto-renames the chat if it's the first message.
-- **`handleRegenerateResponse(messageId)`** — slices the message array back to before the target assistant message, then calls `handleSendMessage` with the preceding user message's content and files.
-- **`handleNewChat(newChat)`** — adds a new entry to `chatHistory`, sets it active, and initialises its messages array.
-- **`handleDeleteChat(id)`** — removes the chat and its messages. If all chats are deleted, creates a new blank one.
-- **`handleRenameChat(id, newTitle)`** — updates the title in `chatHistory`.
-- **`handleClearConversation()`** — empties messages for the active chat; shows a toast.
+- **`handleSendMessage(content, attachedFiles)`** — captures `activeChatId` at send time (`chatIdAtSend`) to prevent stale-closure bugs. Runs a 4-step `setTimeout` chain (~4.2s total) simulating: intent analysis → model comparison → model selection → response generation. On completion, updates `conversationsMessages`, writes telemetry to `localStorage`, and auto-renames the chat on first message. All timer handles stored in `timeoutRefs` and cancelled on unmount.
+- **`handleRegenerateResponse(messageId)`** — slices message array back to before target assistant message, calls `handleSendMessage` with the preceding user message.
+- **`handleNewChat(newChat)`** — adds entry to `chatHistory`, sets it active, initialises its messages array.
+- **`handleDeleteChat(id)`** — removes chat and messages. Creates new blank chat if all deleted.
+- **`handleRenameChat(id, newTitle)`** — updates title in `chatHistory`.
+- **`handleClearConversation()`** — empties messages for active chat; shows a toast.
 
 ---
 
 ## `getMockRouting` — `src/utils/mockRouter.js`
 
 **Signature:** `getMockRouting(query: string, file: File | null, policy: string): RoutingResult`
+
+This is the **frontend mock** of the classifier. When the real backend `/route` endpoint is implemented, this module will be replaced by an API call.
 
 **Policies** (read from `localStorage` key `routingPolicy`, default `'balanced'`):
 
@@ -148,62 +266,63 @@ All session state is owned by `Chat.jsx` and passed down as props. There is no g
 
 **Returns:** `{ model, cost, confidence, reason, latency }` — all strings for display.
 
+> **Migration note:** When the real backend is ready, replace calls to `getMockRouting()` in `Chat.jsx` with a `fetch('http://localhost:8000/route', { method: 'POST', body: JSON.stringify({ query, file_ref, policy }) })` call, consuming the SSE stream.
+
 ---
 
 ## `Sidebar.jsx` — Detailed Notes
 
-The sidebar is the most complex component (~33KB). Key sub-sections:
+The sidebar is the most complex component. Key sub-sections:
 
-- **Chat list** — scrollable list of `chatHistory`, with inline rename (double-click title) and delete (hover → trash icon). Active item is highlighted with `bg-blue-950/30 text-white` (no colored side border — clean active state).
-- **Routing policy selector** — `<select>` that reads/writes `localStorage('routingPolicy')`. Emits `storage` event on change so `Chat.jsx` reads the latest value at send time.
-- **Telemetry panel** — shows `totalQueries`, `savings`, and a model breakdown pie. Reads from `localStorage('routingStats')` on mount and on a custom `telemetry-updated` window event (fired by `Chat.jsx` after each assistant response). `defaultStats` from `src/data/mockData.js` is used as the seed when no stored data exists.
-- **Theme toggle** — wired to `ThemeContext`. Cycles through `'light'`, `'dark'`, `'system'`. Applied to `<html data-theme="...">` by `ThemeContext.jsx`.
-- **`Tooltip.jsx`** — the sidebar imports from `src/components/Tooltip.jsx` (extracted to its own file). It is a simple hover wrapper; not accessible for keyboard/screen reader use yet.
-- **Mobile behaviour** — controlled by `mobileOpen` prop from `Chat.jsx`. Renders as a fixed overlay with a backdrop on screens below `md` breakpoint.
+- **Chat list** — scrollable, with inline rename (double-click title) and delete (hover → trash icon). Active item: `bg-blue-950/30 text-white` (no colored side border).
+- **Routing policy selector** — `<select>` reads/writes `localStorage('routingPolicy')`. Emits `storage` event on change so `Chat.jsx` reads latest value at send time.
+- **Telemetry panel** — shows `totalQueries`, `savings`, model breakdown pie. Reads from `localStorage('routingStats')` on mount and on `telemetry-updated` window event (fired by `Chat.jsx` after each response). `defaultStats` from `src/data/mockData.js` seeds empty state.
+- **Theme toggle** — wired to `ThemeContext`. Cycles `'light'` → `'dark'` → `'system'`. Applied to `<html data-theme="...">` by `ThemeContext.jsx`.
+- **`Tooltip.jsx`** — imported from `src/components/Tooltip.jsx`. Hover-only; not keyboard/screen-reader accessible yet.
+- **Mobile** — controlled by `mobileOpen` prop from `Chat.jsx`. Fixed overlay with backdrop below `md` breakpoint.
 
 ---
 
 ## `ChatMessage.jsx` — Detailed Notes
 
-Handles both `role: 'user'` and `role: 'assistant'` in a single component with an `isUser` branch.
+Handles both `role: 'user'` and `role: 'assistant'` in a single component.
 
-- **Prop contract:** accepts a single `message` object (the dual-prop API from an earlier version has been removed).
-- **`CodeBlock`** — internal sub-component. Uses `react-syntax-highlighter` (Prism / `vscDarkPlus` theme). Inline vs. block detection: `!match || !String(children).includes('\n')`.
-- **`markdownComponents`** — full set of custom renderers for `react-markdown` + `remark-gfm`: headings, paragraphs, lists, blockquotes, links (with `ExternalLink` icon), tables, and code.
-- **`SkeletonMessage`** — rendered when `role === 'assistant'` and content is empty and not streaming. Uses `animate-pulse`.
-- **Action toolbar** — appears on hover (`opacity-0 group-hover:opacity-100`). User messages: Copy + Share. Assistant messages: Copy + Regenerate + ThumbsUp + ThumbsDown + Share.
-- **`RoutingCard`** is rendered inline below the assistant message content when `message.routing` is present.
+- **Prop contract:** single `message` object (dual-prop API from earlier version removed).
+- **`CodeBlock`** — uses `react-syntax-highlighter` (Prism / `vscDarkPlus`). Inline detection: `!match || !String(children).includes('\n')`.
+- **`markdownComponents`** — custom renderers for `react-markdown` + `remark-gfm`: headings, paragraphs, lists, blockquotes, links, tables, code.
+- **`SkeletonMessage`** — rendered when `role === 'assistant'`, content empty, not streaming. Uses `animate-pulse`.
+- **Action toolbar** — appears on hover. User: Copy + Share. Assistant: Copy + Regenerate + ThumbsUp + ThumbsDown + Share.
+- **`RoutingCard`** rendered inline below assistant content when `message.routing` is present.
 
 ---
 
 ## `RoutingCard.jsx` — Detailed Notes
 
-An expandable card that displays the routing decision for an assistant message.
+Expandable card showing routing decision for each assistant message.
 
-- Takes a single `routing` prop: `{ model, cost, confidence, reason }`.
-- Collapsed state shows model badge, cost, confidence percentage.
-- Expanded state adds the `reason` text and a visual model indicator.
-- **Status:** Actively used — rendered inside `ChatMessage.jsx` for every assistant message that has a `routing` object. The component is NOT dead code; an earlier version of this codebase had it imported but hidden in `Chat.jsx` — that has since been corrected.
+- Takes single `routing` prop: `{ model, cost, confidence, reason }`.
+- Collapsed: model badge, cost, confidence percentage.
+- Expanded: adds `reason` text and visual model indicator.
+- Actively used — rendered inside `ChatMessage.jsx` for every assistant message with a `routing` object.
 
 ---
 
 ## `ChatInput.jsx` — Detailed Notes
 
-- Auto-resizing `<textarea>` via `useEffect` on `value`. Clamped between 56px and 200px.
-- File attachment via hidden `<input type="file">`. Multiple files supported. Accepted types: `.pdf`, `.txt`, `.md`, `.doc`, `.docx`, `.csv`, `.json`, `.png`, `.jpg`, `.jpeg`, `.webp`.
-- Attached file previews rendered above the textarea with name, size, and `getFileIcon()`.
-- **Keyboard shortcuts:** `Enter` submits; `Shift+Enter` inserts newline.
-- **Note:** Helper text at the bottom uses `text-[11px]` which is below the 12px accessibility floor. Should be changed to `text-xs` (12px).
+- Auto-resizing `<textarea>` via `useEffect` on `value`. Clamped 56px–200px.
+- File attachment via hidden `<input type="file">`. Accepted: `.pdf`, `.txt`, `.md`, `.doc`, `.docx`, `.csv`, `.json`, `.png`, `.jpg`, `.jpeg`, `.webp`.
+- **Keyboard:** `Enter` submits; `Shift+Enter` newline.
+- **Known issue:** Helper text uses `text-[11px]` — below the 12px accessibility floor. Should be `text-xs`.
 
 ---
 
 ## `TypingIndicator.jsx` — Detailed Notes
 
-Shown in the message list while `isLoading === true`.
+Shown while `isLoading === true`.
 
-- Accepts `loadingStep` (current step label string) and `selectedModel` (null until step 3).
-- Renders animated step pills cycling through: "Analyzing Intent…" → "Comparing Models…" → "Selecting Best Model…" → "Generating Response…"
-- When `selectedModel` becomes non-null (step 3), it renders a model badge preview inside the indicator.
+- Props: `loadingStep` (step label string), `selectedModel` (null until step 3).
+- Step labels: "Analyzing Intent…" → "Comparing Models…" → "Selecting Best Model…" → "Generating Response…"
+- When `selectedModel` is non-null (step 3), renders model badge preview inside the indicator.
 
 ---
 
@@ -212,13 +331,13 @@ Shown in the message list while `isLoading === true`.
 ### `ThemeContext.jsx`
 
 - Provides `{ theme, setTheme }` — values: `'light'`, `'dark'`, `'system'`.
-- On mount and on every `theme` change, sets `document.documentElement.setAttribute('data-theme', resolved)` where `resolved` is `'light'` or `'dark'` (system preference resolved via `matchMedia`).
-- Used by: `Sidebar.jsx` (toggle button), `Navbar.jsx` (toggle button).
+- Sets `document.documentElement.setAttribute('data-theme', resolved)` on mount and on every change.
+- Used by: `Sidebar.jsx`, `Navbar.jsx`.
 
 ### `ToastContext.jsx`
 
 - Provides `showToast(message: string, type: 'success' | 'error' | 'info')`.
-- Renders a stack of toast notifications in a fixed portal at the bottom-right.
+- Renders toast stack in fixed portal at bottom-right.
 - Used by: `Chat.jsx`, `ChatMessage.jsx`, `ChatInput.jsx`, `Sidebar.jsx`.
 
 ---
@@ -227,59 +346,66 @@ Shown in the message list while `isLoading === true`.
 
 ### `src/data/mockData.js`
 
-Exports:
+- `defaultStats` — `{ totalQueries: 0, savings: 0, models: {} }` — seed for `localStorage('routingStats')`.
+- `modelList` — model descriptor objects for UI dropdowns.
 
-- `defaultStats` — `{ totalQueries: 0, savings: 0, models: {} }` — used as the seed when `localStorage('routingStats')` is empty.
-- `modelList` — array of model descriptor objects used in various UI dropdowns.
+### `localStorage` keys
 
-### `localStorage` keys used at runtime
-
-| Key             | Written by                     | Read by                 | Purpose                   |
-| --------------- | ------------------------------ | ----------------------- | ------------------------- |
-| `routingPolicy` | Sidebar policy selector        | `Chat.jsx` at send time | Active routing preference |
-| `routingStats`  | `Chat.jsx` after each response | Sidebar telemetry panel | Cumulative session stats  |
+| Key             | Written by              | Read by                 | Purpose                   |
+| --------------- | ----------------------- | ----------------------- | ------------------------- |
+| `routingPolicy` | Sidebar policy selector | `Chat.jsx` at send time | Active routing preference |
+| `routingStats`  | `Chat.jsx` post-response| Sidebar telemetry panel | Cumulative session stats  |
 
 ---
 
 ## Test Suite — `src/test/`
 
-| File                 | What it covers                                                                                                                                                              |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `mockRouter.test.js` | `getMockRouting()` — verifies correct model selection for code queries, research queries, file attachments, policy overrides (speed/cost/quality), and the default fallback |
-| `setup.js`           | `@testing-library/jest-dom` import for extended matchers                                                                                                                    |
+| File                 | What it covers                                                                               |
+| -------------------- | -------------------------------------------------------------------------------------------- |
+| `mockRouter.test.js` | `getMockRouting()` — code queries, research queries, file attachments, policy overrides, fallback |
+| `setup.js`           | `@testing-library/jest-dom` import                                                           |
 
-Run tests: `pnpm test:run` (single pass) or `pnpm test` (watch mode).  
-CI runs `pnpm test:run` in the `test` job after `lint`.
+Run: `pnpm test:run` (single pass) or `pnpm test` (watch).
+CI runs `pnpm test:run` after `lint`.
 
 ---
 
 ## CI Pipeline — `.github/workflows/`
 
-Three jobs, sequential:
+Three sequential jobs:
 
-1. **lint** — `pnpm lint` (ESLint flat config)
-2. **test** — `pnpm test:run` (Vitest)
-3. **build** — `pnpm build` (Vite production build)
+1. **lint** — `pnpm lint`
+2. **test** — `pnpm test:run`
+3. **build** — `pnpm build`
+
+---
+
+## Deployment
+
+- **Frontend:** Vercel. `vercel.json` contains an SPA rewrite rule (`/* → /index.html`). Push to `main` triggers auto-deploy.
+- **Backend:** Not yet deployed. Planned target: Railway (mentioned in pitch docs as the hosting choice for the FastAPI service).
 
 ---
 
 ## Known Issues & Pending Work
 
-| Area                | Issue                                                                                                                           | Priority |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| `ChatInput.jsx`     | `text-[11px]` on helper text — below 12px a11y floor                                                                            | Low      |
-| `ChatMessage.jsx`   | `RoutingCard` import still present even though the component renders correctly — no action needed, just noting it's intentional | —        |
-| `Sidebar.jsx`       | `Tooltip.jsx` is not keyboard/screen-reader accessible                                                                          | Low      |
-| `Chat.jsx`          | `handleNewChat` in header button is an inline lambda; should call the same `handleNewChat` function used by Sidebar             | Low      |
-| All pages           | No real API integration — all routing is mock                                                                                   | Future   |
-| Auth flow           | `AuthenticationComingSoonModal` is a placeholder; no auth system exists                                                         | Future   |
-| `Documentation.jsx` | Content is static/hardcoded, not generated from code                                                                            | Future   |
+| Area                | Issue                                                                                      | Priority |
+| ------------------- | ------------------------------------------------------------------------------------------ | -------- |
+| `backend/`          | `/route` endpoint not implemented — all core routing logic missing                         | **High** |
+| `backend/`          | `requirements.txt` missing provider SDKs (`openai`, `anthropic`, `httpx`, `supabase`)     | **High** |
+| `backend/`          | `allow_origins=["*"]` in CORS config — must be scoped before public deployment             | Medium   |
+| `ChatInput.jsx`     | `text-[11px]` on helper text — below 12px a11y floor, should be `text-xs`                 | Low      |
+| `Sidebar.jsx`       | `Tooltip.jsx` not keyboard/screen-reader accessible                                        | Low      |
+| `Chat.jsx`          | `handleNewChat` in header button is an inline lambda; should call the shared function      | Low      |
+| All pages           | No real API integration — all routing is mock                                              | Future   |
+| Auth flow           | `AuthenticationComingSoonModal` is a placeholder; no auth system exists                    | Future   |
+| `Documentation.jsx` | Content is static/hardcoded                                                                | Future   |
 
 ---
 
 ## Dependency Notes
 
-Key runtime dependencies (from `package.json`):
+### Frontend (package.json)
 
 | Package                         | Purpose                                                         |
 | ------------------------------- | --------------------------------------------------------------- |
@@ -287,23 +413,24 @@ Key runtime dependencies (from `package.json`):
 | `react-router-dom`              | Client-side routing                                             |
 | `react-markdown` + `remark-gfm` | Markdown rendering in assistant messages                        |
 | `react-syntax-highlighter`      | Code block syntax highlighting (Prism / vscDarkPlus)            |
-| `lucide-react`                  | Icon set used throughout                                        |
-| `framer-motion`                 | Animation — used in landing/benefits pages and some transitions |
+| `lucide-react`                  | Icon set                                                        |
+| `framer-motion`                 | Animation — landing/benefits pages and transitions              |
 | `tailwindcss` (v4)              | Styling — utility classes + custom design tokens in `index.css` |
 
-Key dev dependencies:
-| Package | Purpose |
-|---|---|
-| `vite` | Build tool + dev server |
-| `vitest` | Unit test runner |
-| `@testing-library/jest-dom` | Extended DOM matchers for tests |
-| `eslint` + `eslint-plugin-react-hooks` | Linting |
+### Backend (requirements.txt)
+
+| Package          | Purpose                    |
+| ---------------- | -------------------------- |
+| `fastapi 0.138`  | API framework              |
+| `uvicorn 0.49`   | ASGI server                |
+| `pydantic 2.13`  | Request/response schemas   |
+| `python-dotenv`  | `.env` loading             |
 
 ---
 
 ## Design Tokens (index.css)
 
-Custom Tailwind tokens defined in `src/index.css` under `@theme`:
+Custom Tailwind tokens under `@theme`:
 
 | Token               | Usage                             |
 | ------------------- | --------------------------------- |
@@ -314,4 +441,4 @@ Custom Tailwind tokens defined in `src/index.css` under `@theme`:
 | `text-primary`      | Primary text                      |
 | `text-secondary`    | Muted/secondary text              |
 
-Custom animation classes: `animate-slide-up-fade`, `animate-slide-in-right`, `stagger-1` through `stagger-4` — all defined as `@keyframes` in `index.css`.
+Custom animations: `animate-slide-up-fade`, `animate-slide-in-right`, `stagger-1` through `stagger-4` — defined as `@keyframes` in `index.css`.
