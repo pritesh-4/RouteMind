@@ -40,9 +40,6 @@ class Settings(BaseModel):
     GEMINI_API_KEY: str | None = os.getenv("GEMINI_API_KEY") or None
     OPENAI_API_KEY: str | None = os.getenv("OPENAI_API_KEY") or None
     ANTHROPIC_API_KEY: str | None = os.getenv("ANTHROPIC_API_KEY") or None
-    GROQ_API_KEY: str | None = os.getenv("GROQ_API_KEY") or None
-    CEREBRAS_API_KEY: str | None = os.getenv("CEREBRAS_API_KEY") or None
-    GITHUB_TOKEN: str | None = os.getenv("GITHUB_TOKEN") or None
 
 
 # Global settings instance for import across the codebase
