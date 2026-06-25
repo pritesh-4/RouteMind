@@ -38,8 +38,9 @@ src/
 │   ├── ChatInput.jsx       # Text input + file attachment UI
 │   ├── ChatMessage.jsx     # Renders user & assistant messages
 │   ├── Sidebar.jsx         # Nav, chat history, settings modal, telemetry modal
+│   ├── Tooltip.jsx         # Centralized tooltip hover helper
 │   ├── TypingIndicator.jsx # Animated "thinking" indicator
-│   └── RoutingCard.jsx     # (Currently unused — imported but hidden in Chat.jsx)
+│   └── RoutingCard.jsx     # (Currently unused — dead import removed)
 ├── context/
 │   ├── ThemeContext.jsx     # Light/dark/system theme provider
 │   └── ToastContext.jsx     # Global toast notification system
@@ -49,9 +50,10 @@ src/
 │   ├── Benefits.jsx        # Features/benefits page
 │   └── Documetation.jsx    # Documentation page (note: filename has typo)
 ├── utils/
+│   ├── fileHelpers.jsx     # Centralized file size formatting and icon matching helpers
 │   └── mockRouter.js       # Routing logic (keyword matching → model selection)
 ├── data/
-│   └── mockData.js         # Static data (TERMINAL_EXAMPLES, legacy routingStats)
+│   └── mockData.js         # Static data & defaultStats definition
 └── main.jsx                # Entry point — wraps app in BrowserRouter > ThemeProvider > ToastProvider
 ```
 
@@ -201,15 +203,15 @@ Located in `src/context/ToastContext.jsx`.
 
 ## 12. Known Issues & TODOs
 
-| # | File | Issue | Severity |
+| # | File | Issue | Status / Severity |
 |---|---|---|---|
-| 1 | `Chat.jsx` | Stale `currentMessages` closure in auto-rename logic — condition checks stale value; should check state inside the `setChatHistory` callback | 🔴 Bug |
-| 2 | `Chat.jsx` | `defaultStats` object duplicated — defined identically in both `handleSendMessage` and Sidebar state initialiser; extract to `src/data/mockData.js` | 🟡 DRY |
-| 3 | `ChatMessage.jsx` | Dual prop API (`message` object OR individual `role`/`content`/`model` props); all call sites use `message={}`  — remove the flat prop API | 🟡 Confusing |
-| 4 | `ChatInput.jsx` + `ChatMessage.jsx` | `formatFileSize` and `getFileIcon` are duplicated identically in both files; move to `src/utils/fileHelpers.js` | 🟡 DRY |
-| 5 | `Sidebar.jsx` | `Tooltip` component defined at the bottom of the file — move to `src/components/Tooltip.jsx` | 🟢 Organisation |
-| 6 | `RoutingCard.jsx` | Imported in `Chat.jsx` but rendered with `aria-hidden="true"` and never shown — remove the import | 🟢 Dead code |
-| 7 | `ChatInput.jsx` | `text-[11px]` on helper labels is below 12px accessibility floor; use `text-xs` | 🟠 Accessibility |
+| 1 | `Chat.jsx` | Stale `currentMessages` closure in auto-rename logic — condition checks stale value; should check state inside the `setChatHistory` callback | Resolved ✅ |
+| 2 | `Chat.jsx` | `defaultStats` object duplicated — defined identically in both `handleSendMessage` and Sidebar state initialiser; extract to `src/data/mockData.js` | Resolved ✅ |
+| 3 | `ChatMessage.jsx` | Dual prop API (`message` object OR individual `role`/`content`/`model` props); all call sites use `message={}`  — remove the flat prop API | Resolved ✅ |
+| 4 | `ChatInput.jsx` + `ChatMessage.jsx` | `formatFileSize` and `getFileIcon` are duplicated identically in both files; move to `src/utils/fileHelpers.js` | Resolved ✅ |
+| 5 | `Sidebar.jsx` | `Tooltip` component defined at the bottom of the file — move to `src/components/Tooltip.jsx` | Resolved ✅ |
+| 6 | `RoutingCard.jsx` | Imported in `Chat.jsx` but rendered with `aria-hidden="true"` and never shown — remove the import | Resolved ✅ |
+| 7 | `ChatInput.jsx` | `text-[11px]` on helper labels is below 12px accessibility floor; use `text-xs` | Resolved ✅ |
 | 8 | `mockRouter.js` | `policy-updated` event dispatched by Sidebar is never consumed — wire it up if real-time policy switching mid-session is needed | 🟡 Incomplete |
 
 ---

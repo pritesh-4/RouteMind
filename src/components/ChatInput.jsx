@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
-import { Paperclip, ArrowUp, Sparkles, Loader2, Image, FileText, Code, File, X } from 'lucide-react'
+import { Paperclip, ArrowUp, Sparkles, Loader2, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useToast } from '../context/ToastContext'
+import { formatFileSize, getFileIcon } from '../utils/fileHelpers'
+
 
 const SUPPORTED_EXTENSIONS = [
   'pdf', 'txt', 'md', 'doc', 'docx', 
@@ -132,33 +134,7 @@ const ChatInput = ({
     }
   }
 
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes'
-    const k = 1024
-    const sizes = ['Bytes', 'KB', 'MB', 'GB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
-  }
 
-  const getFileIcon = (fileName) => {
-    const ext = fileName.split('.').pop().toLowerCase()
-    if (['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext)) {
-      return <Image size={15} className="text-blue-400 shrink-0" />
-    }
-    if (['pdf'].includes(ext)) {
-      return <FileText size={15} className="text-red-400 shrink-0" />
-    }
-    if (['doc', 'docx'].includes(ext)) {
-      return <FileText size={15} className="text-blue-500 shrink-0" />
-    }
-    if (['txt', 'md'].includes(ext)) {
-      return <FileText size={15} className="text-neutral-400 shrink-0" />
-    }
-    if (['js', 'jsx', 'ts', 'tsx', 'py', 'cpp', 'java', 'json', 'html', 'css'].includes(ext)) {
-      return <Code size={15} className="text-green-400 shrink-0" />
-    }
-    return <File size={15} className="text-neutral-400 shrink-0" />
-  }
 
   const getFileTypeBadge = (fileName) => {
     return fileName.split('.').pop().toUpperCase()
@@ -181,14 +157,14 @@ const ChatInput = ({
 
       {/* Helper / Reassurance Text */}
       {!isLoading && helperText && selectedFiles.length === 0 && (
-        <div className="text-[11px] text-neutral-500 font-mono tracking-wide px-1.5 select-none transition-opacity duration-200">
+        <div className="text-xs text-neutral-500 font-mono tracking-wide px-1.5 select-none transition-opacity duration-200">
           {helperText}
         </div>
       )}
 
       {/* Loading Steps Indicator */}
       {isLoading && (
-        <div className="text-[11px] text-blue-400 font-mono tracking-wide px-1.5 flex items-center gap-1.5 select-none transition-opacity duration-200">
+        <div className="text-xs text-blue-400 font-mono tracking-wide px-1.5 flex items-center gap-1.5 select-none transition-opacity duration-200">
           <Loader2 size={12} className="animate-spin text-blue-500" />
           <span className="animate-pulse">{loadingStep}</span>
         </div>
@@ -209,7 +185,7 @@ const ChatInput = ({
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="p-1.5 rounded-lg bg-sidebar-bg border border-border-app shrink-0">
-                    {getFileIcon(file.name)}
+                    {getFileIcon(file.name, 15)}
                   </div>
                   <div className="flex flex-col min-w-0">
                     <span className="text-primary font-medium truncate max-w-[220px] xs:max-w-[340px] sm:max-w-[480px]" title={file.name}>

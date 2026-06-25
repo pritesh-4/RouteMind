@@ -297,3 +297,16 @@ export const TERMINAL_EXAMPLES = [
     savings: '74%'
   }
 ];
+
+export const defaultStats = {
+  totalQueries: 14,
+  savings: 0.85,
+  models: {
+    'GPT-4o': 5,
+    'GPT-4o-mini': 1,
+    'Claude 3.5 Sonnet': 3,
+    'Gemini 1.5 Pro': 3,
+    'Gemini 1.5 Flash': 1,
+    'DeepSeek Coder': 1
+  }
+};

@@ -7,6 +7,8 @@ import ChatInput from '../components/ChatInput'
 import TypingIndicator from '../components/TypingIndicator'
 import { getMockRouting } from '../utils/mockRouter'
 import { useToast } from '../context/ToastContext'
+import { defaultStats } from '../data/mockData'
+
 
 const Chat = () => {
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -97,8 +99,11 @@ const Chat = () => {
     const hasFiles = attachedFiles && attachedFiles.length > 0
     if ((!hasText && !hasFiles) || isLoading) return
 
+    const isFirstMessage = currentMessages.length === 0
+
     timeoutRefs.current.forEach(clearTimeout)
     timeoutRefs.current = []
+
 
     const chatIdAtSend = activeChatId
     messageIdRef.current += 1
@@ -175,18 +180,6 @@ const Chat = () => {
             })
             
             // Update live telemetry stats in localStorage
-            const defaultStats = {
-              totalQueries: 14,
-              savings: 0.85,
-              models: {
-                'GPT-4o': 5,
-                'GPT-4o-mini': 1,
-                'Claude 3.5 Sonnet': 3,
-                'Gemini 1.5 Pro': 3,
-                'Gemini 1.5 Flash': 1,
-                'DeepSeek Coder': 1
-              }
-            }
             const storedStats = localStorage.getItem('routingStats')
             const stats = storedStats ? JSON.parse(storedStats) : defaultStats
             stats.totalQueries += 1
@@ -204,8 +197,6 @@ const Chat = () => {
               const chatIndex = prevHistory.findIndex(c => c.id === chatIdAtSend)
               if (chatIndex === -1) return prevHistory
               const chat = prevHistory[chatIndex]
-              const msgsAtCallback = conversationsMessages[chatIdAtSend] || []
-              const isFirstMessage = msgsAtCallback.length <= 1
               if (isFirstMessage && chat.title === 'New Workspace Chat') {
                 const titleText = content.trim() ? content : (hasFiles ? `File: ${attachedFiles[0].name}` : 'New Workspace Chat')
                 const shortened = titleText.length > 25 ? `${titleText.substring(0, 25)}...` : titleText

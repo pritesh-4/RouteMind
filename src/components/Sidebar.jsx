@@ -8,6 +8,9 @@ import {
   Laptop, Sparkles, Shield, Search, Coins, Activity
 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
+import { defaultStats } from '../data/mockData'
+import Tooltip from './Tooltip'
+
 
 const Sidebar = ({
   activeChatId = '1',
@@ -34,18 +37,6 @@ const Sidebar = ({
   })
   const [telemetryOpen, setTelemetryOpen] = useState(false)
   const [stats, setStats] = useState(() => {
-    const defaultStats = {
-      totalQueries: 14,
-      savings: 0.85,
-      models: {
-        'GPT-4o': 5,
-        'GPT-4o-mini': 1,
-        'Claude 3.5 Sonnet': 3,
-        'Gemini 1.5 Pro': 3,
-        'Gemini 1.5 Flash': 1,
-        'DeepSeek Coder': 1
-      }
-    }
     const stored = localStorage.getItem('routingStats')
     return stored ? JSON.parse(stored) : defaultStats
   })
@@ -702,19 +693,6 @@ const Sidebar = ({
         )}
       </aside>
     </>
-  )
-}
-
-
-const Tooltip = ({ text, isCollapsed, children }) => {
-  if (!isCollapsed) return children
-  return (
-    <div className="relative group/tooltip flex items-center">
-      {children}
-      <div className="absolute left-[60px] ml-2 px-2.5 py-1.5 bg-[#181818] border border-border-app text-xs font-medium text-primary rounded-md shadow-xl opacity-0 translate-x-1 group-hover/tooltip:opacity-100 group-hover/tooltip:translate-x-0 pointer-events-none transition-all duration-150 z-50 whitespace-nowrap">
-        {text}
-      </div>
-    </div>
   )
 }
 

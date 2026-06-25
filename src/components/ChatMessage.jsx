@@ -15,42 +15,13 @@ import {
   ShieldCheck,
   Info,
   ExternalLink,
-  Loader2,
-  Image,
-  FileText,
-  Code,
-  File
+  Loader2
 } from 'lucide-react'
 import { useToast } from '../context/ToastContext'
+import { formatFileSize, getFileIcon } from '../utils/fileHelpers'
 
-const formatFileSize = (bytes) => {
-  if (!bytes || bytes === 0) return '0 Bytes'
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
-}
 
-const getFileIcon = (fileName) => {
-  if (!fileName) return <File size={13} className="text-neutral-400 shrink-0" />
-  const ext = fileName.split('.').pop().toLowerCase()
-  if (['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext)) {
-    return <Image size={13} className="text-blue-400 shrink-0" />
-  }
-  if (['pdf'].includes(ext)) {
-    return <FileText size={13} className="text-red-400 shrink-0" />
-  }
-  if (['doc', 'docx'].includes(ext)) {
-    return <FileText size={13} className="text-blue-500 shrink-0" />
-  }
-  if (['txt', 'md'].includes(ext)) {
-    return <FileText size={13} className="text-neutral-400 shrink-0" />
-  }
-  if (['js', 'jsx', 'ts', 'tsx', 'py', 'cpp', 'java', 'json', 'html', 'css'].includes(ext)) {
-    return <Code size={13} className="text-green-400 shrink-0" />
-  }
-  return <File size={13} className="text-neutral-400 shrink-0" />
-}
+
 
 const CodeBlock = ({ language, value }) => {
   const [copied, setCopied] = useState(false)
@@ -189,27 +160,16 @@ const SkeletonMessage = () => (
   </div>
 )
 
-const ChatMessage = ({
-  message,
-  role: directRole,
-  content: directContent,
-  timestamp: directTimestamp,
-  model: directModel,
-  confidence: directConfidence,
-  reason: directReason,
-  isStreaming: directIsStreaming,
-  showRoutingInfo: directShowRoutingInfo,
-  onRegenerate
-}) => {
-  const role = message?.role ?? directRole ?? 'assistant'
-  const content = message?.content ?? directContent ?? ''
-  const timestamp = message?.time ?? message?.timestamp ?? directTimestamp
-  const isStreaming = message?.isStreaming ?? directIsStreaming ?? false
+const ChatMessage = ({ message, onRegenerate }) => {
+  const role = message?.role ?? 'assistant'
+  const content = message?.content ?? ''
+  const timestamp = message?.time ?? message?.timestamp
+  const isStreaming = message?.isStreaming ?? false
 
-  const model = message?.routing?.model ?? directModel
-  const confidence = message?.routing?.confidence ?? directConfidence
-  const reason = message?.routing?.reason ?? directReason
-  const showRoutingInfo = message?.routing ? true : (directShowRoutingInfo ?? !!(model || confidence || reason))
+  const model = message?.routing?.model
+  const confidence = message?.routing?.confidence
+  const reason = message?.routing?.reason
+  const showRoutingInfo = !!message?.routing
 
   const isUser = role === 'user'
 
