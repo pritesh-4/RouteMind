@@ -54,46 +54,49 @@ const Sidebar = ({
     return stored ? JSON.parse(stored) : DEFAULT_STATS
   })
 
-  // Resizable sidebar state
+  // ── Resizable sidebar ──────────────────────────────────────────────────────
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_WIDTH)
   const isResizing = useRef(false)
-  const startX = useRef(0)
-  const startWidth = useRef(DEFAULT_WIDTH)
+  const frameRef = useRef(null)
 
-  const handleResizeMouseDown = useCallback(
-    (e) => {
-      e.preventDefault()
-      isResizing.current = true
-      startX.current = e.clientX
-      startWidth.current = sidebarWidth
-      document.body.style.cursor = 'col-resize'
-      document.body.style.userSelect = 'none'
-    },
-    [sidebarWidth]
-  )
+  const handleResizeMouseDown = useCallback((e) => {
+    e.preventDefault()
+    isResizing.current = true
+    const startX = e.clientX
+    const startWidth = sidebarWidth
 
-  useEffect(() => {
-    const handleMouseMove = (e) => {
+    // Disable CSS transition while dragging so width tracks cursor exactly
+    const aside = e.currentTarget.closest('aside')
+    if (aside) aside.style.transition = 'none'
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+
+    const onMouseMove = (moveEvent) => {
       if (!isResizing.current) return
-      const delta = e.clientX - startX.current
-      const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth.current + delta))
-      setSidebarWidth(newWidth)
+      if (frameRef.current) cancelAnimationFrame(frameRef.current)
+      frameRef.current = requestAnimationFrame(() => {
+        const delta = moveEvent.clientX - startX
+        const next = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth + delta))
+        setSidebarWidth(next)
+      })
     }
-    const handleMouseUp = () => {
-      if (!isResizing.current) return
+
+    const onMouseUp = () => {
       isResizing.current = false
+      if (frameRef.current) cancelAnimationFrame(frameRef.current)
       document.body.style.cursor = ''
       document.body.style.userSelect = ''
+      // Re-enable transition after drag ends
+      if (aside) aside.style.transition = ''
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
     }
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseup', handleMouseUp)
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup', handleMouseUp)
-    }
-  }, [])
 
-  // Sync telemetry updates
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+  }, [sidebarWidth])
+
+  // ── Telemetry sync ─────────────────────────────────────────────────────────
   useEffect(() => {
     const handleUpdate = () => {
       const stored = localStorage.getItem('routingStats')
@@ -121,45 +124,56 @@ const Sidebar = ({
 
   const handleCreateNewChat = useCallback(() => {
     const newId = Date.now().toString()
-    const newChat = {
-      id: newId,
-      title: 'New Workspace Chat',
-      timestamp: 'Just now',
-    }
+    const newChat = { id: newId, title: 'New Workspace Chat', timestamp: 'Just now' }
     onNewChat(newChat)
     setEditingId(newId)
     setEditTitle('New Workspace Chat')
   }, [onNewChat])
 
-  // Cycle theme: dark → light → system → dark
+  // ── Theme cycle ────────────────────────────────────────────────────────────
   const THEME_CYCLE = ['dark', 'light', 'system']
   const handleCycleTheme = () => {
-    const currentIndex = THEME_CYCLE.indexOf(theme)
-    const nextTheme = THEME_CYCLE[(currentIndex + 1) % THEME_CYCLE.length]
-    setTheme(nextTheme)
+    const idx = THEME_CYCLE.indexOf(theme)
+    setTheme(THEME_CYCLE[(idx + 1) % THEME_CYCLE.length])
   }
   const nextThemeLabel = THEME_CYCLE[(THEME_CYCLE.indexOf(theme) + 1) % THEME_CYCLE.length]
   const themeLabels = { dark: 'Dark', light: 'Light', system: 'System' }
   const ThemeIcon = theme === 'dark' ? Moon : theme === 'light' ? Sun : Laptop
 
-  // Global Keyboard Shortcuts
+  // ── Keyboard shortcuts ─────────────────────────────────────────────────────
   useEffect(() => {
-    const handleGlobalShortcuts = (e) => {
+    const handleKeyDown = (e) => {
       const tag = document.activeElement?.tagName
       const isTyping =
-        tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable
+        tag === 'INPUT' ||
+        tag === 'TEXTAREA' ||
+        document.activeElement?.isContentEditable
 
-      // Escape closes modals
+      // Escape closes any open modal — always fires
       if (e.key === 'Escape') {
-        setSettingsOpen((prev) => (prev ? false : prev))
-        setTelemetryOpen((prev) => (prev ? false : prev))
+        if (settingsOpen) { setSettingsOpen(false); return }
+        if (telemetryOpen) { setTelemetryOpen(false); return }
         return
       }
 
-      // Block shortcuts while user is typing in an input
+      // Ctrl+, toggles Settings (open or close) — skip if typing in input
+      if ((e.ctrlKey || e.metaKey) && e.key === ',') {
+        e.preventDefault()
+        setSettingsOpen((prev) => !prev)
+        return
+      }
+
+      // Block all remaining shortcuts while focused inside an input
       if (isTyping) return
 
-      // CMD/CTRL+K — focus search
+      // Ctrl+\ — toggle sidebar with smooth animation
+      if ((e.ctrlKey || e.metaKey) && e.key === '\\') {
+        e.preventDefault()
+        setIsCollapsed((prev) => !prev)
+        return
+      }
+
+      // Ctrl+K — focus search (only when sidebar is open)
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
         if (!isCollapsed) {
@@ -169,50 +183,24 @@ const Sidebar = ({
         }
         return
       }
-
-      // CMD/CTRL+N — new chat
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
-        e.preventDefault()
-        handleCreateNewChat()
-        return
-      }
-
-      // CMD/CTRL+\ — toggle sidebar
-      if ((e.ctrlKey || e.metaKey) && e.key === '\\') {
-        e.preventDefault()
-        setIsCollapsed((prev) => !prev)
-        return
-      }
-
-      // CMD/CTRL+, — open settings
-      if ((e.ctrlKey || e.metaKey) && e.key === ',') {
-        e.preventDefault()
-        setSettingsOpen(true)
-        return
-      }
     }
 
-    window.addEventListener('keydown', handleGlobalShortcuts)
-    return () => window.removeEventListener('keydown', handleGlobalShortcuts)
-  }, [handleCreateNewChat, setIsCollapsed, isCollapsed])
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleCreateNewChat, setIsCollapsed, isCollapsed, settingsOpen, telemetryOpen])
 
+  // ── Rename helpers ─────────────────────────────────────────────────────────
   const handleStartRename = (id, title, e) => {
     e.stopPropagation()
     setEditingId(id)
     setEditTitle(title)
   }
-
   const handleSaveRename = (id) => {
-    if (!editTitle.trim()) {
-      setEditingId(null)
-      return
-    }
+    if (!editTitle.trim()) { setEditingId(null); return }
     onRenameChat(id, editTitle)
     setEditingId(null)
   }
-
   const handleCancelRename = () => setEditingId(null)
-
   const handleDelete = (id, e) => {
     e.stopPropagation()
     onDeleteChat(id)
@@ -222,130 +210,88 @@ const Sidebar = ({
     chat.title.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const collapsedClass = 'w-0 border-r-0 overflow-hidden'
-  const expandedStyle = isCollapsed ? {} : { width: sidebarWidth }
-
-  const sidebarClass = `
-    fixed inset-y-0 left-0 z-40 flex flex-col h-screen bg-sidebar-bg text-secondary
-    transition-[width] duration-300 ease-in-out md:sticky md:top-0 md:h-screen
-    ${isCollapsed ? collapsedClass : 'border-r border-border-app'}
-    ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-  `
+  // ── Sidebar width logic ────────────────────────────────────────────────────
+  // Use CSS width (no transition) during drag; CSS transition only for collapse/expand
+  const expandedWidth = isCollapsed ? 0 : sidebarWidth
 
   return (
     <>
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm md:hidden transition-opacity duration-300"
+          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm md:hidden"
           onClick={() => setMobileOpen(false)}
           aria-hidden="true"
         />
       )}
 
       <aside
-        className={sidebarClass}
-        style={expandedStyle}
+        className={[
+          'fixed inset-y-0 left-0 z-40 flex flex-col h-screen bg-sidebar-bg text-secondary',
+          'md:sticky md:top-0 md:h-screen overflow-hidden',
+          // Smooth collapse/expand animation via CSS transition
+          'transition-[width] duration-300 ease-in-out',
+          // Border only when visible
+          !isCollapsed ? 'border-r border-border-app' : '',
+          // Mobile drawer
+          mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+        ].join(' ')}
+        style={{ width: expandedWidth }}
         aria-label="RouteMind workspace sidebar"
       >
-        {/* Header */}
-        <div className="h-[76px] px-4 flex items-center justify-between border-b border-border-app overflow-hidden shrink-0">
+        {/* ── Header ── */}
+        <div className="h-[76px] px-4 flex items-center justify-between border-b border-border-app shrink-0">
           <Link
             to="/"
             className="flex items-center gap-3 select-none group/logo focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 rounded p-0.5"
           >
             <div className="relative flex items-center justify-center w-9 h-9 rounded-lg bg-card-bg border border-border-app group-hover/logo:border-blue-500/40 transition-colors duration-200 shrink-0">
-              <svg
-                className="w-[20px] h-[20px] text-neutral-400 group-hover/logo:text-blue-400 transition-colors duration-200"
-                viewBox="0 0 32 32"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M8 10C12 10 14 6 18 6H24"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  className="text-neutral-300 dark:text-neutral-700 group-hover/logo:text-neutral-400 dark:group-hover/logo:text-neutral-600 transition-colors duration-200"
-                />
-                <path
-                  d="M8 16H24"
-                  stroke="#3B82F6"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  className="drop-shadow-[0_0_4px_rgba(59,130,246,0.6)]"
-                />
-                <path
-                  d="M8 22C12 22 14 26 18 26H24"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  className="text-neutral-300 dark:text-neutral-700 group-hover/logo:text-neutral-400 dark:group-hover/logo:text-neutral-600 transition-colors duration-200"
-                />
-                <rect
-                  x="6"
-                  y="8"
-                  width="4"
-                  height="16"
-                  rx="1"
-                  className="fill-neutral-200 dark:fill-neutral-800 stroke-neutral-300 dark:stroke-neutral-700 transition-colors duration-200"
-                  strokeWidth="1.5"
-                />
+              <svg className="w-[20px] h-[20px] text-neutral-400 group-hover/logo:text-blue-400 transition-colors duration-200" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 10C12 10 14 6 18 6H24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-neutral-300 dark:text-neutral-700" />
+                <path d="M8 16H24" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" className="drop-shadow-[0_0_4px_rgba(59,130,246,0.6)]" />
+                <path d="M8 22C12 22 14 26 18 26H24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-neutral-300 dark:text-neutral-700" />
+                <rect x="6" y="8" width="4" height="16" rx="1" className="fill-neutral-200 dark:fill-neutral-800 stroke-neutral-300 dark:stroke-neutral-700" strokeWidth="1.5" />
                 <circle cx="8" cy="16" r="1.5" fill="#3B82F6" />
-                <circle
-                  cx="24"
-                  cy="6"
-                  r="2"
-                  className="fill-neutral-400 dark:fill-neutral-600 transition-colors duration-200"
-                />
+                <circle cx="24" cy="6" r="2" className="fill-neutral-400 dark:fill-neutral-600" />
                 <circle cx="24" cy="16" r="3" fill="#3B82F6" className="animate-pulse" />
-                <circle
-                  cx="24"
-                  cy="26"
-                  r="2"
-                  className="fill-neutral-400 dark:fill-neutral-600 transition-colors duration-200"
-                />
+                <circle cx="24" cy="26" r="2" className="fill-neutral-400 dark:fill-neutral-600" />
               </svg>
-              <div className="absolute inset-0 bg-blue-500/5 blur-md rounded-lg -z-10"></div>
+              <div className="absolute inset-0 bg-blue-500/5 blur-md rounded-lg -z-10" />
             </div>
-            <div
-              className={`flex flex-col transition-all duration-200 ${isCollapsed ? 'opacity-0 w-0 overflow-hidden translate-x-2' : 'opacity-100 w-auto translate-x-0'}`}
-            >
-              <span className="text-primary font-semibold text-base tracking-tight leading-none group-hover/logo:text-primary/80 transition-colors">
-                RouteMind
-              </span>
-              <span className="text-[10px] text-neutral-500 font-medium tracking-wide mt-1.5 uppercase font-mono">
-                Intelligent AI Routing
-              </span>
+            <div className={`flex flex-col transition-all duration-200 ${
+              isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
+            }`}>
+              <span className="text-primary font-semibold text-base tracking-tight leading-none whitespace-nowrap">RouteMind</span>
+              <span className="text-[10px] text-neutral-500 font-medium tracking-wide mt-1.5 uppercase font-mono whitespace-nowrap">Intelligent AI Routing</span>
             </div>
           </Link>
           <button
             className="md:hidden p-1.5 rounded-md hover:bg-neutral-800 text-neutral-400 hover:text-white transition-colors"
             onClick={() => setMobileOpen(false)}
-            aria-label="Close sidebar drawer"
+            aria-label="Close sidebar"
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* New Chat */}
+        {/* ── New Chat ── */}
         <div className="p-3.5 shrink-0">
-          <Tooltip text="New Chat (Ctrl+N)" isCollapsed={isCollapsed}>
+          <Tooltip text="New Chat" isCollapsed={isCollapsed}>
             <button
               onClick={handleCreateNewChat}
-              className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-sidebar-bg border border-border-app text-primary text-sm font-medium hover:border-blue-500/50 hover:bg-card-bg transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-blue-500/50 active:scale-[0.98] cursor-pointer ${isCollapsed ? 'h-10 w-10 p-0' : 'h-10'}`}
-              aria-label="Start new conversation (Ctrl+N)"
+              className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-sidebar-bg border border-border-app text-primary text-sm font-medium hover:border-blue-500/50 hover:bg-card-bg transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-blue-500/50 active:scale-[0.98] cursor-pointer ${
+                isCollapsed ? 'h-10 w-10 p-0' : 'h-10'
+              }`}
+              aria-label="New conversation"
             >
               <Plus size={16} className="text-blue-400 shrink-0" />
-              <span
-                className={`transition-opacity duration-200 ${isCollapsed ? 'hidden opacity-0' : 'block opacity-100'}`}
-              >
-                New Chat
-              </span>
+              <span className={`whitespace-nowrap transition-opacity duration-200 ${
+                isCollapsed ? 'hidden opacity-0' : 'block opacity-100'
+              }`}>New Chat</span>
             </button>
           </Tooltip>
         </div>
 
-        {/* Search */}
+        {/* ── Search ── */}
         {!isCollapsed && (
           <div className="px-3.5 pb-2 shrink-0">
             <div className="relative flex items-center">
@@ -358,10 +304,7 @@ const Sidebar = ({
                 className="w-full bg-card-bg border border-border-app rounded-md py-1.5 pl-8 pr-3 text-xs text-primary placeholder-neutral-500 focus:outline-none focus:border-[#3B82F6]/50 focus:ring-0 transition-colors"
               />
               {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2 text-neutral-500 hover:text-neutral-300 p-0.5 rounded"
-                >
+                <button onClick={() => setSearchQuery('')} className="absolute right-2 text-neutral-500 hover:text-neutral-300 p-0.5 rounded">
                   <X size={12} />
                 </button>
               )}
@@ -369,7 +312,7 @@ const Sidebar = ({
           </div>
         )}
 
-        {/* Chat list */}
+        {/* ── Chat list ── */}
         <nav
           className="flex-1 overflow-y-auto px-2 py-2 space-y-1 select-none scrollbar-thin scrollbar-thumb-neutral-800 scrollbar-track-transparent"
           aria-label="Conversation history"
@@ -395,12 +338,13 @@ const Sidebar = ({
                         handleChatSelect(chat.id)
                       }
                     }}
-                    className={`group relative flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-200 outline-none cursor-pointer ${isActive ? 'bg-card-bg text-primary font-medium border-l-[3px] border-blue-500 pl-[9px] rounded-l-none' : 'text-neutral-400 hover:bg-card-bg/50 hover:text-primary'} ${isCollapsed ? 'justify-center p-2 rounded-lg border-l-0 pl-2' : ''}`}
+                    className={`group relative flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-200 outline-none cursor-pointer ${
+                      isActive
+                        ? 'bg-card-bg text-primary font-medium border-l-[3px] border-blue-500 pl-[9px] rounded-l-none'
+                        : 'text-neutral-400 hover:bg-card-bg/50 hover:text-primary'
+                    } ${isCollapsed ? 'justify-center p-2 rounded-lg border-l-0 pl-2' : ''}`}
                   >
-                    <MessageSquare
-                      size={15}
-                      className={`shrink-0 ${isActive ? 'text-blue-400' : 'text-neutral-500 group-hover:text-neutral-300'}`}
-                    />
+                    <MessageSquare size={15} className={`shrink-0 ${isActive ? 'text-blue-400' : 'text-neutral-500 group-hover:text-neutral-300'}`} />
                     {!isCollapsed && (
                       <div className="flex-1 min-w-0 pr-6">
                         {isEditing ? (
@@ -419,29 +363,17 @@ const Sidebar = ({
                         ) : (
                           <div className="flex flex-col">
                             <span className="truncate text-xs text-inherit">{chat.title}</span>
-                            <span className="text-[10px] text-neutral-600 font-mono mt-0.5 group-hover:text-neutral-500 transition-colors">
-                              {chat.timestamp}
-                            </span>
+                            <span className="text-[10px] text-neutral-600 font-mono mt-0.5 group-hover:text-neutral-500 transition-colors">{chat.timestamp}</span>
                           </div>
                         )}
                       </div>
                     )}
                     {!isCollapsed && !isEditing && (
                       <div className="absolute right-2 opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity duration-150">
-                        <button
-                          onClick={(e) => handleStartRename(chat.id, chat.title, e)}
-                          className="p-1 rounded text-neutral-500 hover:text-primary hover:bg-card-bg transition-colors"
-                          title="Rename"
-                          aria-label={`Rename ${chat.title}`}
-                        >
+                        <button onClick={(e) => handleStartRename(chat.id, chat.title, e)} className="p-1 rounded text-neutral-500 hover:text-primary hover:bg-card-bg transition-colors" title="Rename" aria-label={`Rename ${chat.title}`}>
                           <Edit2 size={12} />
                         </button>
-                        <button
-                          onClick={(e) => handleDelete(chat.id, e)}
-                          className="p-1 rounded text-neutral-500 hover:text-red-400 hover:bg-card-bg transition-colors"
-                          title="Delete conversation"
-                          aria-label={`Delete ${chat.title}`}
-                        >
+                        <button onClick={(e) => handleDelete(chat.id, e)} className="p-1 rounded text-neutral-500 hover:text-red-400 hover:bg-card-bg transition-colors" title="Delete" aria-label={`Delete ${chat.title}`}>
                           <Trash2 size={12} />
                         </button>
                       </div>
@@ -453,33 +385,27 @@ const Sidebar = ({
           )}
         </nav>
 
-        {/* Footer */}
-        <div className="border-t border-border-app p-3 space-y-2 shrink-0 bg-sidebar-bg relative">
+        {/* ── Footer ── */}
+        <div className="border-t border-border-app p-3 space-y-2 shrink-0 bg-sidebar-bg">
           {!isCollapsed && (
             <button
               onClick={() => setTelemetryOpen(true)}
-              className="w-full px-2.5 py-1.5 rounded-lg bg-card-bg hover:bg-sidebar-bg border border-border-app/40 hover:border-blue-500/30 text-[10px] text-neutral-400 font-mono flex items-center justify-between select-none transition-all active:scale-[0.98] outline-none focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 cursor-pointer"
+              className="w-full px-2.5 py-1.5 rounded-lg bg-card-bg hover:bg-sidebar-bg border border-border-app/40 hover:border-blue-500/30 text-[10px] text-neutral-400 font-mono flex items-center justify-between select-none transition-all active:scale-[0.98] outline-none focus-visible:ring-1 focus-visible:ring-blue-500 cursor-pointer"
               aria-label="Open Live Routing Telemetry"
             >
-              <span className="flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-                Routed: {stats.totalQueries} queries
+              <span className="flex items-center gap-1.5 min-w-0">
+                <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse shrink-0" />
+                <span className="truncate">Routed: {stats.totalQueries} queries</span>
               </span>
-              <span className="text-blue-400 font-semibold text-[9px] tracking-wide font-mono bg-blue-950/20 px-1 py-0.5 rounded border border-blue-500/20">
-                TELEMETRY
-              </span>
+              <span className="text-blue-400 font-semibold text-[9px] tracking-wide font-mono bg-blue-950/20 px-1 py-0.5 rounded border border-blue-500/20 shrink-0 ml-2">TELEMETRY</span>
             </button>
           )}
 
-          <div
-            className={`flex items-center gap-3 px-1.5 py-1 ${isCollapsed ? 'justify-center' : ''}`}
-          >
+          <div className={`flex items-center gap-3 px-1.5 py-1 min-w-0 ${isCollapsed ? 'justify-center' : ''}`}>
             <Tooltip text="Developer Account" isCollapsed={isCollapsed}>
               <div className="relative shrink-0">
-                <div className="w-8 h-8 rounded-full bg-card-bg border border-border-app flex items-center justify-center text-xs font-semibold text-blue-400 ring-2 ring-blue-500/10">
-                  AC
-                </div>
-                <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-sidebar-bg rounded-full"></div>
+                <div className="w-8 h-8 rounded-full bg-card-bg border border-border-app flex items-center justify-center text-xs font-semibold text-blue-400 ring-2 ring-blue-500/10">AC</div>
+                <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-sidebar-bg rounded-full" />
               </div>
             </Tooltip>
             {!isCollapsed && (
@@ -489,44 +415,36 @@ const Sidebar = ({
               </div>
             )}
             {!isCollapsed && (
-              <span className="px-1.5 py-0.5 rounded bg-blue-950/40 border border-blue-500/20 text-[9px] font-mono text-blue-400 select-none">
-                Pro
-              </span>
+              <span className="px-1.5 py-0.5 rounded bg-blue-950/40 border border-blue-500/20 text-[9px] font-mono text-blue-400 select-none shrink-0">Pro</span>
             )}
           </div>
 
-          <div
-            className={`flex items-center gap-1.5 pt-1 border-t border-border-app/40 ${isCollapsed ? 'flex-col items-center' : 'justify-between'}`}
-          >
+          <div className={`flex items-center gap-1.5 pt-1 border-t border-border-app/40 ${
+            isCollapsed ? 'flex-col items-center' : 'justify-between'
+          }`}>
             <Tooltip text="Settings (Ctrl+,)" isCollapsed={isCollapsed}>
               <button
-                onClick={() => setSettingsOpen(true)}
+                onClick={() => setSettingsOpen((p) => !p)}
                 className="p-2 rounded-lg text-neutral-400 hover:text-primary hover:bg-card-bg border border-transparent hover:border-border-app transition-all focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50"
-                aria-label="Open settings (Ctrl+,)"
+                aria-label="Toggle settings (Ctrl+,)"
               >
                 <Settings size={15} />
               </button>
             </Tooltip>
-            <Tooltip
-              text={`Theme: ${themeLabels[theme]} → ${themeLabels[nextThemeLabel]}`}
-              isCollapsed={isCollapsed}
-            >
+            <Tooltip text={`Theme: ${themeLabels[theme]} → ${themeLabels[nextThemeLabel]}`} isCollapsed={isCollapsed}>
               <button
                 onClick={handleCycleTheme}
                 className="p-2 rounded-lg text-neutral-400 hover:text-primary hover:bg-card-bg border border-transparent hover:border-border-app transition-all focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50 cursor-pointer"
-                aria-label={`Current theme: ${themeLabels[theme]}. Click for ${themeLabels[nextThemeLabel]}`}
+                aria-label={`Switch to ${themeLabels[nextThemeLabel]} theme`}
               >
                 <ThemeIcon size={15} />
               </button>
             </Tooltip>
-            <Tooltip
-              text={isCollapsed ? 'Expand Sidebar (Ctrl+\\)' : 'Collapse Sidebar (Ctrl+\\)'}
-              isCollapsed={isCollapsed}
-            >
+            <Tooltip text={isCollapsed ? 'Expand (Ctrl+\\)' : 'Collapse (Ctrl+\\)'} isCollapsed={isCollapsed}>
               <button
-                onClick={() => setIsCollapsed(!isCollapsed)}
+                onClick={() => setIsCollapsed((p) => !p)}
                 className="p-2 rounded-lg text-neutral-400 hover:text-primary hover:bg-card-bg border border-transparent hover:border-border-app transition-all focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500/50"
-                aria-label={isCollapsed ? 'Expand sidebar (Ctrl+\\)' : 'Collapse sidebar (Ctrl+\\)'}
+                aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               >
                 {isCollapsed ? <PanelLeft size={15} /> : <PanelLeftClose size={15} />}
               </button>
@@ -534,16 +452,13 @@ const Sidebar = ({
           </div>
         </div>
 
-        {/* Resize handle — only on desktop when expanded */}
+        {/* ── Resize handle (desktop only, when expanded) ── */}
         {!isCollapsed && (
           <div
             onMouseDown={handleResizeMouseDown}
-            className="absolute top-0 right-0 w-1 h-full cursor-col-resize z-50 group hidden md:block"
-            title="Drag to resize sidebar"
+            className="absolute top-0 right-0 w-1.5 h-full cursor-col-resize z-50 group hidden md:block hover:bg-blue-500/20 transition-colors duration-150"
             aria-hidden="true"
-          >
-            <div className="w-full h-full group-hover:bg-blue-500/30 transition-colors duration-150" />
-          </div>
+          />
         )}
 
         <SettingsModal
