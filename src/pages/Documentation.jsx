@@ -4,7 +4,6 @@ import { motion } from 'framer-motion'
 import {
   ChevronRight,
   Cpu,
-  Check,
   ChevronDown,
   Info,
   Server,
@@ -119,7 +118,7 @@ const Documentation = () => {
           </div>
         </aside>
 
-        {/* Mobile jump bar — fixed text-xs (was text-[11px], below 12px a11y floor) */}
+        {/* Mobile jump bar */}
         <div className="w-full md:hidden py-2 px-1 border-b border-border-app bg-card-bg/60 backdrop-blur-md sticky top-[76px] z-20 overflow-x-auto scrollbar-none flex gap-2 shrink-0 select-none">
           {NAV_ITEMS.map((item) => (
             <button
@@ -175,7 +174,7 @@ const Documentation = () => {
             </motion.div>
           </motion.section>
 
-          {/* SECTION 2: Why RouteMind — The Problem */}
+          {/* SECTION 2: Why RouteMind */}
           <motion.section
             id="why-routemind"
             initial="hidden"
@@ -263,7 +262,6 @@ const Documentation = () => {
               </motion.h2>
             </div>
 
-            {/* Updated: 6 steps matching actual code pipeline */}
             <motion.div
               variants={fadeInUp}
               className="grid grid-cols-2 sm:grid-cols-6 gap-2 bg-card-bg border border-border-app p-4 rounded-xl text-center select-none font-mono text-[10px]"
@@ -347,7 +345,7 @@ const Documentation = () => {
             </motion.div>
           </motion.section>
 
-          {/* SECTION 4: Supported Models — updated to match router.py exactly */}
+          {/* SECTION 4: Supported Models */}
           <motion.section
             id="supported-models"
             initial="hidden"
@@ -535,7 +533,7 @@ const Documentation = () => {
             </motion.div>
           </motion.section>
 
-          {/* SECTION 6: Architecture — expanded to match actual backend */}
+          {/* SECTION 6: Architecture */}
           <motion.section
             id="architecture"
             initial="hidden"
@@ -559,7 +557,6 @@ const Documentation = () => {
               </motion.h2>
             </div>
 
-            {/* Updated: shows actual pipeline steps from backend code */}
             <motion.div
               variants={fadeInUp}
               className="p-5 bg-card-bg border border-border-app rounded-xl space-y-4 select-none font-mono text-[10px] text-center overflow-x-auto"
@@ -609,7 +606,7 @@ const Documentation = () => {
             </motion.div>
           </motion.section>
 
-          {/* SECTION 7: FAQ — corrected accuracy claim and routing description */}
+          {/* SECTION 7: FAQ */}
           <motion.section
             id="faq"
             initial="hidden"
@@ -688,7 +685,7 @@ const Documentation = () => {
             </motion.div>
           </motion.section>
 
-          {/* SECTION 8: Future Roadmap — Clock/Circle icons, not Check */}
+          {/* SECTION 8: Future Roadmap */}
           <motion.section
             id="roadmap"
             initial="hidden"
@@ -735,7 +732,6 @@ const Documentation = () => {
                   className="flex items-center justify-between bg-card-bg border border-border-app p-3 rounded-lg"
                 >
                   <div className="flex items-center gap-2">
-                    {/* Clock for in-development, Circle for planned — not Check (implies done) */}
                     {item.statusColor === 'blue' ? (
                       <Clock size={11} className="text-blue-600 dark:text-blue-400" />
                     ) : (
