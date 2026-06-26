@@ -14,6 +14,8 @@ PRICING_TABLE = {
     "gemini-2.5-pro": 0.00000125,
     "llama-3.3-70b-versatile": 0.0000007,
     "llama-3.1-8b-instant": 0.00000005,
+    "cohere/north-mini-code:free": 0.0,
+    "north-mini-code": 0.0,
 }
 
 DEFAULT_PRICE_PER_TOKEN = 0.000015  # Fallback price per token in USD

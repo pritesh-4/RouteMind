@@ -7,7 +7,7 @@ import ChatInput from '../components/ChatInput'
 import TypingIndicator from '../components/TypingIndicator'
 import { chatService } from '../services/chatService'
 import { useToast } from '../context/ToastContext'
-import { defaultStats } from '../data/mockData'
+
 
 const Chat = () => {
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -16,81 +16,11 @@ const Chat = () => {
   const { showToast } = useToast()
 
   const [chatHistory, setChatHistory] = useState([
-    { id: '1', title: 'RouteMind Introduction', timestamp: 'Just now' },
-    { id: '2', title: 'Code Performance Tuning', timestamp: '2h ago' },
-    { id: '3', title: 'LLM Routing Benchmarks', timestamp: 'Yesterday' },
+    { id: '1', title: 'New Workspace Chat', timestamp: 'Just now' },
   ])
 
   const [conversationsMessages, setConversationsMessages] = useState({
     1: [],
-    2: [
-      {
-        id: 'm1',
-        role: 'user',
-        content: 'Explain how to write a simple fast async HTTP server in Rust.',
-        time: '2h ago',
-      },
-      {
-        id: 'm2',
-        role: 'assistant',
-        content:
-          'To build a fast, async HTTP server in Rust, we should use Tokio as the async runtime and Axum (built on top of hyper and tower) as the web framework. Here is a basic implementation:\n\n```rust\nuse axum::{routing::get, Router};\n\n#[tokio::main]\nasync fn main() {\n    let app = Router::new().route("/", get(|| async { "Hello from RouteMind!" }));\n    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();\n    axum::serve(listener, app).await.unwrap();\n}\n```',
-        time: '2h ago',
-        routing: {
-          selected_model: 'llama-3.3-70b-versatile',
-          provider: 'groq',
-          routing_reason: 'Routed to Llama 3.3 via Groq for precise Rust syntax construction and system-level performance optimizations.',
-          metrics: {
-            estimated_cost_usd: 0.000084,
-            total_tokens: 120,
-            intent_match: 99,
-            response_quality: 94,
-            latency_index: 92,
-            cost_efficiency: 92,
-            composite_score: 94,
-            response_speed: 'Very Fast',
-            provider_entity: 'Groq',
-            model_version: 'llama-3.3-70b-versatile'
-          },
-          confidence: 99,
-          reason: 'Routed to Llama 3.3 via Groq for precise Rust syntax construction and system-level performance optimizations.',
-        },
-      },
-    ],
-    3: [
-      {
-        id: 'm3',
-        role: 'user',
-        content: 'What is the latency difference between Gemini 2.5 Flash and Llama 3.3?',
-        time: 'Yesterday',
-      },
-      {
-        id: 'm4',
-        role: 'assistant',
-        content:
-          'Gemini 2.5 Flash has extremely low network latency, typically under 200ms, making it ideal for real-time document analysis and search. Llama 3.3 (running on Groq) is optimized for ultra-fast token generation speed, yielding high throughput for code execution and logic verification.',
-        time: 'Yesterday',
-        routing: {
-          selected_model: 'gemini-2.5-flash',
-          provider: 'gemini',
-          routing_reason: 'Routed to Gemini 2.5 Flash due to balanced latency and cost optimization policy mappings for general-intent questions.',
-          metrics: {
-            estimated_cost_usd: 0.000006,
-            total_tokens: 80,
-            intent_match: 94,
-            response_quality: 91,
-            latency_index: 96,
-            cost_efficiency: 98,
-            composite_score: 95,
-            response_speed: 'Extremely Fast',
-            provider_entity: 'Gemini',
-            model_version: 'gemini-2.5-flash'
-          },
-          confidence: 94,
-          reason: 'Routed to Gemini 2.5 Flash due to balanced latency and cost optimization policy mappings for general-intent questions.',
-        },
-      },
-    ],
   })
 
   const [isLoading, setIsLoading] = useState(false)
@@ -225,9 +155,9 @@ const Chat = () => {
       // Await backend response here if it hasn't completed yet
       const backendResponse = await apiCallPromise
 
-      const { response: backendResponseDetail, routing: backendRoutingDetail } = backendResponse
-      const model = backendRoutingDetail.selected_model
-      const reply = backendResponseDetail.content
+      // Flat response: all fields at top level
+      const model = backendResponse.selected_model
+      const reply = backendResponse.content
 
       // Reveal selected model preview badge in loading indicator
       setPendingModel(model)
@@ -244,7 +174,7 @@ const Chat = () => {
         content: '',
         time: 'Just now',
         isStreaming: true,
-        routing: backendRoutingDetail, // Pass the direct backend routing object!
+        routing: backendResponse, // Pass the entire flat response as routing data
       }
 
       setConversationsMessages((prev) => {
@@ -262,7 +192,7 @@ const Chat = () => {
         content: reply,
         time: 'Just now',
         isStreaming: false,
-        routing: backendRoutingDetail, // Pass the direct backend routing object!
+        routing: backendResponse, // Pass the entire flat response as routing data
       }
 
       setConversationsMessages((prev) => {
@@ -275,15 +205,16 @@ const Chat = () => {
 
       // Update live telemetry stats in localStorage
       const storedStats = localStorage.getItem('routingStats')
-      const stats = storedStats ? JSON.parse(storedStats) : defaultStats
+      const defaultStatsInit = { totalQueries: 0, savings: 0.0, models: {} }
+      const stats = storedStats ? JSON.parse(storedStats) : defaultStatsInit
       stats.totalQueries += 1
 
-      // Calculate real savings based on actual token costs vs baseline model (Claude 3.5 Sonnet)
-      const actualCost = backendRoutingDetail.metrics?.estimated_cost_usd ?? backendRoutingDetail.estimated_cost_usd ?? 0
-      const totalTokens = backendRoutingDetail.metrics?.total_tokens ?? backendRoutingDetail.total_tokens ?? 0
+      // Calculate real savings based on actual token costs vs baseline model (Gemini 1.5 Pro)
+      const actualCost = backendResponse.estimated_cost_usd ?? 0
+      const totalTokens = backendResponse.total_tokens ?? 0
       let savedAmount = 0
       if (totalTokens > 0) {
-        const baselineCost = totalTokens * 0.000003 // Claude 3.5 Sonnet baseline ($3.00 per M tokens)
+        const baselineCost = totalTokens * 0.000003 // Gemini 1.5 Pro baseline ($3.00 per M tokens)
         savedAmount = Math.max(0, baselineCost - actualCost)
       } else {
         // Fallback estimate if token count is unavailable
@@ -294,8 +225,8 @@ const Chat = () => {
       stats.models[model] = (stats.models[model] || 0) + 1
 
       // Calculate real overhead latency
-      const processingTime = backendRoutingDetail.processing_time_ms ?? 0
-      const providerLatency = backendRoutingDetail.latency_ms ?? 0
+      const processingTime = backendResponse.processing_time_ms ?? 0
+      const providerLatency = backendResponse.latency_ms ?? 0
       const overhead = Math.max(1, processingTime - providerLatency)
       stats.totalOverhead = (stats.totalOverhead || 0) + overhead
       stats.avgOverhead = stats.totalQueries > 0 ? (stats.totalOverhead / stats.totalQueries) : overhead

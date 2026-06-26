@@ -3,7 +3,7 @@ Pydantic schemas for Chat requests and responses.
 Defines production-ready validation, descriptions, and examples.
 """
 
-from typing import List, Optional, Literal
+from typing import List, Optional, Literal, Dict, Any
 from pydantic import BaseModel, Field, field_validator
 from datetime import datetime, timezone
 
@@ -57,11 +57,23 @@ class ChatRequest(BaseModel):
         return value
 
 
-class ResponseDetail(BaseModel):
+class TokenUsage(BaseModel):
     """
-    Details of the generated AI completion response.
+    Schema for token utilization metrics.
+    """
+    prompt_tokens: int = Field(default=0, ge=0)
+    completion_tokens: int = Field(default=0, ge=0)
+    total_tokens: int = Field(default=0, ge=0)
+
+
+class ChatResponse(BaseModel):
+    """
+    Flat schema for the response returned by RouteMind.
+    All fields are top-level for simple, direct frontend consumption.
+    No nested sub-objects — every metric is immediately accessible.
     """
 
+    # --- Response Content ---
     content: str = Field(
         ...,
         description="The generated textual response from the selected AI model.",
@@ -74,20 +86,74 @@ class ResponseDetail(BaseModel):
     )
     attachments: Optional[List[str]] = Field(
         default=None,
-        description="Optional list of attachments that were associated with this response.",
-        examples=[["https://example.com/output.png"]],
+        description="Optional list of attachments associated with this response.",
     )
 
+    # --- Routing Decision ---
+    intent: str = Field(
+        ...,
+        description="The classified intent/category of the message.",
+        examples=["coding"],
+    )
+    provider: str = Field(
+        ...,
+        description="The AI provider hosting the selected model.",
+        examples=["groq"],
+    )
+    selected_model: str = Field(
+        ...,
+        description="The specific AI model that processed the request.",
+        examples=["llama-3.3-70b-versatile"],
+    )
+    routing_policy: str = Field(
+        ...,
+        description="The optimization policy requested by the user.",
+        examples=["balanced"],
+    )
+    confidence: float = Field(
+        ...,
+        description="The confidence score (0.0 to 100.0) of the routing decision.",
+        examples=[95.0],
+        ge=0.0,
+        le=100.0,
+    )
+    reason: str = Field(
+        ...,
+        description="Explaining rationale for why this model and provider were selected.",
+        examples=["Selected Llama-3.3-70b-versatile on Groq for high-quality reasoning."],
+    )
+    routing_reason: str = Field(
+        ...,
+        description="Explainability logic for routing (alias for reason).",
+        examples=["Selected due to optimal intent match and cost efficiency."],
+    )
+    fallback_used: bool = Field(
+        default=False,
+        description="Whether a fallback provider was used due to primary provider failure.",
+    )
+    complexity: str = Field(
+        default="medium",
+        description="The estimated complexity of the user request.",
+        examples=["medium"],
+    )
 
-class RoutingMetrics(BaseModel):
-    """
-    Explainability metrics for model routing.
-    """
-
+    # --- Performance Metrics ---
     latency_ms: float = Field(
         ...,
-        description="The total processing latency in milliseconds.",
-        examples=[842.0],
+        description="The provider API call latency in milliseconds.",
+        examples=[342.1],
+        ge=0.0,
+    )
+    processing_time_ms: int = Field(
+        ...,
+        description="The total end-to-end processing time in milliseconds.",
+        examples=[500],
+        ge=0,
+    )
+    estimated_cost_usd: float = Field(
+        ...,
+        description="Estimated cost in USD calculated using pricing table.",
+        examples=[0.00009],
         ge=0.0,
     )
     prompt_tokens: int = Field(
@@ -108,12 +174,8 @@ class RoutingMetrics(BaseModel):
         examples=[469],
         ge=0,
     )
-    estimated_cost_usd: float = Field(
-        ...,
-        description="Estimated cost in USD calculated using pricing table.",
-        examples=[0.00009],
-        ge=0.0,
-    )
+
+    # --- Evaluation Scores ---
     intent_match: int = Field(
         ...,
         description="Intent match confidence (0 to 100).",
@@ -160,11 +222,8 @@ class RoutingMetrics(BaseModel):
         examples=[469],
         ge=0,
     )
-    fallbacks_evaluated: List[str] = Field(
-        ...,
-        description="List of other providers evaluated by the router.",
-        examples=[["openai", "claude"]],
-    )
+
+    # --- Provider Display ---
     provider_entity: str = Field(
         ...,
         description="User-friendly name of the provider.",
@@ -175,112 +234,16 @@ class RoutingMetrics(BaseModel):
         description="The actual model version selected.",
         examples=["gemini-2.5-flash"],
     )
-
-
-class RoutingDetail(BaseModel):
-    """
-    Explainability data and routing performance metrics for the decision.
-    """
-
-    intent: str = Field(
+    fallbacks_evaluated: List[str] = Field(
         ...,
-        description="The classified intent/category of the message.",
-        examples=["coding"],
-    )
-    provider: str = Field(
-        ...,
-        description="The AI provider hosting the selected model.",
-        examples=["openai"],
-    )
-    selected_model: str = Field(
-        ...,
-        description="The specific AI model that processed the request.",
-        examples=["gpt-4o"],
-    )
-    routing_policy: str = Field(
-        ...,
-        description="The optimization policy requested by the user.",
-        examples=["quality"],
-    )
-    confidence: float = Field(
-        ...,
-        description="The confidence score (0.0 to 100.0) of the classification or routing decision.",
-        examples=[95.0],
-        ge=0.0,
-        le=100.0,
-    )
-    fallback_status: bool = Field(
-        default=False,
-        description="Whether a fallback provider was used due to primary provider failure.",
-    )
-    reason: str = Field(
-        ...,
-        description="Explaining rationale for why this model and provider were selected.",
-        examples=[
-            "Selected GPT-4o for high-quality reasoning requested in routing policy."
-        ],
-    )
-    estimated_cost: float = Field(
-        ...,
-        description="Estimated token cost of this operation in USD.",
-        examples=[0.0015],
-        ge=0.0,
-    )
-    processing_time_ms: int = Field(
-        ...,
-        description="The total processing latency in milliseconds.",
-        examples=[342],
-        ge=0,
-    )
-    latency_ms: float = Field(
-        ...,
-        description="The total processing latency in milliseconds.",
-        examples=[342.1],
-        ge=0.0,
-    )
-    prompt_tokens: int = Field(
-        ...,
-        description="Tokens used in the prompt.",
-        examples=[10],
-        ge=0,
-    )
-    completion_tokens: int = Field(
-        ...,
-        description="Tokens used in the completion.",
-        examples=[20],
-        ge=0,
-    )
-    total_tokens: int = Field(
-        ...,
-        description="Total tokens used.",
-        examples=[30],
-        ge=0,
-    )
-    estimated_cost_usd: float = Field(
-        ...,
-        description="Estimated cost in USD calculated using pricing table.",
-        examples=[0.00015],
-        ge=0.0,
-    )
-    routing_reason: str = Field(
-        ...,
-        description="Explainability logic for routing.",
-        examples=["Reasoning explanation"],
-    )
-    metrics: RoutingMetrics = Field(
-        ...,
-        description="Detailed routing performance and decision metrics.",
+        description="List of other providers evaluated by the router.",
+        examples=[["Groq", "NVIDIA NIM"]],
     )
 
-
-class MetadataDetail(BaseModel):
-    """
-    Diagnostic diagnostic metadata relating to the API request execution.
-    """
-
+    # --- Metadata ---
     request_id: str = Field(
         ...,
-        description="Unique identifier dynamically generated for this request execution.",
+        description="Unique identifier for this request execution.",
         examples=["req_d3f28a9b7"],
     )
     timestamp: str = Field(
@@ -290,7 +253,7 @@ class MetadataDetail(BaseModel):
     )
     status: str = Field(
         default="success",
-        description="Status string indicating success or partial failure of the execution.",
+        description="Status string indicating success or partial failure.",
         examples=["success"],
     )
     api_version: str = Field(
@@ -299,17 +262,24 @@ class MetadataDetail(BaseModel):
         examples=["1.0.0"],
     )
 
-
-class ChatResponse(BaseModel):
-    """
-    Nested schema structure for the response returned by RouteMind.
-    Divided into response content, explainability routing metrics, and call metadata.
-    """
-
-    response: ResponseDetail = Field(
-        ..., description="Contains AI response information."
+    # --- Alias/Extra Flat Fields for Compatibility ---
+    success: bool = Field(
+        default=True,
+        description="Indicates if the request was processed successfully.",
     )
-    routing: RoutingDetail = Field(
-        ..., description="Contains RouteMind's explainability data."
+    response: str = Field(
+        default="",
+        description="The generated textual response from the selected AI model (alias for content).",
     )
-    metadata: MetadataDetail = Field(..., description="Contains backend metadata.")
+    estimated_cost: float = Field(
+        default=0.0,
+        description="Estimated cost in USD (alias for estimated_cost_usd).",
+    )
+    usage: Optional[TokenUsage] = Field(
+        default=None,
+        description="Detailed token usage details.",
+    )
+    routing_metadata: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Metadata dictionary for additional routing parameters.",
+    )

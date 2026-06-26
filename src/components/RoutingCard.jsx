@@ -20,12 +20,12 @@ const RoutingCard = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false)
 
-  // Extract props with defaults, giving precedence to fields nested in `routing` prop
+  // With flat schema, all fields are directly on `routing` — no nested `.metrics`
   const modelVal = routing?.selected_model ?? routing?.model ?? model ?? 'N/A'
 
   const costVal =
-    routing?.metrics?.estimated_cost_usd !== undefined && routing?.metrics?.estimated_cost_usd !== null
-      ? `$${parseFloat(routing.metrics.estimated_cost_usd).toFixed(6)}`
+    routing?.estimated_cost_usd !== undefined && routing?.estimated_cost_usd !== null
+      ? `$${parseFloat(routing.estimated_cost_usd).toFixed(6)}`
       : 'N/A'
 
   const confidenceVal =
@@ -40,12 +40,12 @@ const RoutingCard = ({
 
   const reasonVal = routing?.routing_reason ?? routing?.reason ?? reason ?? 'N/A'
 
-  // Calculate real savings percentage based on actual model cost vs expensive baseline (Claude 3.5 Sonnet)
+  // Calculate real savings percentage based on actual model cost vs expensive baseline (Gemini 1.5 Pro)
   let savingsVal = 'N/A'
-  const totalTokens = routing?.metrics?.total_tokens ?? routing?.total_tokens ?? 0
+  const totalTokens = routing?.total_tokens ?? 0
   if (totalTokens > 0) {
-    const cost = routing?.metrics?.estimated_cost_usd ?? routing?.estimated_cost_usd ?? 0
-    const baselineCost = totalTokens * 0.000003 // Claude 3.5 Sonnet baseline
+    const cost = routing?.estimated_cost_usd ?? 0
+    const baselineCost = totalTokens * 0.000003 // Gemini 1.5 Pro baseline
     if (baselineCost > 0) {
       const pct = Math.max(0, Math.min(99, Math.round(((baselineCost - cost) / baselineCost) * 100)))
       savingsVal = `${pct}%`
@@ -60,22 +60,22 @@ const RoutingCard = ({
     }
   }
 
-  const speedVal = routing?.metrics?.response_speed ?? 'N/A'
+  const speedVal = routing?.response_speed ?? 'N/A'
 
   const factorsVal = {
-    intentMatch: routing?.metrics?.intent_match !== undefined && routing?.metrics?.intent_match !== null ? routing.metrics.intent_match : 'N/A',
-    quality: routing?.metrics?.response_quality !== undefined && routing?.metrics?.response_quality !== null ? routing.metrics.response_quality : 'N/A',
-    latency: routing?.metrics?.latency_index !== undefined && routing?.metrics?.latency_index !== null ? routing.metrics.latency_index : 'N/A',
-    costEfficiency: routing?.metrics?.cost_efficiency !== undefined && routing?.metrics?.cost_efficiency !== null ? routing.metrics.cost_efficiency : 'N/A',
+    intentMatch: routing?.intent_match !== undefined && routing?.intent_match !== null ? routing.intent_match : 'N/A',
+    quality: routing?.response_quality !== undefined && routing?.response_quality !== null ? routing.response_quality : 'N/A',
+    latency: routing?.latency_index !== undefined && routing?.latency_index !== null ? routing.latency_index : 'N/A',
+    costEfficiency: routing?.cost_efficiency !== undefined && routing?.cost_efficiency !== null ? routing.cost_efficiency : 'N/A',
   }
 
   const detailsVal = {
     intent: routing?.intent ? (routing.intent.charAt(0).toUpperCase() + routing.intent.slice(1)) : 'N/A',
-    contextLength: routing?.metrics?.context_length !== undefined && routing?.metrics?.context_length !== null ? `${routing.metrics.context_length} tokens` : 'N/A',
-    provider: routing?.metrics?.provider_entity ?? 'N/A',
-    version: routing?.metrics?.model_version ?? 'N/A',
-    score: routing?.metrics?.composite_score !== undefined && routing?.metrics?.composite_score !== null ? `${routing.metrics.composite_score}/100` : 'N/A',
-    fallbacks: routing?.metrics?.fallbacks_evaluated ?? [],
+    contextLength: routing?.context_length !== undefined && routing?.context_length !== null ? `${routing.context_length} tokens` : 'N/A',
+    provider: routing?.provider_entity ?? 'N/A',
+    version: routing?.model_version ?? 'N/A',
+    score: routing?.composite_score !== undefined && routing?.composite_score !== null ? `${routing.composite_score}/100` : 'N/A',
+    fallbacks: routing?.fallbacks_evaluated ?? [],
   }
 
   const isLoadingVal = routing?.isLoading ?? isLoading ?? false
@@ -326,7 +326,7 @@ const RoutingCard = ({
             <div className="text-neutral-600 dark:text-neutral-400 font-mono text-[9px] uppercase tracking-wider mb-0.5">
               Provider
             </div>
-            <div className="text-primary font-medium">{routing?.metrics?.provider_entity ?? 'N/A'}</div>
+            <div className="text-primary font-medium">{routing?.provider_entity ?? 'N/A'}</div>
           </div>
           <div>
             <div className="text-neutral-600 dark:text-neutral-400 font-mono text-[9px] uppercase tracking-wider mb-0.5">
@@ -371,7 +371,7 @@ const RoutingCard = ({
               Prompt Tokens
             </div>
             <div className="text-primary font-mono font-medium">
-              {routing?.metrics?.prompt_tokens !== undefined && routing?.metrics?.prompt_tokens !== null ? routing.metrics.prompt_tokens : 'N/A'}
+              {routing?.prompt_tokens !== undefined && routing?.prompt_tokens !== null ? routing.prompt_tokens : 'N/A'}
             </div>
           </div>
           <div>
@@ -379,7 +379,7 @@ const RoutingCard = ({
               Completion Tokens
             </div>
             <div className="text-primary font-mono font-medium">
-              {routing?.metrics?.completion_tokens !== undefined && routing?.metrics?.completion_tokens !== null ? routing.metrics.completion_tokens : 'N/A'}
+              {routing?.completion_tokens !== undefined && routing?.completion_tokens !== null ? routing.completion_tokens : 'N/A'}
             </div>
           </div>
           <div>
@@ -387,7 +387,7 @@ const RoutingCard = ({
               Total Tokens
             </div>
             <div className="text-primary font-mono font-medium">
-              {routing?.metrics?.total_tokens !== undefined && routing?.metrics?.total_tokens !== null ? routing.metrics.total_tokens : 'N/A'}
+              {routing?.total_tokens !== undefined && routing?.total_tokens !== null ? routing.total_tokens : 'N/A'}
             </div>
           </div>
           <div>
@@ -401,7 +401,7 @@ const RoutingCard = ({
               Fallback Used
             </div>
             <div className="text-primary font-medium">
-              {routing?.fallback_status !== undefined && routing?.fallback_status !== null ? (routing.fallback_status ? 'Yes' : 'No') : 'N/A'}
+              {routing?.fallback_used !== undefined && routing?.fallback_used !== null ? (routing.fallback_used ? 'Yes' : 'No') : 'N/A'}
             </div>
           </div>
           <div>

@@ -14,8 +14,49 @@ import {
 } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import { TERMINAL_EXAMPLES as EXAMPLES } from '../data/mockData'
 import { fadeInUp, stagger } from '../utils/animations'
+
+const EXAMPLES = [
+  {
+    prompt: 'Debug my React state management synchronization error.',
+    steps: [
+      'Analyzing Intent Structures...',
+      'Comparing Inference Models...',
+      'Evaluating Memory & Costs...',
+    ],
+    selectedModel: 'Llama 3.3 (Groq)',
+    reason:
+      'Routed to Llama 3.3 (Groq) due to superior code logic evaluation and sub-second generation speeds.',
+    cost: '$0.00018',
+    savings: '85%',
+  },
+  {
+    prompt: 'Summarize the attention mechanism in this 80-page transformers PDF.',
+    steps: [
+      'Analyzing Intent Structures...',
+      'Measuring Context Payload...',
+      'Evaluating Edge Node Latency...',
+    ],
+    selectedModel: 'Gemini 2.5 Flash',
+    reason:
+      'Routed to Gemini 2.5 Flash due to high semantic document indexing and optimal cost efficiency.',
+    cost: '$0.00006',
+    savings: '97%',
+  },
+  {
+    prompt: 'Draft a short, punchy product update tweet for RouteMind v2 launch.',
+    steps: [
+      'Analyzing Intent Structures...',
+      'Comparing Inference Models...',
+      'Calculating Token Budget...',
+    ],
+    selectedModel: 'Gemini 2.5 Flash',
+    reason:
+      'Routed to Gemini 2.5 Flash for rapid low-overhead creative copywriting and low-cost response packaging.',
+    cost: '$0.00001',
+    savings: '98%',
+  },
+]
 
 // Terminal Simulator Component
 const TerminalSimulator = () => {
@@ -266,7 +307,7 @@ const Home = () => {
             Supported Routing Destinations
           </p>
           <div className="flex flex-wrap justify-center items-center gap-x-12 gap-y-6 text-sm font-semibold font-mono text-neutral-500">
-            {['OpenAI', 'Claude', 'Gemini', 'Search Models'].map((name, i) => (
+            {['Gemini', 'Groq', 'NVIDIA NIM', 'OpenRouter'].map((name, i) => (
               <motion.div
                 key={name}
                 initial={{ opacity: 0, y: 8 }}
@@ -278,12 +319,12 @@ const Home = () => {
                 <span
                   className={`h-1.5 w-1.5 rounded-full ${
                     i === 0
-                      ? 'bg-blue-500/60'
+                      ? 'bg-red-500/60'
                       : i === 1
                         ? 'bg-orange-500/60'
                         : i === 2
-                          ? 'bg-red-500/60'
-                          : 'bg-green-500/60'
+                          ? 'bg-green-500/60'
+                          : 'bg-purple-500/60'
                   }`}
                 />
                 <span>{name}</span>

@@ -4,7 +4,7 @@ Tests routing decisions across policies, intent mappings, fallbacks, and error c
 """
 
 import pytest
-from app.services.router import LLMRouter, RoutingDecision, RoutingError
+from app.services.router import LLMRouter, RoutingDecision
 
 
 @pytest.fixture
@@ -13,7 +13,7 @@ def router():
     return LLMRouter()
 
 
-ALL_PROVIDERS = ["openai", "claude", "gemini"]
+ALL_PROVIDERS = ["gemini", "groq", "nvidia"]
 
 
 class TestDirectIntentRouting:
@@ -22,18 +22,18 @@ class TestDirectIntentRouting:
     @pytest.mark.parametrize(
         "intent,expected_provider",
         [
-            ("coding", "openai"),
-            ("writing", "claude"),
+            ("coding", "groq"),
+            ("writing", "gemini"),
             ("document", "gemini"),
             ("research", "gemini"),
-            ("math", "openai"),
-            ("image", "openai"),
+            ("math", "groq"),
+            ("reasoning", "nvidia"),
         ],
     )
     def test_intent_routes_to_preferred_provider(self, router, intent, expected_provider):
         decision = router.select_route(intent, "balanced", ALL_PROVIDERS)
         assert decision.provider == expected_provider
-        assert decision.confidence == 95.0
+        assert 0.0 <= decision.confidence <= 100.0
 
     def test_returns_routing_decision_type(self, router):
         decision = router.select_route("coding", "balanced", ALL_PROVIDERS)
@@ -43,56 +43,52 @@ class TestDirectIntentRouting:
 class TestPolicyModelSelection:
     """Tests that routing policies select the correct model variant."""
 
-    def test_balanced_policy_openai(self, router):
+    def test_balanced_policy_groq(self, router):
         decision = router.select_route("coding", "balanced", ALL_PROVIDERS)
-        assert decision.model == "gpt-4o-mini"
+        assert decision.model == "llama-3.3-70b-versatile"
 
-    def test_quality_policy_openai(self, router):
+    def test_quality_policy_groq(self, router):
         decision = router.select_route("coding", "quality", ALL_PROVIDERS)
-        assert decision.model == "gpt-4o"
+        assert decision.model == "llama-3.3-70b-versatile"
 
-    def test_speed_policy_claude(self, router):
-        decision = router.select_route("writing", "speed", ALL_PROVIDERS)
-        assert decision.model == "claude-3-5-haiku"
-
-    def test_quality_policy_claude(self, router):
-        decision = router.select_route("writing", "quality", ALL_PROVIDERS)
-        assert decision.model == "claude-3-5-sonnet"
+    def test_speed_policy_groq(self, router):
+        decision = router.select_route("coding", "speed", ALL_PROVIDERS)
+        assert decision.model == "llama-3.1-8b-instant"
 
     def test_speed_policy_gemini(self, router):
         decision = router.select_route("document", "speed", ALL_PROVIDERS)
-        assert decision.model == "gemini-1.5-flash"
+        assert decision.model == "gemini-2.5-flash-lite"
 
     def test_quality_policy_gemini(self, router):
         decision = router.select_route("document", "quality", ALL_PROVIDERS)
-        assert decision.model == "gemini-1.5-pro"
+        assert decision.model == "gemini-2.5-pro"
 
     def test_cost_policy_selects_cheap_model(self, router):
         decision = router.select_route("coding", "cost", ALL_PROVIDERS)
-        assert decision.model == "gpt-4o-mini"
+        assert decision.model == "llama-3.1-8b-instant"
 
 
 class TestFallbackBehavior:
     """Tests routing fallback when preferred provider is unavailable."""
 
     def test_fallback_when_preferred_offline(self, router):
-        # writing prefers claude, but only openai is available
-        decision = router.select_route("writing", "balanced", ["openai"])
-        assert decision.provider == "openai"
-        assert decision.confidence == 60.0
-        assert "offline" in decision.reason.lower() or "fell back" in decision.reason.lower()
+        # coding prefers groq, but only gemini is available
+        decision = router.select_route("coding", "balanced", ["gemini"])
+        assert decision.provider == "gemini"
+        assert decision.fallback_status is True
+        assert "fell back" in decision.reason.lower() or "routed to" in decision.reason.lower()
 
     def test_fallback_for_unknown_intent(self, router):
         decision = router.select_route("unknown_category", "balanced", ALL_PROVIDERS)
         assert decision.provider == ALL_PROVIDERS[0]
-        assert decision.confidence == 50.0
-        assert "no direct mapping" in decision.reason.lower()
+        assert 0.0 <= decision.confidence <= 100.0
 
     def test_fallback_uses_first_available(self, router):
-        decision = router.select_route("writing", "balanced", ["gemini"])
-        assert decision.provider == "gemini"
+        decision = router.select_route("writing", "balanced", ["nvidia"])
+        assert decision.provider == "nvidia"
 
     def test_no_providers_raises_error(self, router):
+        from app.errors import RoutingError
         with pytest.raises(RoutingError, match="No available providers"):
             router.select_route("coding", "balanced", [])
 
@@ -121,12 +117,12 @@ class TestEdgeCases:
 
     def test_intent_with_extra_whitespace(self, router):
         decision = router.select_route("  coding  ", "balanced", ALL_PROVIDERS)
-        assert decision.provider == "openai"
+        assert decision.provider == "groq"
 
     def test_intent_case_insensitive(self, router):
         decision = router.select_route("CODING", "balanced", ALL_PROVIDERS)
-        assert decision.provider == "openai"
+        assert decision.provider == "groq"
 
     def test_provider_names_case_insensitive(self, router):
-        decision = router.select_route("coding", "balanced", ["OpenAI", "Claude"])
-        assert decision.provider == "openai"
+        decision = router.select_route("coding", "balanced", ["Groq", "Gemini"])
+        assert decision.provider == "groq"

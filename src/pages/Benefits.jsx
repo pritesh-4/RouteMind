@@ -94,8 +94,8 @@ const Benefits = () => {
                   Smarter Model Selection
                 </h2>
                 <p className="text-secondary text-sm leading-relaxed">
-                  Different AI models excel at different tasks. GPT may perform better for coding,
-                  Claude may excel at writing, and Gemini may be stronger for large documents.
+                  Different AI models excel at different tasks. Groq may perform better for coding,
+                  NVIDIA NIM may excel at reasoning, and Gemini may be stronger for large documents.
                   RouteMind analyzes each request and automatically chooses the most suitable model.
                 </p>
               </div>
@@ -130,10 +130,10 @@ const Benefits = () => {
                     </div>
                     <div className="flex items-center gap-2 mb-2">
                       <Cpu size={13} className="text-blue-500 dark:text-blue-400" />
-                      <span className="text-primary font-bold">GPT-4o</span>
+                      <span className="text-primary font-bold">Groq (Llama 3.3)</span>
                     </div>
                     <div className="text-[10px] text-neutral-600 dark:text-neutral-400 leading-normal">
-                      Reason: Strong coding and debugging performance for React 19 concurrent render
+                      Reason: Low latency coding and debugging performance for React 19 concurrent render
                       states.
                     </div>
                   </div>
@@ -155,9 +155,9 @@ const Benefits = () => {
                       </div>
                       <div className="space-y-1.5 text-[10px] text-neutral-600 dark:text-neutral-400">
                         {[
-                          'Open ChatGPT tab',
-                          'Open Claude tab',
                           'Open Gemini tab',
+                          'Open Groq tab',
+                          'Open NVIDIA NIM tab',
                           'Compare outputs',
                         ].map((s) => (
                           <div key={s} className="flex items-center gap-1.5">
@@ -357,7 +357,7 @@ const Benefits = () => {
                     <Terminal size={12} className="text-blue-500" />
                     <span>RouteMind Consolidated Node Shell</span>
                   </div>
-                  {['OpenAI Endpoint', 'Anthropic Endpoint', 'Google Gemini API'].map((ep) => (
+                  {['Google Gemini API', 'Groq API', 'NVIDIA NIM API'].map((ep) => (
                     <div
                       key={ep}
                       className="flex justify-between items-center bg-sidebar-bg/60 backdrop-blur-sm p-2.5 border border-border-app/40 rounded-lg"
@@ -403,8 +403,8 @@ const Benefits = () => {
                 role: 'Developer',
                 sub: 'Refactoring & Review',
                 task: 'Review React Architecture',
-                model: 'GPT-4o',
-                reason: 'Selected due to strong code understanding and debugging algorithms.',
+                model: 'Llama 3.3 70b',
+                reason: 'Selected due to low latency code understanding and debugging capabilities on Groq.',
               },
               {
                 tag: 'RES',
@@ -412,7 +412,7 @@ const Benefits = () => {
                 role: 'Researcher',
                 sub: 'Document Parsing',
                 task: 'Analyze 50-page PDF report',
-                model: 'Gemini Pro',
+                model: 'Gemini 1.5 Pro',
                 reason:
                   'Selected for massive context window capabilities and semantic retrieval accuracy.',
               },
@@ -422,9 +422,9 @@ const Benefits = () => {
                 role: 'Student',
                 sub: 'Concept Explanation',
                 task: 'Explain Quantum Physics',
-                model: 'GPT-4o',
+                model: 'Llama 3.1 405b (NVIDIA)',
                 reason:
-                  'Selected for general reasoning, clear analogical pedagogics, and step descriptions.',
+                  'Selected for high-precision reasoning, clear analogical pedagogics, and step descriptions on NVIDIA NIM.',
               },
               {
                 tag: 'FND',
@@ -432,8 +432,8 @@ const Benefits = () => {
                 role: 'Founder',
                 sub: 'Creative Copywriting',
                 task: 'Draft pitch email templates',
-                model: 'Claude Sonnet',
-                reason: 'Selected for highly polished prose style and narrative structure flow.',
+                model: 'Gemini 1.5 Pro',
+                reason: 'Selected for highly polished writing style and narrative structure flow.',
               },
             ].map(({ tag, color, role, sub, task, model, reason }) => {
               const scenarioColors = {

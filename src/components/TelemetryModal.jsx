@@ -54,7 +54,9 @@ const TelemetryModal = ({ isOpen, onClose, stats }) => {
               <p className="text-[9px] text-neutral-500 font-mono uppercase tracking-wider mb-1">
                 Overhead Latency
               </p>
-              <p className="text-lg font-bold text-blue-500 font-mono">&lt;12ms</p>
+              <p className="text-lg font-bold text-blue-500 font-mono">
+                {stats.avgOverhead ? `${Math.round(stats.avgOverhead)}ms` : '<12ms'}
+              </p>
             </div>
           </div>
 
@@ -66,11 +68,10 @@ const TelemetryModal = ({ isOpen, onClose, stats }) => {
               {Object.entries(stats.models).map(([modelName, count]) => {
                 const percentage = stats.totalQueries > 0 ? (count / stats.totalQueries) * 100 : 0
 
-                let colorClass = 'bg-blue-500'
-                if (modelName.includes('Claude')) colorClass = 'bg-orange-500'
-                else if (modelName.includes('Gemini')) colorClass = 'bg-red-500'
-                else if (modelName.includes('DeepSeek')) colorClass = 'bg-green-500'
-                else if (modelName.includes('Perplexity')) colorClass = 'bg-cyan-500'
+                let colorClass = 'bg-neutral-500'
+                if (modelName.toLowerCase().includes('gemini')) colorClass = 'bg-red-500'
+                else if (modelName.toLowerCase().includes('groq') || (modelName.toLowerCase().includes('llama') && !modelName.toLowerCase().includes('nvidia') && !modelName.toLowerCase().includes('meta/llama'))) colorClass = 'bg-orange-500'
+                else if (modelName.toLowerCase().includes('nvidia') || modelName.toLowerCase().includes('meta/llama')) colorClass = 'bg-green-500'
 
                 return (
                   <div key={modelName} className="space-y-1">

@@ -9,11 +9,13 @@ from typing import Dict, List, Type
 from app.providers.base import BaseProvider
 from app.providers.gemini_provider import GeminiProvider
 from app.providers.groq_provider import GroqProvider
+from app.providers.nvidia_provider import NvidiaProvider
+from app.providers.openrouter_provider import OpenRouterProvider
 
 logger = logging.getLogger("routemind.services.provider_manager")
 
-# Providers that exist but are not available for the hackathon build
-DISABLED_PROVIDERS = ["openai", "claude"]
+# All providers are enabled for unit testing and modular routing fallback
+DISABLED_PROVIDERS = []
 
 
 class ProviderManager:
@@ -25,14 +27,19 @@ class ProviderManager:
 
     def __init__(self) -> None:
         """
-        Initializes the ProviderManager registry with active provider classes only.
-        OpenAI and Claude are disabled for the hackathon — only Gemini and Groq are live.
+        Initializes the ProviderManager registry with all provider classes.
         """
         self._provider_registry: Dict[str, Type[BaseProvider]] = {
             "gemini": GeminiProvider,
             "groq": GroqProvider,
+            "nvidia": NvidiaProvider,
+            "openrouter": OpenRouterProvider,
         }
         self._provider_instances: Dict[str, BaseProvider] = {}
+        
+        # Inject manager instance to background HealthMonitor
+        from app.services.health_monitor import health_monitor
+        health_monitor.set_provider_manager(self)
 
     def get_provider(self, name: str) -> BaseProvider:
         """
@@ -120,6 +127,8 @@ class ProviderManager:
         key_map = {
             "gemini": settings.GEMINI_API_KEY,
             "groq": settings.GROQ_API_KEY,
+            "nvidia": settings.NVIDIA_NIM_API_KEY,
+            "openrouter": settings.OPENROUTER_API_KEY,
         }
         for name in self._provider_registry:
             has_key = bool(key_map.get(name))

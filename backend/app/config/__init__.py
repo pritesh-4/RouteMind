@@ -38,9 +38,10 @@ class Settings(BaseModel):
 
     # API Keys (loaded from environment)
     GEMINI_API_KEY: str | None = os.getenv("GEMINI_API_KEY") or None
-    OPENAI_API_KEY: str | None = os.getenv("OPENAI_API_KEY") or None
-    ANTHROPIC_API_KEY: str | None = os.getenv("ANTHROPIC_API_KEY") or None
     GROQ_API_KEY: str | None = os.getenv("GROQ_API_KEY") or None
+    NVIDIA_NIM_API_KEY: str | None = os.getenv("NVIDIA_NIM_API_KEY") or None
+    NVIDIA_NIM_BASE_URL: str = os.getenv("NVIDIA_NIM_BASE_URL", "https://integrate.api.nvidia.com/v1")
+    OPENROUTER_API_KEY: str | None = os.getenv("OPENROUTER_API_KEY") or None
 
 
 # Global settings instance for import across the codebase

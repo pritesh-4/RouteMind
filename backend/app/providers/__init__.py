@@ -10,10 +10,10 @@ from app.providers.base import (
     ProviderAPIError,
     ProviderConnectionError,
 )
-from app.providers.openai_provider import OpenAIProvider
-from app.providers.claude_provider import ClaudeProvider
 from app.providers.gemini_provider import GeminiProvider
 from app.providers.groq_provider import GroqProvider
+from app.providers.nvidia_provider import NvidiaProvider
+from app.providers.openrouter_provider import OpenRouterProvider
 
 __all__ = [
     "BaseProvider",
@@ -21,8 +21,8 @@ __all__ = [
     "ProviderAuthenticationError",
     "ProviderAPIError",
     "ProviderConnectionError",
-    "OpenAIProvider",
-    "ClaudeProvider",
     "GeminiProvider",
     "GroqProvider",
+    "NvidiaProvider",
+    "OpenRouterProvider",
 ]

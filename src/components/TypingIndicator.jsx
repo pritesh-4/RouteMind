@@ -2,7 +2,28 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle2, Cpu, Loader2, Sliders } from 'lucide-react'
 
-import { ROUTING_STAGES as STAGES, MODEL_CANDIDATES as CANDIDATES } from '../data/mockData'
+/**
+ * Pipeline stage definitions for the TypingIndicator animation.
+ * These are UI animation labels, not mock API data.
+ */
+const STAGES = [
+  { id: 'intent', label: 'Analyzing Query Structure' },
+  { id: 'compare', label: 'Comparing Available Models' },
+  { id: 'cost', label: 'Calculating Routing Score' },
+  { id: 'provider', label: 'Selecting Optimal Provider' },
+  { id: 'generate', label: 'Generating Response' },
+]
+
+/**
+ * Provider candidates shown during the "evaluating" animation.
+ * These are real provider names in the RouteMind system.
+ */
+const CANDIDATES = [
+  'Gemini 2.5 Flash',
+  'Llama 3.3 (Groq)',
+  'NVIDIA NIM',
+  'OpenRouter',
+]
 
 const TypingIndicator = ({ loadingStep, selectedModel, selectionReason }) => {
   const [currentStep, setCurrentStep] = useState(0)
@@ -182,19 +203,6 @@ const TypingIndicator = ({ loadingStep, selectedModel, selectionReason }) => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Future-Ready Architecture Placeholders */}
-      <div className="mt-3.5 pt-3.5 border-t border-border-app/40 flex items-center justify-between text-[9px] font-mono text-neutral-600 opacity-60 select-none pointer-events-none">
-        <div>
-          Est. Cost: <span className="text-neutral-500">Slot Ready</span>
-        </div>
-        <div>
-          Latency: <span className="text-neutral-500">Slot Ready</span>
-        </div>
-        <div>
-          Confidence: <span className="text-neutral-500">Slot Ready</span>
-        </div>
-      </div>
     </div>
   )
 }

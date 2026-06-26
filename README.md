@@ -192,6 +192,10 @@ OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
 GEMINI_API_KEY=AIza...
 
+# Required for NVIDIA NIM integration
+NVIDIA_NIM_API_KEY=nvapi-...
+NVIDIA_NIM_BASE_URL="https://integrate.api.nvidia.com/v1"
+
 # CORS — add your Vercel deployment URL here
 CORS_ORIGINS=["http://localhost:5173","http://localhost:3000","https://your-app.vercel.app"]
 
@@ -257,20 +261,27 @@ Returns service status and registered provider list.
 
 ### Intent → Provider Mapping
 
-| Intent      | `balanced` / `cost`      | `speed`                  | `quality`                               |
-| :---------- | :----------------------- | :----------------------- | :-------------------------------------- |
-| `coding`    | `openai` / `gpt-4o-mini` | `openai` / `gpt-4o-mini` | `openai` / `gpt-4o`                     |
-| `research`  | `openai` / `gpt-4o-mini` | `openai` / `gpt-4o-mini` | `gemini` / `gemini-1.5-pro`             |
-| `document`  | `openai` / `gpt-4o-mini` | `openai` / `gpt-4o-mini` | `claude` / `claude-3-5-sonnet-20241022` |
-| `reasoning` | `openai` / `gpt-4o-mini` | `openai` / `gpt-4o-mini` | `openai` / `gpt-4o`                     |
-| `writing`   | `openai` / `gpt-4o-mini` | `openai` / `gpt-4o-mini` | `claude` / `claude-3-5-sonnet-20241022` |
-| `general`   | `openai` / `gpt-4o-mini` | `openai` / `gpt-4o-mini` | `openai` / `gpt-4o`                     |
+| Intent      | `balanced` / `cost`      | `speed`                  | `quality`                               | Preferred Order (Failover List)         |
+| :---------- | :----------------------- | :----------------------- | :-------------------------------------- | :-------------------------------------- |
+| `coding`    | `openai` / `gpt-4o-mini` | `openai` / `gpt-4o-mini` | `openai` / `gpt-4o`                     | `openai` → `groq` → `gemini` → `nvidia` |
+| `writing`   | `claude` / `claude-3-5-sonnet` | `claude` / `claude-3-5-haiku` | `claude` / `claude-3-5-sonnet` | `claude` → `gemini` → `openai` → `nvidia` |
+| `research`  | `gemini` / `gemini-1.5-flash` | `gemini` / `gemini-1.5-flash` | `gemini` / `gemini-1.5-pro`      | `gemini` → `openai` → `claude` → `nvidia` |
+| `document`  | `gemini` / `gemini-1.5-flash` | `gemini` / `gemini-1.5-flash` | `gemini` / `gemini-1.5-pro`      | `gemini` → `openai` → `claude` → `nvidia` |
+| `reasoning` | `nvidia` / `meta/llama-3.1-405b-instruct` | `nvidia` / `meta/llama-3.1-405b-instruct` | `nvidia` / `meta/llama-3.1-405b-instruct` | `nvidia` → `gemini` → `groq` → `openai` |
+| `analysis`  | `nvidia` / `meta/llama-3.1-405b-instruct` | `nvidia` / `meta/llama-3.1-405b-instruct` | `nvidia` / `meta/llama-3.1-405b-instruct` | `nvidia` → `gemini` → `groq` → `openai` |
+| `planning`  | `nvidia` / `meta/llama-3.1-405b-instruct` | `nvidia` / `meta/llama-3.1-405b-instruct` | `nvidia` / `meta/llama-3.1-405b-instruct` | `nvidia` → `gemini` → `groq` → `openai` |
+| `strategy`  | `nvidia` / `meta/llama-3.1-405b-instruct` | `nvidia` / `meta/llama-3.1-405b-instruct` | `nvidia` / `meta/llama-3.1-405b-instruct` | `nvidia` → `gemini` → `groq` → `openai` |
+| `general`   | `gemini` / `gemini-1.5-flash` | `gemini` / `gemini-1.5-flash` | `gemini` / `gemini-1.5-pro`      | `gemini` → `nvidia` → `groq` → `openai` |
 
-> ⚠️ `balanced` and `cost` currently map to identical models — no cost-weighted scoring is implemented yet.
+> ⚠️ Reasoning-related intents (`reasoning`, `analysis`, `planning`, `strategy`) automatically override default policy models to always route to the premium high-capacity models (e.g., `meta/llama-3.1-405b-instruct` on NVIDIA NIM, `gemini-1.5-pro` on Gemini, etc.) for complex logic evaluation.
 
-### Fallback Chain
+### Dynamic Fallback Chains
 
-If the selected provider is unavailable: `openai` → `gemini` → `claude`. The first healthy provider wins.
+If the selected provider is unavailable, RouteMind executes a 3-provider failover chain. The first healthy provider in the sequence is invoked:
+
+* **NVIDIA Primary:** `nvidia` → `gemini` → `groq`
+* **Gemini Primary:** `gemini` → `nvidia` → `groq`
+* **Groq Primary:** `groq` → `nvidia` → `gemini`
 
 ---
 

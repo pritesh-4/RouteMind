@@ -150,7 +150,7 @@ const Documentation = () => {
                 model for a user's task.
               </p>
               <p>
-                Instead of manually choosing between GPT, Claude, Gemini, or other providers, users
+                Instead of manually choosing between Gemini, Groq, NVIDIA NIM, or other providers, users
                 simply ask their question and RouteMind handles the decision-making process. The
                 goal is to simplify AI usage while improving quality, transparency, and efficiency.
               </p>
@@ -184,10 +184,9 @@ const Documentation = () => {
               className="space-y-4 text-sm sm:text-[15px] text-secondary leading-relaxed font-medium"
             >
               <p>
-                Different AI models excel at different tasks. For instance, OpenAI's GPT models may
-                perform better for coding, Anthropic's Claude may excel at creative writing,
-                Google's Gemini excels at long document contexts, and custom Search Models are best
-                for real-time information retrieval.
+                Different AI models excel at different tasks. For instance, Groq may
+                perform better for coding and low-latency requests, Google's Gemini excels at long document
+                contexts, and NVIDIA NIM provides maximum accuracy and reasoning depth.
               </p>
               <p>
                 Currently, users must manually decide which model to use before writing a prompt.
@@ -336,70 +335,53 @@ const Documentation = () => {
               variants={fadeInUp}
               className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 font-mono text-xs select-none"
             >
-              {/* OpenAI Card */}
-              <div className="p-4 bg-card-bg border border-border-app rounded-xl space-y-2">
-                <span className="text-neutral-500 uppercase tracking-wider text-[9px]">
-                  OpenAI Models
-                </span>
-                <ul className="space-y-1 text-primary">
-                  <li className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
-                    <span>GPT-4o</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
-                    <span>GPT-4o Mini</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Claude Card */}
-              <div className="p-4 bg-card-bg border border-border-app rounded-xl space-y-2">
-                <span className="text-neutral-500 uppercase tracking-wider text-[9px]">
-                  Claude Models
-                </span>
-                <ul className="space-y-1 text-primary">
-                  <li className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-orange-500"></span>
-                    <span>Claude 3.5 Sonnet</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-orange-500"></span>
-                    <span>Claude 3 Opus</span>
-                  </li>
-                </ul>
-              </div>
-
               {/* Google Card */}
-              <div className="p-4 bg-card-bg border border-border-app rounded-xl space-y-2">
+              <div className="p-4 bg-card-bg border border-border-app rounded-xl space-y-2 col-span-1">
                 <span className="text-neutral-500 uppercase tracking-wider text-[9px]">
-                  Google Models
+                  Google Gemini Models
                 </span>
                 <ul className="space-y-1 text-primary">
                   <li className="flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-red-500"></span>
-                    <span>Gemini 1.5 Pro</span>
+                    <span>Gemini 2.5 Pro</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-red-500"></span>
-                    <span>Gemini 1.5 Flash</span>
+                    <span>Gemini 2.5 Flash</span>
                   </li>
                 </ul>
               </div>
 
-              {/* Custom Search Models */}
-              <div className="p-4 bg-card-bg border border-border-app rounded-xl space-y-2">
+              {/* Groq Card */}
+              <div className="p-4 bg-card-bg border border-border-app rounded-xl space-y-2 col-span-1">
                 <span className="text-neutral-500 uppercase tracking-wider text-[9px]">
-                  Search & Open Source
+                  Groq Models
+                </span>
+                <ul className="space-y-1 text-primary">
+                  <li className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-orange-500"></span>
+                    <span>Llama 3.3 70b</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-orange-500"></span>
+                    <span>Llama 3.1 8b</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* NVIDIA NIM Card */}
+              <div className="p-4 bg-card-bg border border-border-app rounded-xl space-y-2 sm:col-span-2">
+                <span className="text-neutral-500 uppercase tracking-wider text-[9px]">
+                  NVIDIA NIM Models
                 </span>
                 <ul className="space-y-1 text-primary">
                   <li className="flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-green-500"></span>
-                    <span>Web Search Models</span>
+                    <span>Llama 3.1 405b</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-purple-500"></span>
-                    <span>DeepSeek / Llama Integration</span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                    <span>Llama 3.1 70b</span>
                   </li>
                 </ul>
               </div>
@@ -538,8 +520,8 @@ const Documentation = () => {
             >
               <p>
                 When a query is entered in the Chat Workspace, it hits the **RouteMind proxy**. The
-                intent classifier maps the structure and routes to the best API provider (Google,
-                Anthropic, or OpenAI). The response aggregator wraps the raw token outputs and feeds
+                intent classifier maps the structure and routes to the best API provider (Gemini,
+                Groq, or NVIDIA NIM). The response aggregator wraps the raw token outputs and feeds
                 metadata straight to the **Explainability Layer** before returning it to the user.
               </p>
             </motion.div>
@@ -573,8 +555,8 @@ const Documentation = () => {
             <motion.div variants={fadeInUp} className="space-y-3 select-none">
               {[
                 {
-                  q: 'Why not use ChatGPT directly?',
-                  a: 'ChatGPT relies on a single model ecosystem. If you need coding refactoring, Claude is often superior. If you need context size, Gemini Pro wins. RouteMind gives you all specialists under one workflow without multiple billing accounts.',
+                  q: 'Why not use Gemini directly?',
+                  a: 'Gemini is a single model ecosystem. If you need low-latency coding, Groq\'s Llama 3.3 is often superior. If you need reasoning depth, NVIDIA NIM\'s Llama 3.1 405b wins. RouteMind gives you all specialists under one workflow without multiple billing accounts.',
                 },
                 {
                   q: 'Why not use OpenRouter?',

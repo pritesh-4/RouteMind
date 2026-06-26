@@ -5,12 +5,16 @@ Configures CORS, registers API routers, sets up basic logging, and defines lifec
 
 from contextlib import asynccontextmanager
 import logging
-from fastapi import FastAPI
+import uuid
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 
 from app.config import settings
 from app.routes.health import router as health_router
 from app.routes.chat import router as chat_router
+from app.errors import BaseRouteMindError
 
 # Setup basic logging configuration as per standard practices
 logging.basicConfig(
@@ -31,11 +35,17 @@ async def lifespan(app: FastAPI):
     logger.info("Provider Status:")
 
     from app.services import ProviderManager
+    from app.services.health_monitor import health_monitor
 
     mgr = ProviderManager()
     mgr.log_provider_status()
 
+    # Start the background health tracking
+    await health_monitor.start()
+
     yield
+    # Stop background health tracking
+    await health_monitor.stop()
     logger.info("Shutting down RouteMind Backend...")
 
 
@@ -46,6 +56,51 @@ app = FastAPI(
     description="Intelligent AI Orchestration and Routing Platform API.",
     lifespan=lifespan,
 )
+
+# Custom Global Exception Handlers
+
+@app.exception_handler(BaseRouteMindError)
+async def routemind_exception_handler(request: Request, exc: BaseRouteMindError):
+    return JSONResponse(
+        status_code=400 if exc.error_code in ("VALIDATION_ERROR", "ROUTING_ERROR") else 500,
+        content={
+            "success": False,
+            "error_code": exc.error_code,
+            "message": exc.message,
+            "fallback_used": True,
+            "provider": exc.provider,
+            "request_id": f"req_{uuid.uuid4().hex[:12]}",
+        }
+    )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=422,
+        content={
+            "success": False,
+            "error_code": "VALIDATION_ERROR",
+            "message": str(exc),
+            "fallback_used": False,
+            "provider": "system",
+            "request_id": f"req_{uuid.uuid4().hex[:12]}",
+        }
+    )
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    logger.exception("Unhandled exception caught by middleware: %s", str(exc))
+    return JSONResponse(
+        status_code=500,
+        content={
+            "success": False,
+            "error_code": "INTERNAL_SERVER_ERROR",
+            "message": "An unexpected server error occurred.",
+            "fallback_used": False,
+            "provider": "system",
+            "request_id": f"req_{uuid.uuid4().hex[:12]}",
+        }
+    )
 
 # Configure CORS Middleware using settings defined in environment
 app.add_middleware(

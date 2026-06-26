@@ -20,6 +20,10 @@ class IntentResult(BaseModel):
     classification_reason: str = Field(
         ..., description="Rationale for this classification."
     )
+    complexity: str = Field(
+        default="medium",
+        description="The estimated complexity of the user request (simple, medium, complex)."
+    )
 
 
 class BaseIntentClassifier(ABC):
@@ -50,7 +54,7 @@ class RuleBasedIntentClassifier(BaseIntentClassifier):
     def __init__(self) -> None:
         # Standardized lists of lowercase keywords for each intent
         self._keyword_rules = {
-            "debugging": {
+            "coding": {
                 "debug",
                 "debugging",
                 "stacktrace",
@@ -58,8 +62,6 @@ class RuleBasedIntentClassifier(BaseIntentClassifier):
                 "error",
                 "fix",
                 "logs",
-            },
-            "coding": {
                 "code",
                 "python",
                 "javascript",
@@ -75,8 +77,6 @@ class RuleBasedIntentClassifier(BaseIntentClassifier):
                 "json",
                 "develop",
                 "algorithm",
-            },
-            "programming": {
                 "programming",
                 "program",
                 "programmer",
@@ -118,19 +118,38 @@ class RuleBasedIntentClassifier(BaseIntentClassifier):
                 "research",
                 "study",
                 "literature",
-                "analyze",
                 "scientific",
                 "concept",
                 "theory",
+            },
+            "analysis": {
+                "analysis",
+                "analyze",
+                "deep analysis",
+                "evaluate",
+                "evaluation",
                 "investigate",
                 "compare",
-                "history",
                 "explain",
                 "explaining",
-                "quantum",
-                "computing",
+                "history",
             },
-            "document analysis": {
+            "planning": {
+                "plan",
+                "planning",
+                "roadmap",
+                "schedule",
+                "milestones",
+                "timeline",
+            },
+            "strategy": {
+                "strategy",
+                "strategic",
+                "strategic planning",
+                "optimize",
+                "optimization",
+            },
+            "document": {
                 "document analysis",
                 "parse document",
                 "read document",
@@ -139,12 +158,15 @@ class RuleBasedIntentClassifier(BaseIntentClassifier):
                 "xlsx",
                 "csv",
                 "file",
-            },
-            "pdf analysis": {
                 "pdf analysis",
                 "parse pdf",
                 "read pdf",
                 "pdf",
+                "summarize",
+                "summarization",
+                "summary",
+                "outline",
+                "brief",
             },
             "writing": {
                 "write",
@@ -161,35 +183,7 @@ class RuleBasedIntentClassifier(BaseIntentClassifier):
                 "article",
                 "copywrite",
             },
-            "summarization": {
-                "summarize",
-                "summarization",
-                "summary",
-                "outline",
-                "brief",
-            },
-            "translation": {
-                "translate",
-                "translation",
-                "language",
-                "bilingual",
-                "english",
-                "spanish",
-                "french",
-                "german",
-                "chinese",
-                "japanese",
-            },
-            "general chat": {
-                "hello",
-                "hi",
-                "hey",
-                "greetings",
-                "chat",
-                "conversation",
-                "how are you",
-            },
-            "image understanding": {
+            "image": {
                 "image understanding",
                 "parse image",
                 "read image",
@@ -202,9 +196,35 @@ class RuleBasedIntentClassifier(BaseIntentClassifier):
                 "sketch",
                 "paint",
                 "draw",
+                "generate image",
             },
         }
         self._fallback_intent = "general"
+
+    def _detect_complexity(self, message: str) -> str:
+        cleaned = message.lower().strip()
+        
+        # Simple keywords / greetings / short queries
+        simple_keywords = {"hello", "hi", "hey", "test", "ping", "help", "greet", "greetings"}
+        words = set(re.findall(r"\b\w+\b", cleaned))
+        
+        if len(cleaned) < 15 or (len(words) <= 2 and words.issubset(simple_keywords)):
+            return "simple"
+            
+        # Complex keywords
+        complex_keywords = {
+            "design", "architecture", "distributed", "event-driven", "system design",
+            "microservices", "kubernetes", "compiler", "deep learning", "proof",
+            "optimization", "complex", "production-ready", "concurrency", "thread-safe",
+            "scalability", "sharding", "database design", "refactor", "performance audit",
+            "neural", "asynchronous", "performance", "throughput", "redundancy"
+        }
+        
+        has_complex_keyword = any(kw in cleaned for kw in complex_keywords)
+        if len(cleaned) > 200 or has_complex_keyword:
+            return "complex"
+            
+        return "medium"
 
     def classify(self, message: str) -> IntentResult:
         """
@@ -227,7 +247,16 @@ class RuleBasedIntentClassifier(BaseIntentClassifier):
             "pdf analysis",
             "image understanding",
             "general chat",
+            "general",
             "generate image",
+            "parse document",
+            "read document",
+            "parse pdf",
+            "read pdf",
+            "parse image",
+            "read image",
+            "deep analysis",
+            "strategic planning",
         ]:
             if special_keyword in cleaned_message:
                 words.add(special_keyword)
@@ -257,9 +286,12 @@ class RuleBasedIntentClassifier(BaseIntentClassifier):
                 f"{sorted(list(best_matched_keywords))}."
             )
 
+        complexity = self._detect_complexity(message)
+
         return IntentResult(
             intent=best_intent,
             confidence=confidence,
             matched_keywords=sorted(list(best_matched_keywords)),
             classification_reason=reason,
+            complexity=complexity,
         )

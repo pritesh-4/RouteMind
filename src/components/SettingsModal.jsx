@@ -19,7 +19,7 @@ const SettingsModal = ({ isOpen, onClose, routingPolicy, setRoutingPolicy }) => 
     {
       id: 'cost',
       title: 'Cost Optimizer',
-      desc: 'Routes to cheaper models (DeepSeek, GPT-4o-mini).',
+      desc: 'Routes to cheaper models (Llama 3.1 8b, Gemini Flash).',
       icon: Coins,
       activeClass:
         'border-green-500/30 bg-green-500/5 dark:bg-green-950/10 text-green-600 dark:text-green-400 font-semibold shadow-sm shadow-green-950/5',
@@ -27,7 +27,7 @@ const SettingsModal = ({ isOpen, onClose, routingPolicy, setRoutingPolicy }) => 
     {
       id: 'balanced',
       title: 'Balanced AI',
-      desc: 'Default RouteMind proxies (Claude for code, Gemini for files).',
+      desc: 'Default RouteMind proxies (Groq for code, Gemini for files).',
       icon: Sparkles,
       activeClass:
         'border-blue-500/30 bg-blue-500/5 dark:bg-blue-950/10 text-blue-600 dark:text-blue-400 font-semibold shadow-sm shadow-blue-950/5',
@@ -35,7 +35,7 @@ const SettingsModal = ({ isOpen, onClose, routingPolicy, setRoutingPolicy }) => 
     {
       id: 'quality',
       title: 'Max Quality',
-      desc: 'Primary tier-1 premium models (Claude 3.5 Sonnet, GPT-4o).',
+      desc: 'Primary tier-1 premium models (Llama 3.1 405b, Gemini Pro).',
       icon: Shield,
       activeClass:
         'border-purple-500/30 bg-purple-500/5 dark:bg-purple-950/10 text-purple-600 dark:text-purple-400 font-semibold shadow-sm shadow-purple-950/5',

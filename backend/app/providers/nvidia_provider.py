@@ -1,5 +1,5 @@
 """
-OpenAI Provider implementation for RouteMind.
+NVIDIA NIM Provider implementation for RouteMind using official OpenAI SDK.
 """
 
 import time
@@ -22,73 +22,78 @@ from app.providers.base import (
     ProviderConnectionError,
 )
 
-logger = logging.getLogger("routemind.providers.openai")
+logger = logging.getLogger("routemind.providers.nvidia")
 
 
-class OpenAIProvider(BaseProvider):
+class NvidiaProvider(BaseProvider):
     """
-    OpenAI provider integration implementing the BaseProvider contract.
-    Connects to the official OpenAI python SDK and routes chat completions.
+    Nvidia provider integration implementing the BaseProvider contract.
+    Connects to the NVIDIA NIM API using the OpenAI SDK.
     """
 
     def __init__(self):
         """
-        Initializes the OpenAI provider.
-        Loads the API key dynamically from settings.
+        Initializes the Nvidia provider.
+        Loads the API key and base URL dynamically from settings.
         """
-        self.api_key = settings.OPENAI_API_KEY
-        self.default_model = "gpt-4o-mini"
+        self.api_key = settings.NVIDIA_NIM_API_KEY
+        self.base_url = settings.NVIDIA_NIM_BASE_URL
+        self.default_model = "meta/llama-3.1-70b-instruct"
         self._client = None
+        logger.info("Initializing provider: nvidia")
 
     @property
     def client(self) -> OpenAI:
         """
-        Retrieves the shared OpenAI client instance.
+        Retrieves the shared OpenAI client instance configured for Nvidia NIM.
         Instantiated lazily to prevent errors on startup when keys are missing.
         """
         if not self._client:
             if not self.api_key:
                 raise ProviderAuthenticationError(
-                    "OpenAI API Key is not configured. Please set the OPENAI_API_KEY environment variable."
+                    "NVIDIA NIM API Key is not configured. Please set the NVIDIA_NIM_API_KEY environment variable."
                 )
-            self._client = OpenAI(api_key=self.api_key)
+            self._client = OpenAI(
+                api_key=self.api_key, base_url=self.base_url
+            )
         return self._client
 
     def provider_name(self) -> str:
         """
         Returns the unique provider name.
         """
-        return "openai"
+        return "nvidia"
 
     def generate_response(
         self, prompt: str, model: str = None, **kwargs
     ) -> Dict[str, Any]:
         """
-        Generates a non-streaming chat completion using OpenAI.
+        Generates a non-streaming chat completion using NVIDIA NIM.
 
         Args:
             prompt: The string message to send.
-            model: The target model (e.g., 'gpt-4o-mini', 'gpt-4o'). If None, default is used.
-            **kwargs: Extra parameters passed to the chat completions API (e.g. temperature).
+            model: The target model name. If None, default is used.
+            **kwargs: Extra parameters passed to the chat completions API.
 
         Returns:
             Standard response dictionary.
         """
         model_to_use = model or self.default_model
-        logger.info("Provider selected: openai (Model: %s)", model_to_use)
+        logger.info("Provider selected: nvidia (Model: %s)", model_to_use)
 
         start_time = time.perf_counter()
         try:
             client = self.client
             messages = [{"role": "user", "content": prompt}]
 
+            logger.info("Calling NVIDIA NIM API...")
             # API Call
             response = client.chat.completions.create(
                 model=model_to_use, messages=messages, **kwargs
             )
 
             latency_ms = (time.perf_counter() - start_time) * 1000
-            logger.info("OpenAI API call successful. Latency: %.2f ms", latency_ms)
+            logger.info("Nvidia response received. Latency: %.2f ms", latency_ms)
 
             # Extract content and usage data
             choice = response.choices[0]
@@ -109,51 +114,50 @@ class OpenAIProvider(BaseProvider):
         except AuthenticationError as e:
             latency_ms = (time.perf_counter() - start_time) * 1000
             logger.error(
-                "OpenAI Authentication Error: %s (Latency: %.2f ms)", str(e), latency_ms
+                "Nvidia Authentication Error: %s (Latency: %.2f ms)", str(e), latency_ms
             )
-            raise ProviderAuthenticationError(
-                f"OpenAI Authentication failed: {e}"
-            ) from e
+            raise ProviderAuthenticationError(f"Nvidia Authentication failed: {e}") from e
 
         except APIConnectionError as e:
             latency_ms = (time.perf_counter() - start_time) * 1000
             logger.error(
-                "OpenAI Connection Error: %s (Latency: %.2f ms)", str(e), latency_ms
+                "Nvidia Connection Error: %s (Latency: %.2f ms)", str(e), latency_ms
             )
-            raise ProviderConnectionError(
-                f"Failed to connect to OpenAI API: {e}"
-            ) from e
+            raise ProviderConnectionError(f"Failed to connect to Nvidia API: {e}") from e
 
         except RateLimitError as e:
             latency_ms = (time.perf_counter() - start_time) * 1000
             logger.error(
-                "OpenAI Rate Limit Error: %s (Latency: %.2f ms)", str(e), latency_ms
+                "Nvidia Rate Limit Error: %s (Latency: %.2f ms)", str(e), latency_ms
             )
-            raise ProviderAPIError(f"OpenAI Rate limit exceeded: {e}") from e
+            raise ProviderAPIError(f"Nvidia Rate limit exceeded: {e}") from e
 
         except OpenAIError as e:
             latency_ms = (time.perf_counter() - start_time) * 1000
-            logger.error("OpenAI API Error: %s (Latency: %.2f ms)", str(e), latency_ms)
-            raise ProviderAPIError(f"OpenAI API error occurred: {e}") from e
+            logger.error("Nvidia API Error: %s (Latency: %.2f ms)", str(e), latency_ms)
+            raise ProviderAPIError(f"Nvidia API error occurred: {e}") from e
 
         except Exception as e:
             latency_ms = (time.perf_counter() - start_time) * 1000
             logger.error(
-                "Unexpected error in OpenAI provider: %s (Latency: %.2f ms)",
+                "Unexpected error in Nvidia provider: %s (Latency: %.2f ms)",
                 str(e),
                 latency_ms,
             )
             raise ProviderAPIError(
-                f"An unexpected error occurred during the OpenAI call: {e}"
+                f"An unexpected error occurred during the Nvidia call: {e}"
             ) from e
 
     def health_check(self) -> bool:
         """
         Lightweight health check using model listing.
         """
+        if not self.api_key:
+            logger.warning("NVIDIA NIM API Key is missing. Health check failed immediately.")
+            return False
         try:
             self.client.models.list()
             return True
         except Exception as e:
-            logger.error("OpenAI health check failed: %s", str(e))
+            logger.error("Nvidia health check failed: %s", str(e))
             return False
