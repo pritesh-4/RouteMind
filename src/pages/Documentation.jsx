@@ -168,10 +168,9 @@ const Documentation = () => {
                 model for a user's task.
               </p>
               <p>
-                Instead of manually choosing between Gemini, Groq, NVIDIA NIM, or OpenRouter,
-                users simply ask their question and RouteMind handles the decision-making process.
-                The goal is to simplify AI usage while improving quality, transparency, and
-                efficiency.
+                Instead of manually choosing between Gemini, Groq, NVIDIA NIM, or OpenRouter, users
+                simply ask their question and RouteMind handles the decision-making process. The
+                goal is to simplify AI usage while improving quality, transparency, and efficiency.
               </p>
             </motion.div>
           </motion.section>
@@ -314,8 +313,8 @@ const Documentation = () => {
                   2. Complexity Detection:
                 </span>
                 <span>
-                  Prompt length and keyword signals determine simple / medium / complex tier,
-                  which upgrades or downgrades the routing policy automatically.
+                  Prompt length and keyword signals determine simple / medium / complex tier, which
+                  upgrades or downgrades the routing policy automatically.
                 </span>
               </div>
               <div className="flex gap-4">
@@ -332,15 +331,18 @@ const Documentation = () => {
                   4. Multi-Factor Scoring:
                 </span>
                 <span>
-                  Each healthy provider is scored: 35% specialization capability + 20% latency +
-                  15% cost + 15% health + 15% historical success rate.
+                  Each healthy provider is scored: 35% specialization capability + 20% latency + 15%
+                  cost + 15% health + 15% historical success rate.
                 </span>
               </div>
               <div className="flex gap-4">
                 <span className="text-blue-600 dark:text-blue-400 font-bold shrink-0">
                   5. Response &amp; Explanation:
                 </span>
-                <span>Delivers output alongside routing metadata: provider, model, confidence score, and reason.</span>
+                <span>
+                  Delivers output alongside routing metadata: provider, model, confidence score, and
+                  reason.
+                </span>
               </div>
             </motion.div>
           </motion.section>
@@ -368,7 +370,8 @@ const Documentation = () => {
             </motion.h2>
             <motion.p variants={fadeInUp} className="text-secondary text-sm leading-relaxed">
               RouteMind is completely provider-agnostic. Models are assigned per routing policy
-              (balanced / speed / cost / quality) and selected dynamically based on health and scoring.
+              (balanced / speed / cost / quality) and selected dynamically based on health and
+              scoring.
             </motion.p>
 
             <motion.div
@@ -377,7 +380,9 @@ const Documentation = () => {
             >
               {/* Gemini */}
               <div className="p-4 bg-card-bg border border-border-app rounded-xl space-y-2">
-                <span className="text-secondary uppercase tracking-wider text-[9px]">Google Gemini</span>
+                <span className="text-secondary uppercase tracking-wider text-[9px]">
+                  Google Gemini
+                </span>
                 <ul className="space-y-1 text-primary">
                   {[
                     { model: 'gemini-2.5-pro', policy: 'quality' },
@@ -416,7 +421,9 @@ const Documentation = () => {
 
               {/* NVIDIA NIM */}
               <div className="p-4 bg-card-bg border border-border-app rounded-xl space-y-2">
-                <span className="text-secondary uppercase tracking-wider text-[9px]">NVIDIA NIM</span>
+                <span className="text-secondary uppercase tracking-wider text-[9px]">
+                  NVIDIA NIM
+                </span>
                 <ul className="space-y-1 text-primary">
                   {[
                     { model: 'meta/llama-3.1-70b-instruct', policy: 'balanced / quality' },
@@ -435,7 +442,9 @@ const Documentation = () => {
 
               {/* OpenRouter */}
               <div className="p-4 bg-card-bg border border-border-app rounded-xl space-y-2">
-                <span className="text-secondary uppercase tracking-wider text-[9px]">OpenRouter (Free tier)</span>
+                <span className="text-secondary uppercase tracking-wider text-[9px]">
+                  OpenRouter (Free tier)
+                </span>
                 <ul className="space-y-1 text-primary">
                   {[
                     { model: 'deepseek/deepseek-r1-0528:free', policy: 'quality' },
@@ -490,7 +499,8 @@ const Documentation = () => {
                   <span className="font-semibold text-primary">Specialization (35%)</span>
                 </div>
                 <p className="text-[10px] text-secondary leading-normal">
-                  Per-intent capability weights — e.g. Groq scores 100 for coding, Gemini scores 100 for research.
+                  Per-intent capability weights — e.g. Groq scores 100 for coding, Gemini scores 100
+                  for research.
                 </p>
               </div>
               <div className="p-3 bg-card-bg border border-border-app rounded-xl space-y-1.5">
@@ -508,7 +518,8 @@ const Documentation = () => {
                   <span className="font-semibold text-primary">Cost Score (15%)</span>
                 </div>
                 <p className="text-[10px] text-secondary leading-normal">
-                  Free models score 100, premium frontier models score lower. Balances quality vs spend.
+                  Free models score 100, premium frontier models score lower. Balances quality vs
+                  spend.
                 </p>
               </div>
               <div className="p-3 bg-card-bg border border-border-app rounded-xl space-y-1.5">
@@ -586,13 +597,14 @@ const Documentation = () => {
               className="space-y-4 text-sm sm:text-[15px] text-secondary leading-relaxed font-medium"
             >
               <p>
-                A query enters the FastAPI backend and is processed by the <strong className="text-primary">Intent Classifier</strong>,
-                which uses keyword heuristics to assign a task type (coding, research, reasoning, etc.)
-                and a complexity tier (simple / medium / complex).
-                The <strong className="text-primary">Policy Router</strong> then runs multi-factor scoring across all healthy providers
-                — weighting specialization, latency, cost, and historical reliability — to select
-                the optimal provider and model. The raw response is wrapped with routing metadata
-                and returned to the frontend.
+                A query enters the FastAPI backend and is processed by the{' '}
+                <strong className="text-primary">Intent Classifier</strong>, which uses keyword
+                heuristics to assign a task type (coding, research, reasoning, etc.) and a
+                complexity tier (simple / medium / complex). The{' '}
+                <strong className="text-primary">Policy Router</strong> then runs multi-factor
+                scoring across all healthy providers — weighting specialization, latency, cost, and
+                historical reliability — to select the optimal provider and model. The raw response
+                is wrapped with routing metadata and returned to the frontend.
               </p>
             </motion.div>
           </motion.section>
@@ -707,7 +719,11 @@ const Documentation = () => {
             >
               {[
                 { title: 'Self-learning routing', status: 'In development', statusColor: 'blue' },
-                { title: 'User feedback optimization', status: 'Planning', statusColor: 'secondary' },
+                {
+                  title: 'User feedback optimization',
+                  status: 'Planning',
+                  statusColor: 'secondary',
+                },
                 { title: 'Domain-specific routing', status: 'Planning', statusColor: 'secondary' },
                 { title: 'Enterprise analytics API', status: 'Backlog', statusColor: 'secondary' },
                 { title: 'Browser extension package', status: 'Backlog', statusColor: 'secondary' },
@@ -727,11 +743,13 @@ const Documentation = () => {
                     )}
                     <span>{item.title}</span>
                   </div>
-                  <span className={`text-[8px] px-1.5 py-0.5 rounded border font-semibold uppercase ${
-                    item.statusColor === 'blue'
-                      ? 'bg-blue-100 dark:bg-blue-950/40 border-blue-300 dark:border-blue-500/20 text-blue-700 dark:text-blue-400'
-                      : 'bg-card-bg border-border-app text-secondary'
-                  }`}>
+                  <span
+                    className={`text-[8px] px-1.5 py-0.5 rounded border font-semibold uppercase ${
+                      item.statusColor === 'blue'
+                        ? 'bg-blue-100 dark:bg-blue-950/40 border-blue-300 dark:border-blue-500/20 text-blue-700 dark:text-blue-400'
+                        : 'bg-card-bg border-border-app text-secondary'
+                    }`}
+                  >
                     {item.status}
                   </span>
                 </li>

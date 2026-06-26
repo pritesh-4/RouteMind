@@ -117,10 +117,7 @@ const Benefits = () => {
                     </div>
                   </div>
                   <div className="flex justify-center py-1">
-                    <ArrowRight
-                      size={14}
-                      className="text-secondary rotate-90 md:rotate-0"
-                    />
+                    <ArrowRight size={14} className="text-secondary rotate-90 md:rotate-0" />
                   </div>
                   <div className="p-3 bg-sidebar-bg/60 backdrop-blur-sm border border-blue-500/20 rounded-lg">
                     <div className="flex items-center justify-between mb-1.5">
@@ -317,8 +314,8 @@ const Benefits = () => {
                 </h2>
                 <p className="text-secondary text-sm leading-relaxed">
                   Not every task requires the most expensive frontier model. RouteMind intelligently
-                  matches simpler tasks with highly efficient, low-cost models — including free tiers
-                  via OpenRouter. This helps users receive premium responses while eliminating
+                  matches simpler tasks with highly efficient, low-cost models — including free
+                  tiers via OpenRouter. This helps users receive premium responses while eliminating
                   unnecessary API spend.
                 </p>
               </div>
@@ -362,17 +359,19 @@ const Benefits = () => {
                     <Terminal size={12} className="text-blue-500" />
                     <span>RouteMind Consolidated Node Shell</span>
                   </div>
-                  {['Google Gemini API', 'Groq API', 'NVIDIA NIM API', 'OpenRouter API'].map((ep) => (
-                    <div
-                      key={ep}
-                      className="flex justify-between items-center bg-sidebar-bg/60 backdrop-blur-sm p-2.5 border border-border-app/40 rounded-lg"
-                    >
-                      <span className="text-secondary">{ep}</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-950/40 border border-blue-500/20 text-blue-400 font-semibold font-mono">
-                        CONNECTED
-                      </span>
-                    </div>
-                  ))}
+                  {['Google Gemini API', 'Groq API', 'NVIDIA NIM API', 'OpenRouter API'].map(
+                    (ep) => (
+                      <div
+                        key={ep}
+                        className="flex justify-between items-center bg-sidebar-bg/60 backdrop-blur-sm p-2.5 border border-border-app/40 rounded-lg"
+                      >
+                        <span className="text-secondary">{ep}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-950/40 border border-blue-500/20 text-blue-400 font-semibold font-mono">
+                          CONNECTED
+                        </span>
+                      </div>
+                    )
+                  )}
                 </div>
               </div>
             </div>
@@ -443,7 +442,8 @@ const Benefits = () => {
                 task: 'Draft pitch email templates',
                 model: 'deepseek/deepseek-r1-0528:free',
                 provider: 'OpenRouter',
-                reason: 'Selected for polished long-form writing at zero cost via OpenRouter free tier.',
+                reason:
+                  'Selected for polished long-form writing at zero cost via OpenRouter free tier.',
               },
             ].map(({ tag, color, role, sub, task, model, provider, reason }) => {
               const scenarioColors = {
@@ -530,7 +530,11 @@ const Benefits = () => {
                 <tbody className="divide-y divide-border-app/40">
                   {[
                     ['Interface Model', 'Multiple tabs & developer keys', 'One unified console'],
-                    ['Model Selection', 'Manual evaluation per query', 'Automatic multi-factor routing'],
+                    [
+                      'Model Selection',
+                      'Manual evaluation per query',
+                      'Automatic multi-factor routing',
+                    ],
                     [
                       'API Cost',
                       'Always pays frontier model rates',
