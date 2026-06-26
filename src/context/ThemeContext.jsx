@@ -4,8 +4,49 @@ import { createContext, useContext, useEffect, useState } from 'react'
 const ThemeContext = createContext({
   theme: 'system',
   setTheme: () => null,
-  resolvedTheme: 'dark', // 'light' or 'dark'
+  resolvedTheme: 'dark',
 })
+
+/**
+ * Apply dark/light class to <html> with a smooth transition.
+ * Uses the View Transition API when available (Chrome 111+, Edge 111+)
+ * for a native hardware-accelerated cross-fade.
+ * Falls back to a CSS class-based transition on older browsers.
+ */
+function applyTheme(isDark) {
+  const root = document.documentElement
+  const targetClass = isDark ? 'dark' : null
+
+  const doApply = () => {
+    if (isDark) {
+      root.classList.add('dark')
+    } else {
+      root.classList.remove('dark')
+    }
+  }
+
+  // View Transition API path — gives a native GPU cross-fade
+  if (document.startViewTransition) {
+    // Mark the root so our CSS can target the transition snapshot
+    root.setAttribute('data-theme-switching', '')
+    const transition = document.startViewTransition(() => {
+      doApply()
+    })
+    transition.finished.finally(() => {
+      root.removeAttribute('data-theme-switching')
+    })
+    return
+  }
+
+  // CSS fallback for browsers without View Transition API
+  root.classList.add('theme-transition')
+  doApply()
+  // Remove the transition class after all transitions complete
+  const timer = setTimeout(() => {
+    root.classList.remove('theme-transition')
+  }, 350)
+  return () => clearTimeout(timer)
+}
 
 export const ThemeProvider = ({ children }) => {
   const [theme, setThemeState] = useState(() => {
@@ -22,66 +63,34 @@ export const ThemeProvider = ({ children }) => {
   })
 
   const setTheme = (newTheme) => {
-    if (newTheme !== 'light' && newTheme !== 'dark' && newTheme !== 'system') {
-      return
-    }
+    if (newTheme !== 'light' && newTheme !== 'dark' && newTheme !== 'system') return
     setThemeState(newTheme)
     localStorage.setItem('theme', newTheme)
   }
 
   useEffect(() => {
-    const root = window.document.documentElement
+    const isDark =
+      theme === 'dark' ||
+      (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
 
-    const handleThemeChange = () => {
-      const isDark =
-        theme === 'dark' ||
-        (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-
-      const targetTheme = isDark ? 'dark' : 'light'
-      setResolvedTheme(targetTheme)
-
-      // Add temporary transition class
-      root.classList.add('theme-transition')
-
-      if (isDark) {
-        root.classList.add('dark')
-      } else {
-        root.classList.remove('dark')
-      }
-
-      // Remove transition class after it finishes
-      const timer = setTimeout(() => {
-        root.classList.remove('theme-transition')
-      }, 300)
-
-      return () => clearTimeout(timer)
-    }
-
-    const cleanUp = handleThemeChange()
+    setResolvedTheme(isDark ? 'dark' : 'light')
+    const cleanup = applyTheme(isDark)
 
     if (theme === 'system') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+      const mq = window.matchMedia('(prefers-color-scheme: dark)')
       const listener = () => {
-        handleThemeChange()
+        const nowDark = mq.matches
+        setResolvedTheme(nowDark ? 'dark' : 'light')
+        applyTheme(nowDark)
       }
-
-      if (mediaQuery.addEventListener) {
-        mediaQuery.addEventListener('change', listener)
-      } else {
-        mediaQuery.addListener(listener)
-      }
-
+      mq.addEventListener ? mq.addEventListener('change', listener) : mq.addListener(listener)
       return () => {
-        cleanUp && cleanUp()
-        if (mediaQuery.removeEventListener) {
-          mediaQuery.removeEventListener('change', listener)
-        } else {
-          mediaQuery.removeListener(listener)
-        }
+        cleanup?.()
+        mq.removeEventListener ? mq.removeEventListener('change', listener) : mq.removeListener(listener)
       }
     }
 
-    return cleanUp
+    return cleanup
   }, [theme])
 
   return (
