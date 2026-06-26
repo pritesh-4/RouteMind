@@ -74,7 +74,7 @@ const Benefits = () => {
 
           <motion.p
             variants={fadeInUp}
-            className="text-neutral-500 text-xs sm:text-sm max-w-2xl mx-auto leading-relaxed"
+            className="text-secondary text-xs sm:text-sm max-w-2xl mx-auto leading-relaxed"
           >
             Modern AI users spend unnecessary time deciding which model to use. RouteMind eliminates
             that decision-making process while remaining transparent about every routing decision.
@@ -103,13 +103,13 @@ const Benefits = () => {
               {/* Frosted glass widget */}
               <div className="bg-card-bg/50 backdrop-blur-xl border border-border-app rounded-xl p-5 font-mono text-xs text-left shadow-lg relative group/widget">
                 <div className="absolute inset-0 bg-blue-500/3 blur-xl pointer-events-none rounded-xl"></div>
-                <div className="flex items-center justify-between border-b border-border-app/40 pb-3 mb-4 text-[10px] text-neutral-500 uppercase tracking-wider">
+                <div className="flex items-center justify-between border-b border-border-app/40 pb-3 mb-4 text-[10px] text-secondary uppercase tracking-wider">
                   <span>Proxy Analysis Layer</span>
                   <span className="text-blue-400 font-semibold">RM_ANALYZER</span>
                 </div>
                 <div className="space-y-3">
                   <div className="p-3 bg-sidebar-bg/70 backdrop-blur-sm border border-border-app rounded-lg">
-                    <div className="text-[10px] text-neutral-500 mb-1">User Query</div>
+                    <div className="text-[10px] text-secondary mb-1">User Query</div>
                     <div className="text-primary flex items-center gap-1.5">
                       <span className="text-blue-500 font-bold shrink-0">&gt;</span>
                       <span>Debug a React application state synchronization hook</span>
@@ -118,12 +118,12 @@ const Benefits = () => {
                   <div className="flex justify-center py-1">
                     <ArrowRight
                       size={14}
-                      className="text-neutral-600 rotate-90 md:rotate-0 animate-pulse"
+                      className="text-secondary rotate-90 md:rotate-0 animate-pulse"
                     />
                   </div>
                   <div className="p-3 bg-sidebar-bg/60 backdrop-blur-sm border border-blue-500/20 rounded-lg">
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[10px] text-neutral-500">Route Evaluated</span>
+                      <span className="text-[10px] text-secondary">Route Evaluated</span>
                       <span className="px-1.5 py-0.5 rounded bg-blue-950/40 text-[9px] text-blue-400 font-semibold border border-blue-500/10 animate-pulse">
                         Active Node
                       </span>
@@ -132,7 +132,7 @@ const Benefits = () => {
                       <Cpu size={13} className="text-blue-500 dark:text-blue-400" />
                       <span className="text-primary font-bold">Groq (Llama 3.3)</span>
                     </div>
-                    <div className="text-[10px] text-neutral-600 dark:text-neutral-400 leading-normal">
+                    <div className="text-[10px] text-secondary leading-normal">
                       Reason: Low latency coding and debugging performance for React 19 concurrent
                       render states.
                     </div>
@@ -153,7 +153,7 @@ const Benefits = () => {
                       <div className="text-[9px] text-red-400 font-semibold tracking-wider uppercase mb-2">
                         Manual Workflow
                       </div>
-                      <div className="space-y-1.5 text-[10px] text-neutral-600 dark:text-neutral-400">
+                      <div className="space-y-1.5 text-[10px] text-secondary">
                         {[
                           'Open Gemini tab',
                           'Open Groq tab',
@@ -167,7 +167,7 @@ const Benefits = () => {
                         ))}
                       </div>
                     </div>
-                    <span className="text-[9px] text-neutral-500 dark:text-neutral-400 mt-3 font-semibold">
+                    <span className="text-[9px] text-secondary mt-3 font-semibold">
                       Cognitive overhead
                     </span>
                   </div>
@@ -177,12 +177,12 @@ const Benefits = () => {
                       <div className="text-[9px] text-green-400 font-semibold tracking-wider uppercase mb-2">
                         RouteMind
                       </div>
-                      <div className="space-y-1.5 text-[10px] text-neutral-700 dark:text-neutral-200">
+                      <div className="space-y-1.5 text-[10px] text-primary">
                         <div className="flex items-center gap-1.5 text-blue-500 dark:text-blue-400">
                           <span className="h-1.5 w-1.5 rounded-full bg-blue-400 shrink-0"></span>
                           <span>Ask once</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">
+                        <div className="flex items-center gap-1.5 text-secondary">
                           <span className="h-1.5 w-1.5 rounded-full bg-green-500 shrink-0 animate-pulse"></span>
                           <span>Orchestrator routes</span>
                         </div>
@@ -229,7 +229,7 @@ const Benefits = () => {
               {/* Frosted glass widget */}
               <div className="bg-card-bg/50 backdrop-blur-xl border border-border-app rounded-xl p-5 font-mono text-xs text-left shadow-lg">
                 <div className="flex items-center justify-between border-b border-border-app/40 pb-2.5 mb-3">
-                  <span className="text-[9px] text-neutral-500 font-semibold uppercase">
+                  <span className="text-[9px] text-secondary font-semibold uppercase">
                     Explainability Metadata
                   </span>
                   <span className="text-green-400 text-[10px] flex items-center gap-1">
@@ -238,18 +238,18 @@ const Benefits = () => {
                 </div>
                 <div className="space-y-2.5">
                   <div className="flex justify-between py-1 border-b border-border-app/20">
-                    <span className="text-neutral-500">Selected Model</span>
+                    <span className="text-secondary">Selected Model</span>
                     <span className="text-primary font-bold">Gemini Flash</span>
                   </div>
                   <div className="flex justify-between py-1 border-b border-border-app/20">
-                    <span className="text-neutral-500">Confidence Score</span>
+                    <span className="text-secondary">Confidence Score</span>
                     <span className="text-green-400 font-semibold">95%</span>
                   </div>
                   <div className="py-1">
-                    <span className="text-neutral-600 dark:text-neutral-500 block mb-1">
+                    <span className="text-secondary block mb-1">
                       Selection Parameter
                     </span>
-                    <span className="text-neutral-700 dark:text-neutral-300 leading-normal block bg-sidebar-bg/60 backdrop-blur-sm p-2 rounded border border-border-app/40">
+                    <span className="text-primary leading-normal block bg-sidebar-bg/60 backdrop-blur-sm p-2 rounded border border-border-app/40">
                       Large context requirements (32,450 tokens matched) processed via Google
                       low-latency node.
                     </span>
@@ -266,7 +266,7 @@ const Benefits = () => {
               <div className="order-last md:order-first bg-card-bg/50 backdrop-blur-xl border border-border-app rounded-xl p-5 font-mono text-xs text-left shadow-lg">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between border-b border-border-app/40 pb-2.5">
-                    <span className="text-[9px] text-neutral-500 font-semibold uppercase">
+                    <span className="text-[9px] text-secondary font-semibold uppercase">
                       Token Budget Comparison
                     </span>
                     <span className="text-blue-400 text-[10px] flex items-center gap-1 font-semibold">
@@ -275,7 +275,7 @@ const Benefits = () => {
                   </div>
                   <div className="space-y-3">
                     <div>
-                      <div className="flex justify-between text-[10px] text-neutral-600 dark:text-neutral-500 mb-1">
+                      <div className="flex justify-between text-[10px] text-secondary mb-1">
                         <span>Frontier Default Option (GPT-4o)</span>
                         <span>$0.0150</span>
                       </div>
@@ -341,7 +341,7 @@ const Benefits = () => {
                   ].map((item, idx) => (
                     <li
                       key={idx}
-                      className="flex items-center gap-2 text-xs text-neutral-700 dark:text-neutral-300"
+                      className="flex items-center gap-2 text-xs text-secondary"
                     >
                       <Check size={12} className="text-blue-500" />
                       <span>{item}</span>
@@ -353,7 +353,7 @@ const Benefits = () => {
               {/* Frosted glass widget */}
               <div className="bg-card-bg/50 backdrop-blur-xl border border-border-app rounded-xl p-5 font-mono text-xs text-left shadow-lg">
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 border-b border-border-app/40 pb-2.5 mb-2.5 text-[9px] text-neutral-500 font-semibold uppercase">
+                  <div className="flex items-center gap-2 border-b border-border-app/40 pb-2.5 mb-2.5 text-[9px] text-secondary font-semibold uppercase">
                     <Terminal size={12} className="text-blue-500" />
                     <span>RouteMind Consolidated Node Shell</span>
                   </div>
@@ -362,7 +362,7 @@ const Benefits = () => {
                       key={ep}
                       className="flex justify-between items-center bg-sidebar-bg/60 backdrop-blur-sm p-2.5 border border-border-app/40 rounded-lg"
                     >
-                      <span className="text-neutral-400">{ep}</span>
+                      <span className="text-secondary">{ep}</span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-950/40 border border-blue-500/20 text-blue-400 font-semibold font-mono">
                         CONNECTED
                       </span>
@@ -377,7 +377,7 @@ const Benefits = () => {
         {/* ── SCENARIOS ── */}
         <section className="space-y-8">
           <Reveal className="space-y-2 text-center max-w-2xl mx-auto">
-            <span className="text-[10px] font-mono text-neutral-500 tracking-wider uppercase font-semibold">
+            <span className="text-[10px] font-mono text-secondary tracking-wider uppercase font-semibold">
               Workspace Contexts
             </span>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">
@@ -461,16 +461,16 @@ const Benefits = () => {
                       </div>
                       <div>
                         <h3 className="text-xs font-semibold text-primary">{role}</h3>
-                        <p className="text-[9px] text-neutral-600 dark:text-neutral-500">{sub}</p>
+                        <p className="text-[9px] text-secondary">{sub}</p>
                       </div>
                     </div>
                     <div className="space-y-1.5 font-mono text-[10px]">
                       <div>
-                        <span className="text-neutral-600 dark:text-neutral-500">Task:</span>
+                        <span className="text-secondary">Task:</span>
                         <p className="text-primary mt-0.5">{task}</p>
                       </div>
                       <div>
-                        <span className="text-neutral-600 dark:text-neutral-500">
+                        <span className="text-secondary">
                           Selected Model:
                         </span>
                         <p className="text-blue-600 dark:text-blue-400 font-semibold mt-0.5 flex items-center gap-1">
@@ -479,7 +479,7 @@ const Benefits = () => {
                       </div>
                     </div>
                   </div>
-                  <p className="text-[10px] text-neutral-600 dark:text-neutral-400 leading-relaxed border-t border-border-app/30 pt-3">
+                  <p className="text-[10px] text-secondary leading-relaxed border-t border-border-app/30 pt-3">
                     {reason}
                   </p>
                 </motion.div>
@@ -491,7 +491,7 @@ const Benefits = () => {
         {/* ── COMPARISON TABLE ── */}
         <section className="space-y-8">
           <Reveal className="space-y-2 text-center max-w-2xl mx-auto">
-            <span className="text-[10px] font-mono text-neutral-500 tracking-wider uppercase font-semibold">
+            <span className="text-[10px] font-mono text-secondary tracking-wider uppercase font-semibold">
               Workflow Efficiency
             </span>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">
@@ -507,7 +507,7 @@ const Benefits = () => {
               <table className="w-full border-collapse text-left text-sm font-sans">
                 <thead className="bg-card-bg/70 border-b border-border-app text-xs font-semibold text-primary uppercase select-none">
                   <tr>
-                    <th className="px-6 py-4 font-semibold text-neutral-700 dark:text-neutral-300">
+                    <th className="px-6 py-4 font-semibold text-primary">
                       Feature Parameter
                     </th>
                     <th className="px-6 py-4 font-semibold text-red-500 dark:text-red-400/90">
@@ -534,10 +534,10 @@ const Benefits = () => {
                     ],
                   ].map(([feature, before, after]) => (
                     <tr key={feature} className="hover:bg-card-bg/30 transition-colors">
-                      <td className="px-6 py-4 text-neutral-700 dark:text-neutral-300 font-medium">
+                      <td className="px-6 py-4 text-primary font-medium">
                         {feature}
                       </td>
-                      <td className="px-6 py-4 text-neutral-600 dark:text-neutral-400">{before}</td>
+                      <td className="px-6 py-4 text-secondary">{before}</td>
                       <td className="px-6 py-4 text-primary font-medium">
                         <span className="flex items-center gap-2">
                           <span className="h-1.5 w-1.5 rounded-full bg-blue-500 dark:bg-blue-400 shrink-0" />

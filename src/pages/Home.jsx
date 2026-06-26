@@ -254,7 +254,6 @@ const Home = () => {
               </span>
             </motion.h1>
 
-            {/* Hero subtext — was text-[#A1A1AA] which fails light mode */}
             <motion.p
               variants={fadeInUp}
               className="text-secondary text-base sm:text-lg max-w-xl mx-auto leading-relaxed"
@@ -352,7 +351,6 @@ const Home = () => {
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-primary">
               High-Performance Optimization
             </h2>
-            {/* Was text-[#A1A1AA] — invisible on light */}
             <p className="text-secondary text-sm sm:text-base leading-relaxed">
               We manage inference complexity. Reduce cost overheads without sacrificing coding and
               contextual depths.
@@ -401,7 +399,6 @@ const Home = () => {
                   {icon}
                 </div>
                 <h3 className="text-base font-semibold text-primary">{title}</h3>
-                {/* Was text-neutral-400 — fails light mode */}
                 <p className="text-secondary text-xs leading-relaxed">{desc}</p>
               </motion.div>
             ))}
