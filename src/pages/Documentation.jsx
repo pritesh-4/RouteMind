@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -17,6 +17,7 @@ import {
   Database,
   Workflow,
   Sliders,
+  Circle,
 } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
@@ -36,6 +37,31 @@ const NAV_ITEMS = [
 const Documentation = () => {
   const [activeSection, setActiveSection] = useState('overview')
   const [expandedFaq, setExpandedFaq] = useState(null)
+  const observerRef = useRef(null)
+
+  // IntersectionObserver: auto-update active section on scroll
+  useEffect(() => {
+    const sectionEls = NAV_ITEMS.map(({ id }) => document.getElementById(id)).filter(Boolean)
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        // Find the topmost visible section
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
+        if (visible.length > 0) {
+          setActiveSection(visible[0].target.id)
+        }
+      },
+      { rootMargin: '-80px 0px -60% 0px', threshold: 0 }
+    )
+
+    sectionEls.forEach((el) => observerRef.current.observe(el))
+
+    return () => {
+      if (observerRef.current) observerRef.current.disconnect()
+    }
+  }, [])
 
   const toggleFaq = (idx) => {
     setExpandedFaq(expandedFaq === idx ? null : idx)
@@ -93,13 +119,13 @@ const Documentation = () => {
           </div>
         </aside>
 
-        {/* Mobile jump bar */}
+        {/* Mobile jump bar — fixed text-xs (was text-[11px], below 12px a11y floor) */}
         <div className="w-full md:hidden py-2 px-1 border-b border-border-app bg-card-bg/60 backdrop-blur-md sticky top-[76px] z-20 overflow-x-auto scrollbar-none flex gap-2 shrink-0 select-none">
           {NAV_ITEMS.map((item) => (
             <button
               key={item.id}
               onClick={() => handleNavClick(item.id)}
-              className={`px-3 py-1 rounded-full text-[11px] font-mono whitespace-nowrap border shrink-0 transition-colors ${
+              className={`px-3 py-1 rounded-full text-xs font-mono whitespace-nowrap border shrink-0 transition-colors ${
                 activeSection === item.id
                   ? 'bg-blue-600 border-blue-500 text-white'
                   : 'bg-card-bg border-border-app text-secondary'
@@ -142,7 +168,7 @@ const Documentation = () => {
                 model for a user's task.
               </p>
               <p>
-                Instead of manually choosing between Gemini, Groq, NVIDIA NIM, or other providers,
+                Instead of manually choosing between Gemini, Groq, NVIDIA NIM, or OpenRouter,
                 users simply ask their question and RouteMind handles the decision-making process.
                 The goal is to simplify AI usage while improving quality, transparency, and
                 efficiency.
@@ -177,9 +203,10 @@ const Documentation = () => {
               className="space-y-4 text-sm sm:text-[15px] text-secondary leading-relaxed font-medium"
             >
               <p>
-                Different AI models excel at different tasks. For instance, Groq may perform better
-                for coding and low-latency requests, Google's Gemini excels at long document
-                contexts, and NVIDIA NIM provides maximum accuracy and reasoning depth.
+                Different AI models excel at different tasks. Groq delivers low-latency coding
+                responses, Gemini handles million-token document contexts, and NVIDIA NIM provides
+                precision reasoning. OpenRouter aggregates free frontier models for cost-sensitive
+                tasks.
               </p>
               <p>
                 Currently, users must manually decide which model to use before writing a prompt.
@@ -187,7 +214,6 @@ const Documentation = () => {
               </p>
             </motion.div>
 
-            {/* The 4 problem points — was text-neutral-300, invisible on light */}
             <motion.ul
               variants={fadeInUp}
               className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs text-primary font-mono select-none"
@@ -238,16 +264,18 @@ const Documentation = () => {
               </motion.h2>
             </div>
 
+            {/* Updated: 6 steps matching actual code pipeline */}
             <motion.div
               variants={fadeInUp}
-              className="grid grid-cols-1 sm:grid-cols-5 gap-3 bg-card-bg border border-border-app p-4 rounded-xl text-center select-none font-mono text-[10px]"
+              className="grid grid-cols-2 sm:grid-cols-6 gap-2 bg-card-bg border border-border-app p-4 rounded-xl text-center select-none font-mono text-[10px]"
             >
               {[
                 { step: '01', title: 'Query' },
                 { step: '02', title: 'Intent' },
-                { step: '03', title: 'Evaluate' },
-                { step: '04', title: 'Decision' },
-                { step: '05', title: 'Response' },
+                { step: '03', title: 'Complexity' },
+                { step: '04', title: 'Policy' },
+                { step: '05', title: 'Provider' },
+                { step: '06', title: 'Response' },
               ].map((item, idx) => (
                 <div
                   key={idx}
@@ -259,7 +287,7 @@ const Documentation = () => {
                       {item.title}
                     </span>
                   </div>
-                  {idx < 4 && (
+                  {idx < 5 && (
                     <div className="hidden sm:flex items-center text-secondary self-center">
                       <ChevronRight size={12} />
                     </div>
@@ -268,7 +296,6 @@ const Documentation = () => {
               ))}
             </motion.div>
 
-            {/* Routing steps — was text-neutral-400, fails light */}
             <motion.div
               variants={fadeInUp}
               className="space-y-4 font-mono text-xs text-secondary pt-2"
@@ -278,34 +305,47 @@ const Documentation = () => {
                   1. Intent Analysis:
                 </span>
                 <span>
-                  Extract semantic structure and query type (e.g. coding syntax check vs. long
-                  context retrieval).
+                  Keyword-based classification maps the prompt to a task type (e.g. coding,
+                  research, reasoning, document).
                 </span>
               </div>
               <div className="flex gap-4">
                 <span className="text-blue-600 dark:text-blue-400 font-bold shrink-0">
-                  2. Model Evaluation:
-                </span>
-                <span>Scan provider latency matrices, capabilities, and target pricing.</span>
-              </div>
-              <div className="flex gap-4">
-                <span className="text-blue-600 dark:text-blue-400 font-bold shrink-0">
-                  3. Routing Decision:
+                  2. Complexity Detection:
                 </span>
                 <span>
-                  Select the model that maximizes output metrics while maintaining token budgets.
+                  Prompt length and keyword signals determine simple / medium / complex tier,
+                  which upgrades or downgrades the routing policy automatically.
                 </span>
               </div>
               <div className="flex gap-4">
                 <span className="text-blue-600 dark:text-blue-400 font-bold shrink-0">
-                  4. Response & Explanation:
+                  3. Policy Application:
                 </span>
-                <span>Deliver output alongside confidence telemetry logs.</span>
+                <span>
+                  User-selected policy (balanced / speed / cost / quality) is combined with
+                  complexity to derive the effective routing strategy.
+                </span>
+              </div>
+              <div className="flex gap-4">
+                <span className="text-blue-600 dark:text-blue-400 font-bold shrink-0">
+                  4. Multi-Factor Scoring:
+                </span>
+                <span>
+                  Each healthy provider is scored: 35% specialization capability + 20% latency +
+                  15% cost + 15% health + 15% historical success rate.
+                </span>
+              </div>
+              <div className="flex gap-4">
+                <span className="text-blue-600 dark:text-blue-400 font-bold shrink-0">
+                  5. Response &amp; Explanation:
+                </span>
+                <span>Delivers output alongside routing metadata: provider, model, confidence score, and reason.</span>
               </div>
             </motion.div>
           </motion.section>
 
-          {/* SECTION 4: Supported Models */}
+          {/* SECTION 4: Supported Models — updated to match router.py exactly */}
           <motion.section
             id="supported-models"
             initial="hidden"
@@ -327,57 +367,89 @@ const Documentation = () => {
               Current Model Ecosystem
             </motion.h2>
             <motion.p variants={fadeInUp} className="text-secondary text-sm leading-relaxed">
-              RouteMind is completely provider-agnostic. We continuously benchmark and integrate
-              primary endpoints to ensure your requests are routed to peak performers.
+              RouteMind is completely provider-agnostic. Models are assigned per routing policy
+              (balanced / speed / cost / quality) and selected dynamically based on health and scoring.
             </motion.p>
 
             <motion.div
               variants={fadeInUp}
               className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 font-mono text-xs select-none"
             >
-              <div className="p-4 bg-card-bg border border-border-app rounded-xl space-y-2 col-span-1">
-                <span className="text-secondary uppercase tracking-wider text-[9px]">
-                  Google Gemini Models
-                </span>
+              {/* Gemini */}
+              <div className="p-4 bg-card-bg border border-border-app rounded-xl space-y-2">
+                <span className="text-secondary uppercase tracking-wider text-[9px]">Google Gemini</span>
                 <ul className="space-y-1 text-primary">
-                  <li className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-red-500"></span>
-                    <span>Gemini 2.5 Pro</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-red-500"></span>
-                    <span>Gemini 2.5 Flash</span>
-                  </li>
+                  {[
+                    { model: 'gemini-2.5-pro', policy: 'quality' },
+                    { model: 'gemini-2.5-flash', policy: 'balanced' },
+                    { model: 'gemini-2.5-flash-lite', policy: 'speed / cost' },
+                  ].map(({ model, policy }) => (
+                    <li key={model} className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0"></span>
+                        <span>{model}</span>
+                      </span>
+                      <span className="text-[9px] text-secondary">{policy}</span>
+                    </li>
+                  ))}
                 </ul>
               </div>
-              <div className="p-4 bg-card-bg border border-border-app rounded-xl space-y-2 col-span-1">
-                <span className="text-secondary uppercase tracking-wider text-[9px]">
-                  Groq Models
-                </span>
+
+              {/* Groq */}
+              <div className="p-4 bg-card-bg border border-border-app rounded-xl space-y-2">
+                <span className="text-secondary uppercase tracking-wider text-[9px]">Groq</span>
                 <ul className="space-y-1 text-primary">
-                  <li className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-orange-500"></span>
-                    <span>Llama 3.3 70b</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-orange-500"></span>
-                    <span>Llama 3.1 8b</span>
-                  </li>
+                  {[
+                    { model: 'llama-3.3-70b-versatile', policy: 'balanced / quality' },
+                    { model: 'llama-3.1-8b-instant', policy: 'speed / cost' },
+                  ].map(({ model, policy }) => (
+                    <li key={model} className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-orange-500 shrink-0"></span>
+                        <span>{model}</span>
+                      </span>
+                      <span className="text-[9px] text-secondary">{policy}</span>
+                    </li>
+                  ))}
                 </ul>
               </div>
-              <div className="p-4 bg-card-bg border border-border-app rounded-xl space-y-2 sm:col-span-2">
-                <span className="text-secondary uppercase tracking-wider text-[9px]">
-                  NVIDIA NIM Models
-                </span>
+
+              {/* NVIDIA NIM */}
+              <div className="p-4 bg-card-bg border border-border-app rounded-xl space-y-2">
+                <span className="text-secondary uppercase tracking-wider text-[9px]">NVIDIA NIM</span>
                 <ul className="space-y-1 text-primary">
-                  <li className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-green-500"></span>
-                    <span>Llama 3.1 405b</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-green-500"></span>
-                    <span>Llama 3.1 70b</span>
-                  </li>
+                  {[
+                    { model: 'meta/llama-3.1-70b-instruct', policy: 'balanced / quality' },
+                    { model: 'meta/llama-3.1-8b-instruct', policy: 'speed / cost' },
+                  ].map(({ model, policy }) => (
+                    <li key={model} className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-green-500 shrink-0"></span>
+                        <span>{model}</span>
+                      </span>
+                      <span className="text-[9px] text-secondary">{policy}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* OpenRouter */}
+              <div className="p-4 bg-card-bg border border-border-app rounded-xl space-y-2">
+                <span className="text-secondary uppercase tracking-wider text-[9px]">OpenRouter (Free tier)</span>
+                <ul className="space-y-1 text-primary">
+                  {[
+                    { model: 'deepseek/deepseek-r1-0528:free', policy: 'quality' },
+                    { model: 'qwen/qwen3-coder:free', policy: 'balanced' },
+                    { model: 'cohere/north-mini-code:free', policy: 'speed / cost' },
+                  ].map(({ model, policy }) => (
+                    <li key={model} className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-purple-500 shrink-0"></span>
+                        <span className="break-all">{model}</span>
+                      </span>
+                      <span className="text-[9px] text-secondary shrink-0">{policy}</span>
+                    </li>
+                  ))}
                 </ul>
               </div>
             </motion.div>
@@ -405,8 +477,7 @@ const Documentation = () => {
               How RouteMind Chooses Models
             </motion.h2>
             <motion.p variants={fadeInUp} className="text-secondary text-sm leading-relaxed">
-              Every routing outcome is a multi-dimensional optimization calculation targeting these
-              core operational indexes:
+              Every routing decision is a composite score across five weighted factors:
             </motion.p>
 
             <motion.div
@@ -416,46 +487,44 @@ const Documentation = () => {
               <div className="p-3 bg-card-bg border border-border-app rounded-xl space-y-1.5">
                 <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
                   <BrainCircuit size={13} />
-                  <span className="font-semibold text-primary">Intent Match</span>
-                </div>
-                {/* Was text-neutral-400 — fix to text-secondary */}
-                <p className="text-[10px] text-secondary leading-normal">
-                  Identifies prompt classification parameters to route to corresponding specialists.
-                </p>
-              </div>
-              <div className="p-3 bg-card-bg border border-border-app rounded-xl space-y-1.5">
-                <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
-                  <Coins size={13} />
-                  <span className="font-semibold text-primary">Cost Efficiency</span>
+                  <span className="font-semibold text-primary">Specialization (35%)</span>
                 </div>
                 <p className="text-[10px] text-secondary leading-normal">
-                  Selects lower-tier models if accuracy metrics match frontier standards for simple
-                  tasks.
+                  Per-intent capability weights — e.g. Groq scores 100 for coding, Gemini scores 100 for research.
                 </p>
               </div>
               <div className="p-3 bg-card-bg border border-border-app rounded-xl space-y-1.5">
                 <div className="flex items-center gap-2 text-cyan-600 dark:text-cyan-400">
                   <Clock size={13} />
-                  <span className="font-semibold text-primary">Latency Index</span>
+                  <span className="font-semibold text-primary">Latency Score (20%)</span>
                 </div>
                 <p className="text-[10px] text-secondary leading-normal">
-                  Prioritizes high throughput endpoints for latency-critical application queries.
+                  Derived from live health-monitor latency readings. 100 = fastest, 0 = slowest.
+                </p>
+              </div>
+              <div className="p-3 bg-card-bg border border-border-app rounded-xl space-y-1.5">
+                <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                  <Coins size={13} />
+                  <span className="font-semibold text-primary">Cost Score (15%)</span>
+                </div>
+                <p className="text-[10px] text-secondary leading-normal">
+                  Free models score 100, premium frontier models score lower. Balances quality vs spend.
                 </p>
               </div>
               <div className="p-3 bg-card-bg border border-border-app rounded-xl space-y-1.5">
                 <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400">
                   <Database size={13} />
-                  <span className="font-semibold text-primary">Context Length</span>
+                  <span className="font-semibold text-primary">Health + Success (30%)</span>
                 </div>
                 <p className="text-[10px] text-secondary leading-normal">
-                  Handles massive file inputs by routing dynamically to models with large memory
-                  parameters.
+                  Live health-check status (15%) and historical request success rate (15%) prevent
+                  routing to flaky providers.
                 </p>
               </div>
             </motion.div>
           </motion.section>
 
-          {/* SECTION 6: Architecture */}
+          {/* SECTION 6: Architecture — expanded to match actual backend */}
           <motion.section
             id="architecture"
             initial="hidden"
@@ -479,26 +548,36 @@ const Documentation = () => {
               </motion.h2>
             </div>
 
+            {/* Updated: shows actual pipeline steps from backend code */}
             <motion.div
               variants={fadeInUp}
-              className="p-5 bg-card-bg border border-border-app rounded-xl space-y-4 select-none font-mono text-[10px] text-center"
+              className="p-5 bg-card-bg border border-border-app rounded-xl space-y-4 select-none font-mono text-[10px] text-center overflow-x-auto"
             >
-              <div className="grid grid-cols-1 sm:grid-cols-7 gap-2 items-center">
+              <div className="grid grid-cols-2 sm:grid-cols-7 gap-2 items-center min-w-[560px]">
                 <div className="p-2 bg-sidebar-bg border border-border-app rounded font-semibold text-secondary">
                   User
                 </div>
-                <div className="text-secondary hidden sm:block">──&gt;</div>
+                <div className="text-secondary text-center">──&gt;</div>
                 <div className="p-2 bg-blue-100 dark:bg-blue-950/20 border border-blue-300 dark:border-blue-500/20 text-blue-700 dark:text-blue-400 rounded font-semibold">
-                  Proxy Hub
+                  Intent Classifier
                 </div>
-                <div className="text-secondary hidden sm:block">──&gt;</div>
-                <div className="p-2 bg-sidebar-bg border border-border-app rounded font-semibold text-secondary">
-                  Inference APIs
+                <div className="text-secondary text-center">──&gt;</div>
+                <div className="p-2 bg-purple-100 dark:bg-purple-950/20 border border-purple-300 dark:border-purple-500/20 text-purple-700 dark:text-purple-400 rounded font-semibold">
+                  Policy Router
                 </div>
-                <div className="text-secondary hidden sm:block">──&gt;</div>
+                <div className="text-secondary text-center">──&gt;</div>
                 <div className="p-2 bg-green-100 dark:bg-green-950/20 border border-green-300 dark:border-green-500/20 text-green-700 dark:text-green-400 rounded font-semibold">
-                  Explain Layer
+                  Provider API
                 </div>
+              </div>
+              <div className="text-[9px] text-secondary grid grid-cols-2 sm:grid-cols-7 gap-2 min-w-[560px]">
+                <span></span>
+                <span></span>
+                <span>keyword scoring → task type</span>
+                <span></span>
+                <span>multi-factor scoring → best model</span>
+                <span></span>
+                <span>raw tokens + metadata</span>
               </div>
             </motion.div>
 
@@ -507,15 +586,18 @@ const Documentation = () => {
               className="space-y-4 text-sm sm:text-[15px] text-secondary leading-relaxed font-medium"
             >
               <p>
-                When a query is entered in the Chat Workspace, it hits the RouteMind proxy. The
-                intent classifier maps the structure and routes to the best API provider (Gemini,
-                Groq, or NVIDIA NIM). The response aggregator wraps the raw token outputs and feeds
-                metadata straight to the Explainability Layer before returning it to the user.
+                A query enters the FastAPI backend and is processed by the <strong className="text-primary">Intent Classifier</strong>,
+                which uses keyword heuristics to assign a task type (coding, research, reasoning, etc.)
+                and a complexity tier (simple / medium / complex).
+                The <strong className="text-primary">Policy Router</strong> then runs multi-factor scoring across all healthy providers
+                — weighting specialization, latency, cost, and historical reliability — to select
+                the optimal provider and model. The raw response is wrapped with routing metadata
+                and returned to the frontend.
               </p>
             </motion.div>
           </motion.section>
 
-          {/* SECTION 7: FAQ */}
+          {/* SECTION 7: FAQ — corrected accuracy claim and routing description */}
           <motion.section
             id="faq"
             initial="hidden"
@@ -543,15 +625,15 @@ const Documentation = () => {
               {[
                 {
                   q: 'Why not use Gemini directly?',
-                  a: "Gemini is a single model ecosystem. If you need low-latency coding, Groq's Llama 3.3 is often superior. If you need reasoning depth, NVIDIA NIM's Llama 3.1 405b wins. RouteMind gives you all specialists under one workflow without multiple billing accounts.",
+                  a: "Gemini is a single model ecosystem. If you need low-latency coding, Groq's Llama 3.3 is often superior. If you need reasoning depth, NVIDIA NIM's Llama 3.1 70b wins. OpenRouter gives you powerful free-tier models for cost-sensitive tasks. RouteMind gives you all specialists under one workflow without managing multiple billing accounts.",
                 },
                 {
-                  q: 'Why not use OpenRouter?',
-                  a: 'OpenRouter requires you to manually select the target model for every request. RouteMind automates this classification decision, making your workflow fluid and effortless.',
+                  q: 'Why not use OpenRouter directly?',
+                  a: 'OpenRouter requires you to manually select the target model for every request. RouteMind uses keyword-based intent classification and multi-factor scoring to automate that selection — routing to Groq, Gemini, NVIDIA NIM, or OpenRouter depending on what your task needs.',
                 },
                 {
-                  q: 'How accurate is routing?',
-                  a: 'Our latency, pricing, and benchmark classification vectors are updated in real-time. In testing, RouteMind achieves 96% intent matching accuracy compared to manual configurations.',
+                  q: 'How does routing work?',
+                  a: 'RouteMind uses a keyword heuristic classifier to detect task type and complexity, then runs a weighted scoring algorithm (specialization + latency + cost + health) across all healthy providers to pick the best model for your request.',
                 },
                 {
                   q: 'Can I choose a model manually?',
@@ -563,7 +645,7 @@ const Documentation = () => {
                 },
                 {
                   q: 'Will more models be added?',
-                  a: 'Yes. We continuously benchmark new frontier open-source and proprietary models (such as Llama 3 and DeepSeek) and update endpoints as soon as they pass verification benchmarks.',
+                  a: 'Yes. We continuously benchmark new frontier open-source and proprietary models and update endpoints as soon as they pass verification. Upcoming additions include self-learning routing and domain-specific provider tuning.',
                 },
               ].map((faq, idx) => {
                 const isOpen = expandedFaq === idx
@@ -594,7 +676,7 @@ const Documentation = () => {
             </motion.div>
           </motion.section>
 
-          {/* SECTION 8: Future Roadmap — What's Next */}
+          {/* SECTION 8: Future Roadmap — Clock/Circle icons, not Check */}
           <motion.section
             id="roadmap"
             initial="hidden"
@@ -619,29 +701,37 @@ const Documentation = () => {
               We are constantly refining the orchestration tier. Here is our product expansion plan:
             </motion.p>
 
-            {/* 7 roadmap items — was text-neutral-300, invisible on light */}
             <motion.ul
               variants={fadeInUp}
               className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs text-primary font-mono select-none"
             >
               {[
-                { title: 'Self-learning routing', status: 'In development' },
-                { title: 'User feedback optimization', status: 'Planning' },
-                { title: 'Domain-specific routing', status: 'Planning' },
-                { title: 'Enterprise analytics API', status: 'Backlog' },
-                { title: 'Browser extension package', status: 'Backlog' },
-                { title: 'Multi-agent workflows', status: 'In development' },
-                { title: 'Custom routing tuning', status: 'Planning' },
+                { title: 'Self-learning routing', status: 'In development', statusColor: 'blue' },
+                { title: 'User feedback optimization', status: 'Planning', statusColor: 'secondary' },
+                { title: 'Domain-specific routing', status: 'Planning', statusColor: 'secondary' },
+                { title: 'Enterprise analytics API', status: 'Backlog', statusColor: 'secondary' },
+                { title: 'Browser extension package', status: 'Backlog', statusColor: 'secondary' },
+                { title: 'Multi-agent workflows', status: 'In development', statusColor: 'blue' },
+                { title: 'Custom routing tuning', status: 'Planning', statusColor: 'secondary' },
               ].map((item, idx) => (
                 <li
                   key={idx}
                   className="flex items-center justify-between bg-card-bg border border-border-app p-3 rounded-lg"
                 >
                   <div className="flex items-center gap-2">
-                    <Check size={11} className="text-blue-600 dark:text-blue-400" />
+                    {/* Clock for in-development, Circle for planned — not Check (implies done) */}
+                    {item.statusColor === 'blue' ? (
+                      <Clock size={11} className="text-blue-600 dark:text-blue-400" />
+                    ) : (
+                      <Circle size={11} className="text-secondary" />
+                    )}
                     <span>{item.title}</span>
                   </div>
-                  <span className="text-[8px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950/40 border border-blue-300 dark:border-blue-500/20 text-blue-700 dark:text-blue-400 font-semibold uppercase">
+                  <span className={`text-[8px] px-1.5 py-0.5 rounded border font-semibold uppercase ${
+                    item.statusColor === 'blue'
+                      ? 'bg-blue-100 dark:bg-blue-950/40 border-blue-300 dark:border-blue-500/20 text-blue-700 dark:text-blue-400'
+                      : 'bg-card-bg border-border-app text-secondary'
+                  }`}>
                     {item.status}
                   </span>
                 </li>
@@ -657,7 +747,7 @@ const Documentation = () => {
             variants={stagger}
             className="text-center max-w-2xl mx-auto space-y-6 py-12 select-none border border-border-app/40 bg-card-bg/30 rounded-2xl p-8 relative"
           >
-            <div className="absolute inset-0 bg-blue-500/2 blur-2xl pointer-events-none rounded-2xl"></div>
+            <div className="absolute inset-0 bg-blue-500/5 blur-2xl pointer-events-none rounded-2xl"></div>
             <div className="space-y-3">
               <motion.h2
                 variants={fadeInUp}

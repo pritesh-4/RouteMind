@@ -87,7 +87,8 @@ const Benefits = () => {
           <Reveal>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
               <div className="space-y-4">
-                <div className="inline-flex p-2 rounded-lg bg-blue-950/30 border border-blue-500/20 text-blue-400 animate-pulse">
+                {/* Removed animate-pulse — pulse is for loading states, not static icons */}
+                <div className="inline-flex p-2 rounded-lg bg-blue-950/30 border border-blue-500/20 text-blue-400">
                   <Sliders size={18} />
                 </div>
                 <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-primary">
@@ -118,19 +119,19 @@ const Benefits = () => {
                   <div className="flex justify-center py-1">
                     <ArrowRight
                       size={14}
-                      className="text-secondary rotate-90 md:rotate-0 animate-pulse"
+                      className="text-secondary rotate-90 md:rotate-0"
                     />
                   </div>
                   <div className="p-3 bg-sidebar-bg/60 backdrop-blur-sm border border-blue-500/20 rounded-lg">
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-[10px] text-secondary">Route Evaluated</span>
-                      <span className="px-1.5 py-0.5 rounded bg-blue-950/40 text-[9px] text-blue-400 font-semibold border border-blue-500/10 animate-pulse">
+                      <span className="px-1.5 py-0.5 rounded bg-blue-950/40 text-[9px] text-blue-400 font-semibold border border-blue-500/10">
                         Active Node
                       </span>
                     </div>
                     <div className="flex items-center gap-2 mb-2">
                       <Cpu size={13} className="text-blue-500 dark:text-blue-400" />
-                      <span className="text-primary font-bold">Groq (Llama 3.3)</span>
+                      <span className="text-primary font-bold">Groq — llama-3.3-70b-versatile</span>
                     </div>
                     <div className="text-[10px] text-secondary leading-normal">
                       Reason: Low latency coding and debugging performance for React 19 concurrent
@@ -183,7 +184,7 @@ const Benefits = () => {
                           <span>Ask once</span>
                         </div>
                         <div className="flex items-center gap-1.5 text-secondary">
-                          <span className="h-1.5 w-1.5 rounded-full bg-green-500 shrink-0 animate-pulse"></span>
+                          <span className="h-1.5 w-1.5 rounded-full bg-green-500 shrink-0"></span>
                           <span>Orchestrator routes</span>
                         </div>
                       </div>
@@ -239,11 +240,11 @@ const Benefits = () => {
                 <div className="space-y-2.5">
                   <div className="flex justify-between py-1 border-b border-border-app/20">
                     <span className="text-secondary">Selected Model</span>
-                    <span className="text-primary font-bold">Gemini Flash</span>
+                    <span className="text-primary font-bold">gemini-2.5-flash</span>
                   </div>
                   <div className="flex justify-between py-1 border-b border-border-app/20">
                     <span className="text-secondary">Confidence Score</span>
-                    <span className="text-green-400 font-semibold">95%</span>
+                    <span className="text-green-400 font-semibold">87.4 / 100</span>
                   </div>
                   <div className="py-1">
                     <span className="text-secondary block mb-1">Selection Parameter</span>
@@ -274,26 +275,35 @@ const Benefits = () => {
                   <div className="space-y-3">
                     <div>
                       <div className="flex justify-between text-[10px] text-secondary mb-1">
-                        <span>Frontier Default Option (GPT-4o)</span>
-                        <span>$0.0150</span>
+                        <span>Frontier Default (GPT-4o)</span>
+                        <span>$0.0150 / 1K tokens</span>
                       </div>
                       <div className="h-2 bg-neutral-200 dark:bg-neutral-900 rounded-full overflow-hidden">
                         <div className="h-full bg-neutral-400 dark:bg-neutral-700 w-full rounded-full"></div>
                       </div>
                     </div>
                     <div>
-                      <div className="flex justify-between text-[10px] text-green-600 dark:text-green-400 font-medium mb-1">
-                        <span>Intelligent Proxy Route (Gemini Flash)</span>
-                        <span>$0.0003</span>
+                      <div className="flex justify-between text-[10px] text-secondary mb-1">
+                        <span>Mid-tier Route (gemini-2.5-flash)</span>
+                        <span>$0.0003 / 1K tokens</span>
                       </div>
                       <div className="h-2 bg-neutral-200 dark:bg-neutral-900 rounded-full overflow-hidden">
-                        <div className="h-full bg-blue-500 w-[4%] rounded-full animate-[pulse_1s_infinite]"></div>
+                        <div className="h-full bg-blue-400 w-[20%] rounded-full"></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-[10px] text-green-600 dark:text-green-400 font-medium mb-1">
+                        <span>Free Route (DeepSeek R1 via OpenRouter)</span>
+                        <span>$0.0000 / 1K tokens</span>
+                      </div>
+                      <div className="h-2 bg-neutral-200 dark:bg-neutral-900 rounded-full overflow-hidden">
+                        <div className="h-full bg-green-500 w-[4%] rounded-full"></div>
                       </div>
                     </div>
                   </div>
                   <div className="p-2.5 bg-blue-950/20 backdrop-blur-sm border border-blue-500/10 rounded-lg text-blue-400 text-[10px] leading-normal">
-                    Savings Check: 98% reduced cost with comparable accuracy for simple text
-                    summaries.
+                    RouteMind routes simple queries to free or low-cost models automatically,
+                    reserving premium models for tasks that need them.
                   </div>
                 </div>
               </div>
@@ -307,9 +317,9 @@ const Benefits = () => {
                 </h2>
                 <p className="text-secondary text-sm leading-relaxed">
                   Not every task requires the most expensive frontier model. RouteMind intelligently
-                  matches simpler tasks with highly efficient, low-cost models. This helps users
-                  receive premium, lightning-fast responses while reducing unnecessary API usage
-                  costs.
+                  matches simpler tasks with highly efficient, low-cost models — including free tiers
+                  via OpenRouter. This helps users receive premium responses while eliminating
+                  unnecessary API spend.
                 </p>
               </div>
             </div>
@@ -345,14 +355,14 @@ const Benefits = () => {
                 </ul>
               </div>
 
-              {/* Frosted glass widget */}
+              {/* Frosted glass widget — updated to include OpenRouter */}
               <div className="bg-card-bg/50 backdrop-blur-xl border border-border-app rounded-xl p-5 font-mono text-xs text-left shadow-lg">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 border-b border-border-app/40 pb-2.5 mb-2.5 text-[9px] text-secondary font-semibold uppercase">
                     <Terminal size={12} className="text-blue-500" />
                     <span>RouteMind Consolidated Node Shell</span>
                   </div>
-                  {['Google Gemini API', 'Groq API', 'NVIDIA NIM API'].map((ep) => (
+                  {['Google Gemini API', 'Groq API', 'NVIDIA NIM API', 'OpenRouter API'].map((ep) => (
                     <div
                       key={ep}
                       className="flex justify-between items-center bg-sidebar-bg/60 backdrop-blur-sm p-2.5 border border-border-app/40 rounded-lg"
@@ -398,9 +408,10 @@ const Benefits = () => {
                 role: 'Developer',
                 sub: 'Refactoring & Review',
                 task: 'Review React Architecture',
-                model: 'Llama 3.3 70b',
+                model: 'llama-3.3-70b-versatile',
+                provider: 'Groq',
                 reason:
-                  'Selected due to low latency code understanding and debugging capabilities on Groq.',
+                  'Selected for low-latency code understanding and debugging capabilities on Groq infrastructure.',
               },
               {
                 tag: 'RES',
@@ -408,9 +419,10 @@ const Benefits = () => {
                 role: 'Researcher',
                 sub: 'Document Parsing',
                 task: 'Analyze 50-page PDF report',
-                model: 'Gemini 1.5 Pro',
+                model: 'gemini-2.5-pro',
+                provider: 'Google Gemini',
                 reason:
-                  'Selected for massive context window capabilities and semantic retrieval accuracy.',
+                  'Selected for large context window (1M tokens) and semantic retrieval accuracy on long documents.',
               },
               {
                 tag: 'STU',
@@ -418,9 +430,10 @@ const Benefits = () => {
                 role: 'Student',
                 sub: 'Concept Explanation',
                 task: 'Explain Quantum Physics',
-                model: 'Llama 3.1 405b (NVIDIA)',
+                model: 'meta/llama-3.1-70b-instruct',
+                provider: 'NVIDIA NIM',
                 reason:
-                  'Selected for high-precision reasoning, clear analogical pedagogics, and step descriptions on NVIDIA NIM.',
+                  'Selected for high-precision reasoning and step-by-step pedagogical explanations via NVIDIA NIM.',
               },
               {
                 tag: 'FND',
@@ -428,10 +441,11 @@ const Benefits = () => {
                 role: 'Founder',
                 sub: 'Creative Copywriting',
                 task: 'Draft pitch email templates',
-                model: 'Gemini 1.5 Pro',
-                reason: 'Selected for highly polished writing style and narrative structure flow.',
+                model: 'deepseek/deepseek-r1-0528:free',
+                provider: 'OpenRouter',
+                reason: 'Selected for polished long-form writing at zero cost via OpenRouter free tier.',
               },
-            ].map(({ tag, color, role, sub, task, model, reason }) => {
+            ].map(({ tag, color, role, sub, task, model, provider, reason }) => {
               const scenarioColors = {
                 blue: 'bg-blue-100 dark:bg-blue-950/20 border-blue-200 dark:border-blue-500/20 text-blue-700 dark:text-blue-400',
                 green:
@@ -465,9 +479,13 @@ const Benefits = () => {
                         <p className="text-primary mt-0.5">{task}</p>
                       </div>
                       <div>
+                        <span className="text-secondary">Provider:</span>
+                        <p className="text-secondary mt-0.5">{provider}</p>
+                      </div>
+                      <div>
                         <span className="text-secondary">Selected Model:</span>
-                        <p className="text-blue-600 dark:text-blue-400 font-semibold mt-0.5 flex items-center gap-1">
-                          <Cpu size={10} /> {model}
+                        <p className="text-blue-600 dark:text-blue-400 font-semibold mt-0.5 flex items-center gap-1 break-all">
+                          <Cpu size={10} className="shrink-0" /> {model}
                         </p>
                       </div>
                     </div>
@@ -512,7 +530,12 @@ const Benefits = () => {
                 <tbody className="divide-y divide-border-app/40">
                   {[
                     ['Interface Model', 'Multiple tabs & developer keys', 'One unified console'],
-                    ['Model Selection', 'Manual evaluation', 'Automatic proxy routing'],
+                    ['Model Selection', 'Manual evaluation per query', 'Automatic multi-factor routing'],
+                    [
+                      'API Cost',
+                      'Always pays frontier model rates',
+                      'Routes to cheapest capable model',
+                    ],
                     [
                       'Experience Focus',
                       'Fragmented context switching',
@@ -549,7 +572,8 @@ const Benefits = () => {
           variants={stagger}
           className="text-center max-w-2xl mx-auto space-y-8 py-12 select-none border border-border-app/40 bg-card-bg/30 backdrop-blur-xl rounded-2xl p-8 relative"
         >
-          <div className="absolute inset-0 bg-blue-500/2 blur-2xl pointer-events-none rounded-2xl"></div>
+          {/* Fixed: was bg-blue-500/2 (effectively invisible) → bg-blue-500/5 */}
+          <div className="absolute inset-0 bg-blue-500/5 blur-2xl pointer-events-none rounded-2xl"></div>
 
           <div className="space-y-4">
             <motion.h2
