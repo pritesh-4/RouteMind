@@ -132,13 +132,13 @@ const TerminalSimulator = () => {
   return (
     <div className="w-full max-w-2xl bg-card-bg/60 backdrop-blur-xl border border-border-app rounded-xl shadow-2xl overflow-hidden font-mono text-left select-none relative">
       {/* Terminal Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-sidebar-bg/70 backdrop-blur-md border-b border-border-app text-xs text-neutral-500">
+      <div className="flex items-center justify-between px-4 py-3 bg-sidebar-bg/70 backdrop-blur-md border-b border-border-app text-xs text-secondary">
         <div className="flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-full bg-[#FF5F56] opacity-80" />
           <span className="h-2.5 w-2.5 rounded-full bg-[#FFBD2E] opacity-80" />
           <span className="h-2.5 w-2.5 rounded-full bg-[#27C93F] opacity-80" />
         </div>
-        <span className="text-[10px] tracking-wider text-neutral-500 font-mono font-medium">
+        <span className="text-[10px] tracking-wider text-secondary font-mono font-medium">
           routemind-proxy-edge-01
         </span>
         <div className="flex items-center gap-1 text-[#22C55E] text-[10px] animate-pulse">
@@ -151,7 +151,7 @@ const TerminalSimulator = () => {
       <div className="p-5 space-y-4 text-[13px] min-h-[290px] leading-relaxed">
         <div className="flex items-start gap-2">
           <span className="text-[#3B82F6] font-bold shrink-0">$</span>
-          <p className="text-neutral-900 dark:text-[#FAFAFA] font-medium break-words">
+          <p className="text-primary font-medium break-words">
             {typedPrompt}
             {phase === 'typing' && (
               <span className="inline-block w-1.5 h-3.5 bg-blue-500 animate-pulse ml-0.5" />
@@ -166,7 +166,7 @@ const TerminalSimulator = () => {
             return (
               <div
                 key={idx}
-                className="flex items-center gap-2 text-neutral-400 animate-in fade-in slide-in-from-left-1 duration-200"
+                className="flex items-center gap-2 text-secondary animate-in fade-in slide-in-from-left-1 duration-200"
               >
                 {isCompleted ? (
                   <span className="text-[#22C55E] font-semibold shrink-0">✓</span>
@@ -192,12 +192,12 @@ const TerminalSimulator = () => {
                   <Cpu size={11} className="text-blue-500" />
                   <span>{current.selectedModel} Selected</span>
                 </div>
-                <div className="text-[10px] text-green-400 font-mono bg-green-950/20 border border-green-500/10 px-2 py-0.5 rounded">
+                <div className="text-[10px] text-green-600 dark:text-green-400 font-mono bg-green-950/20 border border-green-500/10 px-2 py-0.5 rounded">
                   Savings: {current.savings}
                 </div>
               </div>
-              <div className="text-neutral-400 text-xs leading-relaxed bg-sidebar-bg border border-border-app/80 p-3 rounded-lg flex items-start gap-2">
-                <Info size={12} className="text-neutral-500 shrink-0 mt-0.5" />
+              <div className="text-secondary text-xs leading-relaxed bg-sidebar-bg border border-border-app/80 p-3 rounded-lg flex items-start gap-2">
+                <Info size={12} className="text-secondary shrink-0 mt-0.5" />
                 <p>{current.reason}</p>
               </div>
             </motion.div>
@@ -205,7 +205,7 @@ const TerminalSimulator = () => {
         </AnimatePresence>
       </div>
 
-      <div className="px-4 py-2 border-t border-border-app/40 bg-sidebar-bg/30 text-[9px] text-neutral-600 flex justify-between font-mono">
+      <div className="px-4 py-2 border-t border-border-app/40 bg-sidebar-bg/30 text-[9px] text-secondary flex justify-between font-mono">
         <span>Latency: &lt;12ms Edge Overhead</span>
         <span>Route Code: RM_AUTO_PROXY</span>
       </div>
@@ -235,9 +235,9 @@ const Home = () => {
           {/* Badge */}
           <motion.div
             variants={fadeInUp}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-950/20 backdrop-blur-sm text-[11px] font-medium text-blue-400 font-mono select-none"
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-950/20 backdrop-blur-sm text-[11px] font-medium text-blue-500 dark:text-blue-400 font-mono select-none"
           >
-            <span className="flex h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse"></span>
+            <span className="flex h-1.5 w-1.5 rounded-full bg-blue-500 dark:bg-blue-400 animate-pulse"></span>
             ACTIVE PROXY SYSTEM: ONLINE
           </motion.div>
 
@@ -249,14 +249,15 @@ const Home = () => {
             >
               One Interface. <br className="hidden sm:inline" />
               Every AI.{' '}
-              <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-cyan-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-500 via-blue-600 to-cyan-500 dark:from-blue-400 dark:via-blue-500 dark:to-cyan-400 bg-clip-text text-transparent">
                 Zero Guesswork.
               </span>
             </motion.h1>
 
+            {/* Hero subtext — was text-[#A1A1AA] which fails light mode */}
             <motion.p
               variants={fadeInUp}
-              className="text-[#A1A1AA] text-base sm:text-lg max-w-xl mx-auto leading-relaxed"
+              className="text-secondary text-base sm:text-lg max-w-xl mx-auto leading-relaxed"
             >
               RouteMind automatically selects the best AI model for every task based on intent,
               cost, latency, and performance requirements.
@@ -303,10 +304,10 @@ const Home = () => {
         className="py-12 border-t border-border-app/40 bg-sidebar-bg/40 backdrop-blur-sm relative select-none"
       >
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-[10px] font-semibold text-neutral-600 font-mono tracking-widest uppercase mb-6">
+          <p className="text-[10px] font-semibold text-secondary font-mono tracking-widest uppercase mb-6">
             Supported Routing Destinations
           </p>
-          <div className="flex flex-wrap justify-center items-center gap-x-12 gap-y-6 text-sm font-semibold font-mono text-neutral-500">
+          <div className="flex flex-wrap justify-center items-center gap-x-12 gap-y-6 text-sm font-semibold font-mono text-secondary">
             {['Gemini', 'Groq', 'NVIDIA NIM', 'OpenRouter'].map((name, i) => (
               <motion.div
                 key={name}
@@ -344,20 +345,21 @@ const Home = () => {
             transition={{ duration: 0.5 }}
             className="max-w-3xl mx-auto text-center space-y-4 mb-16"
           >
-            <div className="inline-flex items-center gap-1.5 text-[#3B82F6] font-mono text-xs uppercase tracking-wider">
+            <div className="inline-flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-mono text-xs uppercase tracking-wider">
               <Sliders size={12} />
               <span>Core Engine Benefits</span>
             </div>
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-primary">
               High-Performance Optimization
             </h2>
-            <p className="text-[#A1A1AA] text-sm sm:text-base leading-relaxed">
+            {/* Was text-[#A1A1AA] — invisible on light */}
+            <p className="text-secondary text-sm sm:text-base leading-relaxed">
               We manage inference complexity. Reduce cost overheads without sacrificing coding and
               contextual depths.
             </p>
           </motion.div>
 
-          {/* Feature cards — staggered scroll reveal */}
+          {/* Feature cards */}
           <motion.div
             className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto"
             variants={stagger}
@@ -368,19 +370,19 @@ const Home = () => {
             {[
               {
                 icon: <Zap size={16} />,
-                iconBg: 'bg-blue-950/20 border-blue-500/10 text-[#3B82F6]',
+                iconBg: 'bg-blue-100 dark:bg-blue-950/20 border-blue-300 dark:border-blue-500/10 text-blue-600 dark:text-[#3B82F6]',
                 title: 'Intelligent Routing',
                 desc: 'Automatically analyze code prompts and long documents to match with optimal model specifications on the fly.',
               },
               {
                 icon: <ShieldCheck size={16} />,
-                iconBg: 'bg-green-950/20 border-green-500/10 text-[#22C55E]',
+                iconBg: 'bg-green-100 dark:bg-green-950/20 border-green-300 dark:border-green-500/10 text-green-600 dark:text-[#22C55E]',
                 title: 'Explainable Decisions',
                 desc: 'Full transparency. Every decision shows model comparisons, latency measurements, and scoring logic breakdown.',
               },
               {
                 icon: <Coins size={16} />,
-                iconBg: 'bg-yellow-950/20 border-yellow-500/10 text-[#F59E0B]',
+                iconBg: 'bg-yellow-100 dark:bg-yellow-950/20 border-yellow-300 dark:border-yellow-500/10 text-yellow-600 dark:text-[#F59E0B]',
                 title: 'Cost Optimization',
                 desc: 'Route simpler intent queries to fast, cost-efficient models. Save up to 80% on standard inference pricing.',
               },
@@ -396,7 +398,8 @@ const Home = () => {
                   {icon}
                 </div>
                 <h3 className="text-base font-semibold text-primary">{title}</h3>
-                <p className="text-neutral-400 text-xs leading-relaxed">{desc}</p>
+                {/* Was text-neutral-400 — fails light mode */}
+                <p className="text-secondary text-xs leading-relaxed">{desc}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -415,7 +418,7 @@ const Home = () => {
           <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-primary">
             Experience AI Optimization
           </h2>
-          <p className="text-[#A1A1AA] text-sm sm:text-base max-w-md mx-auto leading-relaxed">
+          <p className="text-secondary text-sm sm:text-base max-w-md mx-auto leading-relaxed">
             Integrate our proxy layer and experience sub-10ms routing decisions without changing
             your workflow.
           </p>
