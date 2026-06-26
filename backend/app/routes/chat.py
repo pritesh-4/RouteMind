@@ -7,6 +7,7 @@ import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Dict, Any
+from functools import lru_cache
 from fastapi import APIRouter, HTTPException, Depends, status
 
 from app.config import settings
@@ -25,17 +26,21 @@ logger = logging.getLogger("routemind.routes.chat")
 router = APIRouter()
 
 
-# Dependency Injection Providers
+# Dependency Injection Providers — cached as singletons so state (e.g.
+# ProviderManager's lazy-loaded provider instances) persists across requests.
+@lru_cache(maxsize=1)
 def get_classifier() -> BaseIntentClassifier:
     """Dependency injection helper returning the registered Intent Classifier."""
     return RuleBasedIntentClassifier()
 
 
+@lru_cache(maxsize=1)
 def get_router() -> LLMRouter:
     """Dependency injection helper returning the registered LLMRouter."""
     return LLMRouter()
 
 
+@lru_cache(maxsize=1)
 def get_provider_manager() -> ProviderManager:
     """Dependency injection helper returning the registered ProviderManager."""
     return ProviderManager()

@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-// routingStats imported on demand from localStorage where appropriate
 import {
   MessageSquare,
   Plus,
@@ -13,15 +12,13 @@ import {
   Edit2,
   X,
   Laptop,
-  Sparkles,
-  Shield,
   Search,
-  Coins,
-  Activity,
 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { defaultStats } from '../data/mockData'
 import Tooltip from './Tooltip'
+import SettingsModal from './SettingsModal'
+import TelemetryModal from './TelemetryModal'
 
 const Sidebar = ({
   activeChatId = '1',
