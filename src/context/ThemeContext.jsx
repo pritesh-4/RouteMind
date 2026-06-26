@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 
 const ThemeContext = createContext({
   theme: 'system',
@@ -15,7 +15,6 @@ const ThemeContext = createContext({
  */
 function applyTheme(isDark) {
   const root = document.documentElement
-  const targetClass = isDark ? 'dark' : null
 
   const doApply = () => {
     if (isDark) {
@@ -27,7 +26,6 @@ function applyTheme(isDark) {
 
   // View Transition API path — gives a native GPU cross-fade
   if (document.startViewTransition) {
-    // Mark the root so our CSS can target the transition snapshot
     root.setAttribute('data-theme-switching', '')
     const transition = document.startViewTransition(() => {
       doApply()
@@ -41,11 +39,19 @@ function applyTheme(isDark) {
   // CSS fallback for browsers without View Transition API
   root.classList.add('theme-transition')
   doApply()
-  // Remove the transition class after all transitions complete
   const timer = setTimeout(() => {
     root.classList.remove('theme-transition')
   }, 350)
   return () => clearTimeout(timer)
+}
+
+/** Resolve 'system' → actual 'dark' | 'light' without triggering an effect. */
+function resolveTheme(theme) {
+  if (theme === 'dark' || theme === 'light') return theme
+  if (typeof window !== 'undefined') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  }
+  return 'dark'
 }
 
 export const ThemeProvider = ({ children }) => {
@@ -53,14 +59,8 @@ export const ThemeProvider = ({ children }) => {
     return localStorage.getItem('theme') || 'system'
   })
 
-  const [resolvedTheme, setResolvedTheme] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('theme')
-      if (stored === 'light' || stored === 'dark') return stored
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-    }
-    return 'dark'
-  })
+  // Derived synchronously — no setState inside an effect
+  const resolvedTheme = useMemo(() => resolveTheme(theme), [theme])
 
   const setTheme = (newTheme) => {
     if (newTheme !== 'light' && newTheme !== 'dark' && newTheme !== 'system') return
@@ -69,19 +69,15 @@ export const ThemeProvider = ({ children }) => {
   }
 
   useEffect(() => {
-    const isDark =
-      theme === 'dark' ||
-      (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-
-    setResolvedTheme(isDark ? 'dark' : 'light')
+    const isDark = resolvedTheme === 'dark'
     const cleanup = applyTheme(isDark)
 
     if (theme === 'system') {
       const mq = window.matchMedia('(prefers-color-scheme: dark)')
       const listener = () => {
-        const nowDark = mq.matches
-        setResolvedTheme(nowDark ? 'dark' : 'light')
-        applyTheme(nowDark)
+        applyTheme(mq.matches)
+        // Force a re-render so resolvedTheme updates for system preference changes
+        setThemeState('system')
       }
       mq.addEventListener ? mq.addEventListener('change', listener) : mq.addListener(listener)
       return () => {
@@ -93,7 +89,7 @@ export const ThemeProvider = ({ children }) => {
     }
 
     return cleanup
-  }, [theme])
+  }, [theme, resolvedTheme])
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, resolvedTheme }}>
