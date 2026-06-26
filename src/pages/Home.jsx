@@ -50,10 +50,10 @@ const EXAMPLES = [
       'Comparing Inference Models...',
       'Calculating Token Budget...',
     ],
-    selectedModel: 'Gemini 2.5 Flash',
+    selectedModel: 'DeepSeek R1 (OpenRouter)',
     reason:
-      'Routed to Gemini 2.5 Flash for rapid low-overhead creative copywriting and low-cost response packaging.',
-    cost: '$0.00001',
+      'Routed to DeepSeek R1 via OpenRouter free tier for polished creative copywriting at zero API cost.',
+    cost: '$0.00000',
     savings: '98%',
   },
 ]
@@ -385,7 +385,7 @@ const Home = () => {
                 iconBg:
                   'bg-yellow-100 dark:bg-yellow-950/20 border-yellow-300 dark:border-yellow-500/10 text-yellow-600 dark:text-[#F59E0B]',
                 title: 'Cost Optimization',
-                desc: 'Route simpler intent queries to fast, cost-efficient models. Save up to 80% on standard inference pricing.',
+                desc: 'Route simpler intent queries to fast, cost-efficient models. Save up to 98% on standard inference pricing.',
               },
             ].map(({ icon, iconBg, title, desc }) => (
               <motion.div
@@ -419,8 +419,8 @@ const Home = () => {
             Experience AI Optimization
           </h2>
           <p className="text-secondary text-sm sm:text-base max-w-md mx-auto leading-relaxed">
-            Integrate our proxy layer and experience sub-10ms routing decisions without changing
-            your workflow.
+            Integrate our proxy layer and experience near-instant routing decisions without
+            changing your workflow.
           </p>
           <div className="flex justify-center pt-2">
             <Link
