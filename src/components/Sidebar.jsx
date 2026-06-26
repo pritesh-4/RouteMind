@@ -42,7 +42,8 @@ const Sidebar = ({
   const { theme, setTheme } = useTheme()
   const [searchQuery, setSearchQuery] = useState('')
   const [routingPolicy, setRoutingPolicy] = useState(() => {
-    return localStorage.getItem('routingPolicy') || 'balanced'
+    const stored = localStorage.getItem('routingPolicy') || 'balanced'
+    return stored === 'accuracy' ? 'quality' : stored
   })
   const [telemetryOpen, setTelemetryOpen] = useState(false)
   const [stats, setStats] = useState(() => {
@@ -542,7 +543,7 @@ const Sidebar = ({
                       {
                         id: 'cost',
                         title: 'Cost Optimizer',
-                        desc: 'Routes to cheaper models (DeepSeek, GPT-4o-mini).',
+                        desc: 'Routes to cheaper models (Gemini 2.5 Flash).',
                         icon: Coins,
                         activeClass:
                           'border-green-500/30 bg-green-500/5 dark:bg-green-950/10 text-green-600 dark:text-green-400 font-semibold shadow-sm shadow-green-950/5',
@@ -550,15 +551,15 @@ const Sidebar = ({
                       {
                         id: 'balanced',
                         title: 'Balanced AI',
-                        desc: 'Default RouteMind proxies (Claude for code, Gemini for files).',
+                        desc: 'Default RouteMind proxies (Llama for code, Gemini for files).',
                         icon: Sparkles,
                         activeClass:
                           'border-blue-500/30 bg-blue-500/5 dark:bg-blue-950/10 text-blue-600 dark:text-blue-400 font-semibold shadow-sm shadow-blue-950/5',
                       },
                       {
-                        id: 'accuracy',
+                        id: 'quality',
                         title: 'Max Accuracy',
-                        desc: 'Primary tier-1 premium models (Claude 3.5, GPT-4o).',
+                        desc: 'Primary high-performance models (Llama 3.3, Gemini Pro).',
                         icon: Shield,
                         activeClass:
                           'border-purple-500/30 bg-purple-500/5 dark:bg-purple-950/10 text-purple-600 dark:text-purple-400 font-semibold shadow-sm shadow-purple-950/5',
@@ -712,7 +713,9 @@ const Sidebar = ({
                     <p className="text-[9px] text-neutral-500 font-mono uppercase tracking-wider mb-1">
                       Overhead Latency
                     </p>
-                    <p className="text-lg font-bold text-blue-500 font-mono">&lt;12ms</p>
+                    <p className="text-lg font-bold text-blue-500 font-mono">
+                      {stats.avgOverhead ? `${Math.round(stats.avgOverhead)}ms` : '<12ms'}
+                    </p>
                   </div>
                 </div>
 
@@ -730,6 +733,7 @@ const Sidebar = ({
                       else if (modelName.includes('Gemini')) colorClass = 'bg-red-500'
                       else if (modelName.includes('DeepSeek')) colorClass = 'bg-green-500'
                       else if (modelName.includes('Perplexity')) colorClass = 'bg-cyan-500'
+                      else if (modelName.toLowerCase().includes('llama') || modelName.toLowerCase().includes('groq')) colorClass = 'bg-emerald-500'
 
                       return (
                         <div key={modelName} className="space-y-1">

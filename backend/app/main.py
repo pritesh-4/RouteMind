@@ -25,13 +25,18 @@ logger = logging.getLogger("routemind.main")
 async def lifespan(app: FastAPI):
     """
     Lifespan event handler for application startup and shutdown.
-    Prepares resources or registers logs during the lifecycle.
+    Logs provider availability at startup for hackathon readiness.
     """
     logger.info("Starting up RouteMind Backend...")
-    # Add future startup logic here (e.g., initializing clients)
+    logger.info("Provider Status:")
+
+    from app.services import ProviderManager
+
+    mgr = ProviderManager()
+    mgr.log_provider_status()
+
     yield
     logger.info("Shutting down RouteMind Backend...")
-    # Add future shutdown cleanup here
 
 
 # Initialize FastAPI application with centralized configuration metadata

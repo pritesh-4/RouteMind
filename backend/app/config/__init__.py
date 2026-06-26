@@ -8,8 +8,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
-# Build paths relative to this file
-BASE_DIR = Path(__file__).resolve().parent.parent
+# Build paths relative to this file: __file__ is app/config/__init__.py, so parent.parent.parent is backend root
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Load environment variables from the .env file in the backend root
 env_path = BASE_DIR / ".env"
@@ -40,6 +40,7 @@ class Settings(BaseModel):
     GEMINI_API_KEY: str | None = os.getenv("GEMINI_API_KEY") or None
     OPENAI_API_KEY: str | None = os.getenv("OPENAI_API_KEY") or None
     ANTHROPIC_API_KEY: str | None = os.getenv("ANTHROPIC_API_KEY") or None
+    GROQ_API_KEY: str | None = os.getenv("GROQ_API_KEY") or None
 
 
 # Global settings instance for import across the codebase

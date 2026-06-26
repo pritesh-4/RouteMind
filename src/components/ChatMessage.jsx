@@ -193,7 +193,7 @@ const ChatMessage = ({ message, onRegenerate }) => {
   const timestamp = message?.time ?? message?.timestamp
   const isStreaming = message?.isStreaming ?? false
 
-  const model = message?.routing?.model
+  const model = message?.routing?.selected_model ?? message?.routing?.model
   const showRoutingInfo = !!message?.routing
 
   const isUser = role === 'user'

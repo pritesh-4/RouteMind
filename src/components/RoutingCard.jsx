@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import {
   Cpu,
-  ShieldCheck,
   ChevronDown,
   ChevronUp,
   Loader2,
@@ -9,20 +8,12 @@ import {
   Zap,
   TrendingUp,
   Sliders,
-  History,
-  MessageSquare,
 } from 'lucide-react'
 
 const RoutingCard = ({
   routing,
   model,
-  cost,
-  savings,
-  speed,
-  confidence,
   reason,
-  factors,
-  details,
   isLoading,
   loadingStep,
   timestamp,
@@ -30,137 +21,61 @@ const RoutingCard = ({
   const [isExpanded, setIsExpanded] = useState(false)
 
   // Extract props with defaults, giving precedence to fields nested in `routing` prop
-  const modelVal = routing?.selected_model ?? routing?.model ?? model ?? 'GPT-4o'
+  const modelVal = routing?.selected_model ?? routing?.model ?? model ?? 'N/A'
 
   const costVal =
-    routing?.estimated_cost !== undefined
-      ? `$${parseFloat(routing.estimated_cost).toFixed(6)}`
-      : (routing?.cost ?? cost ?? '$0.003')
+    routing?.metrics?.estimated_cost_usd !== undefined && routing?.metrics?.estimated_cost_usd !== null
+      ? `$${parseFloat(routing.metrics.estimated_cost_usd).toFixed(6)}`
+      : 'N/A'
 
   const confidenceVal =
-    routing?.confidence !== undefined
+    routing?.confidence !== undefined && routing?.confidence !== null
       ? String(routing.confidence).includes('%')
         ? routing.confidence
         : `${routing.confidence}%`
-      : (routing?.confidence ?? confidence ?? '92%')
+      : 'N/A'
 
   // Format numeric confidence for radial/circular graphics
-  const numericConfidence = parseInt(String(confidenceVal).replace('%', '')) || 92
+  const numericConfidence = confidenceVal !== 'N/A' ? parseInt(String(confidenceVal).replace('%', '')) || 0 : 0
 
-  const reasonVal =
-    routing?.reason ??
-    reason ??
-    `Routed to ${modelVal} as cost constraints and query latency are balanced for optimal performance.`
+  const reasonVal = routing?.routing_reason ?? routing?.reason ?? reason ?? 'N/A'
 
-  // Dynamically derive stats/details based on the selected model if not provided
-  let defaultSpeed = 'Fast'
-  let defaultSavings = '68%'
-  let defaultFactors = { intentMatch: 95, quality: 92, latency: 87, costEfficiency: 89 }
-  let defaultDetails = {
-    intent: 'General Reasoning',
-    provider: 'OpenAI API',
-    version: 'gpt-4o-2024-05-13',
-    contextLength: '128k tokens',
-    score: '95/100',
-    fallbacks: ['Claude 3.5 Sonnet', 'Gemini 1.5 Pro'],
-  }
-
-  if (modelVal.includes('Sonnet') || modelVal.includes('Claude')) {
-    defaultSpeed = 'Moderate'
-    defaultSavings = '62%'
-    defaultFactors = { intentMatch: 99, quality: 98, latency: 85, costEfficiency: 70 }
-    defaultDetails = {
-      intent: 'Coding & Complex Logic',
-      provider: 'Anthropic API',
-      version: 'claude-3-5-sonnet-20240620',
-      contextLength: '200k tokens',
-      score: '99/100',
-      fallbacks: ['GPT-4o', 'Gemini 1.5 Pro'],
+  // Calculate real savings percentage based on actual model cost vs expensive baseline (Claude 3.5 Sonnet)
+  let savingsVal = 'N/A'
+  const totalTokens = routing?.metrics?.total_tokens ?? routing?.total_tokens ?? 0
+  if (totalTokens > 0) {
+    const cost = routing?.metrics?.estimated_cost_usd ?? routing?.estimated_cost_usd ?? 0
+    const baselineCost = totalTokens * 0.000003 // Claude 3.5 Sonnet baseline
+    if (baselineCost > 0) {
+      const pct = Math.max(0, Math.min(99, Math.round(((baselineCost - cost) / baselineCost) * 100)))
+      savingsVal = `${pct}%`
     }
-  } else if (modelVal.includes('Gemini 1.5 Pro')) {
-    defaultSpeed = 'Moderate'
-    defaultSavings = '82%'
-    defaultFactors = { intentMatch: 98, quality: 95, latency: 78, costEfficiency: 85 }
-    defaultDetails = {
-      intent: 'Document & Long-Context',
-      provider: 'Google Vertex AI',
-      version: 'gemini-1.5-pro-001',
-      contextLength: '2M tokens',
-      score: '97/100',
-      fallbacks: ['GPT-4o', 'Claude 3.5 Sonnet'],
-    }
-  } else if (modelVal.includes('Flash')) {
-    defaultSpeed = 'Ultra Fast'
-    defaultSavings = '95%'
-    defaultFactors = { intentMatch: 92, quality: 90, latency: 97, costEfficiency: 98 }
-    defaultDetails = {
-      intent: 'Low Latency Retrieval',
-      provider: 'Google Vertex AI',
-      version: 'gemini-1.5-flash-001',
-      contextLength: '1M tokens',
-      score: '92/100',
-      fallbacks: ['GPT-4o-mini', 'Llama 3.1'],
-    }
-  } else if (modelVal.includes('mini') || modelVal.includes('Mini')) {
-    defaultSpeed = 'Very Fast'
-    defaultSavings = '90%'
-    defaultFactors = { intentMatch: 93, quality: 89, latency: 95, costEfficiency: 96 }
-    defaultDetails = {
-      intent: 'Conversational Utility',
-      provider: 'OpenAI API',
-      version: 'gpt-4o-mini-2024-07-18',
-      contextLength: '128k tokens',
-      score: '91/100',
-      fallbacks: ['Gemini 1.5 Flash', 'Llama 3.1'],
-    }
-  } else if (modelVal.includes('DeepSeek')) {
-    defaultSpeed = 'Fast'
-    defaultSavings = '92%'
-    defaultFactors = { intentMatch: 94, quality: 93, latency: 88, costEfficiency: 95 }
-    defaultDetails = {
-      intent: 'Coding & Math Optimization',
-      provider: 'DeepSeek Edge',
-      version: 'deepseek-coder-v2',
-      contextLength: '64k tokens',
-      score: '94/100',
-      fallbacks: ['Claude 3.5 Sonnet', 'GPT-4o-mini'],
-    }
-  } else if (modelVal.includes('Sonar') || modelVal.includes('Perplexity')) {
-    defaultSpeed = 'Fast'
-    defaultSavings = '75%'
-    defaultFactors = { intentMatch: 97, quality: 94, latency: 91, costEfficiency: 88 }
-    defaultDetails = {
-      intent: 'Live Search & Synthesis',
-      provider: 'Perplexity API',
-      version: 'sonar-pro-2024',
-      contextLength: '32k tokens',
-      score: '96/100',
-      fallbacks: ['GPT-4o', 'Gemini 1.5 Flash'],
-    }
-  } else if (modelVal.includes('o3-mini')) {
-    defaultSpeed = 'Moderate'
-    defaultSavings = '78%'
-    defaultFactors = { intentMatch: 99, quality: 97, latency: 74, costEfficiency: 82 }
-    defaultDetails = {
-      intent: 'Advanced Reasoning & Math',
-      provider: 'OpenAI API',
-      version: 'o3-mini-2025-01',
-      contextLength: '200k tokens',
-      score: '98/100',
-      fallbacks: ['Claude 3.5 Sonnet', 'GPT-4o'],
+  } else {
+    // If tokens are not provided, estimate based on model
+    const m = modelVal.toLowerCase()
+    if (m.includes('llama') || m.includes('groq')) {
+      savingsVal = '77%'
+    } else if (m.includes('gemini') || m.includes('flash')) {
+      savingsVal = '98%'
     }
   }
 
-  const savingsVal = routing?.savings ?? savings ?? defaultSavings
-  const speedVal = routing?.speed ?? speed ?? defaultSpeed
-  const factorsVal = routing?.factors ?? factors ?? defaultFactors
-  const detailsVal = { ...(routing?.details ?? details ?? defaultDetails) }
+  const speedVal = routing?.metrics?.response_speed ?? 'N/A'
 
-  if (routing?.intent) {
-    detailsVal.intent = routing.intent.charAt(0).toUpperCase() + routing.intent.slice(1)
+  const factorsVal = {
+    intentMatch: routing?.metrics?.intent_match !== undefined && routing?.metrics?.intent_match !== null ? routing.metrics.intent_match : 'N/A',
+    quality: routing?.metrics?.response_quality !== undefined && routing?.metrics?.response_quality !== null ? routing.metrics.response_quality : 'N/A',
+    latency: routing?.metrics?.latency_index !== undefined && routing?.metrics?.latency_index !== null ? routing.metrics.latency_index : 'N/A',
+    costEfficiency: routing?.metrics?.cost_efficiency !== undefined && routing?.metrics?.cost_efficiency !== null ? routing.metrics.cost_efficiency : 'N/A',
   }
-  if (routing?.provider) {
-    detailsVal.provider = routing.provider.toUpperCase()
+
+  const detailsVal = {
+    intent: routing?.intent ? (routing.intent.charAt(0).toUpperCase() + routing.intent.slice(1)) : 'N/A',
+    contextLength: routing?.metrics?.context_length !== undefined && routing?.metrics?.context_length !== null ? `${routing.metrics.context_length} tokens` : 'N/A',
+    provider: routing?.metrics?.provider_entity ?? 'N/A',
+    version: routing?.metrics?.model_version ?? 'N/A',
+    score: routing?.metrics?.composite_score !== undefined && routing?.metrics?.composite_score !== null ? `${routing.metrics.composite_score}/100` : 'N/A',
+    fallbacks: routing?.metrics?.fallbacks_evaluated ?? [],
   }
 
   const isLoadingVal = routing?.isLoading ?? isLoading ?? false
@@ -176,7 +91,7 @@ const RoutingCard = ({
   const stroke = 2.5
   const normalizedRadius = radius - stroke * 2
   const circumference = normalizedRadius * 2 * Math.PI
-  const strokeDashoffset = circumference - (numericConfidence / 100) * circumference
+  const strokeDashoffset = confidenceVal !== 'N/A' && confidenceVal !== '' ? circumference - (numericConfidence / 100) * circumference : circumference
 
   // Circular Confidence indicator colors based on score
   const getConfidenceColor = (score) => {
@@ -247,36 +162,42 @@ const RoutingCard = ({
         </div>
 
         {/* Confidence Ring Indicator */}
-        <div className="flex items-center gap-2 bg-sidebar-bg border border-border-app py-1 px-2.5 rounded-lg select-none">
-          <span className="text-[10px] text-secondary font-mono font-medium">Confidence:</span>
-          <div className="relative flex items-center justify-center">
-            <svg className="w-8 h-8 transform -rotate-90">
-              <circle
-                className="text-border-app"
-                strokeWidth={stroke}
-                stroke="currentColor"
-                fill="transparent"
-                r={normalizedRadius}
-                cx={16}
-                cy={16}
-              />
-              <circle
-                className={`${getConfidenceColor(numericConfidence)} transition-all duration-300`}
-                strokeWidth={stroke}
-                strokeDasharray={circumference + ' ' + circumference}
-                style={{ strokeDashoffset }}
-                strokeLinecap="round"
-                fill="transparent"
-                r={normalizedRadius}
-                cx={16}
-                cy={16}
-              />
-            </svg>
-            <span className="absolute text-[10px] font-bold font-mono text-primary">
-              {numericConfidence}%
-            </span>
+        {confidenceVal !== '' && (
+          <div className="flex items-center gap-2 bg-sidebar-bg border border-border-app py-1 px-2.5 rounded-lg select-none">
+            <span className="text-[10px] text-secondary font-mono font-medium">Confidence:</span>
+            {confidenceVal !== 'N/A' ? (
+              <div className="relative flex items-center justify-center">
+                <svg className="w-8 h-8 transform -rotate-90">
+                  <circle
+                    className="text-border-app"
+                    strokeWidth={stroke}
+                    stroke="currentColor"
+                    fill="transparent"
+                    r={normalizedRadius}
+                    cx={16}
+                    cy={16}
+                  />
+                  <circle
+                    className={`${getConfidenceColor(numericConfidence)} transition-all duration-300`}
+                    strokeWidth={stroke}
+                    strokeDasharray={circumference + ' ' + circumference}
+                    style={{ strokeDashoffset }}
+                    strokeLinecap="round"
+                    fill="transparent"
+                    r={normalizedRadius}
+                    cx={16}
+                    cy={16}
+                  />
+                </svg>
+                <span className="absolute text-[10px] font-bold font-mono text-primary">
+                  {numericConfidence}%
+                </span>
+              </div>
+            ) : (
+              <span className="text-[10px] font-bold font-mono text-primary">N/A</span>
+            )}
           </div>
-        </div>
+        )}
       </div>
 
       {/* Reason Description */}
@@ -293,12 +214,14 @@ const RoutingCard = ({
         <div className="space-y-1">
           <div className="flex justify-between text-[11px] text-secondary">
             <span>Intent Match</span>
-            <span className="font-mono text-[10px] text-primary">{factorsVal.intentMatch}%</span>
+            <span className="font-mono text-[10px] text-primary">
+              {factorsVal.intentMatch !== 'N/A' && factorsVal.intentMatch !== '' ? `${factorsVal.intentMatch}%` : 'N/A'}
+            </span>
           </div>
           <div className="h-1 bg-card-bg rounded-full overflow-hidden">
             <div
               className="h-full bg-blue-500 rounded-full"
-              style={{ width: `${factorsVal.intentMatch}%` }}
+              style={{ width: factorsVal.intentMatch !== 'N/A' && factorsVal.intentMatch !== '' ? `${factorsVal.intentMatch}%` : '0%' }}
             ></div>
           </div>
         </div>
@@ -307,12 +230,14 @@ const RoutingCard = ({
         <div className="space-y-1">
           <div className="flex justify-between text-[11px] text-secondary">
             <span>Response Quality</span>
-            <span className="font-mono text-[10px] text-primary">{factorsVal.quality}%</span>
+            <span className="font-mono text-[10px] text-primary">
+              {factorsVal.quality !== 'N/A' && factorsVal.quality !== '' ? `${factorsVal.quality}%` : 'N/A'}
+            </span>
           </div>
           <div className="h-1 bg-card-bg rounded-full overflow-hidden">
             <div
               className="h-full bg-[#22C55E] rounded-full"
-              style={{ width: `${factorsVal.quality}%` }}
+              style={{ width: factorsVal.quality !== 'N/A' && factorsVal.quality !== '' ? `${factorsVal.quality}%` : '0%' }}
             ></div>
           </div>
         </div>
@@ -321,12 +246,14 @@ const RoutingCard = ({
         <div className="space-y-1">
           <div className="flex justify-between text-[11px] text-secondary">
             <span>Latency Index</span>
-            <span className="font-mono text-[10px] text-primary">{factorsVal.latency}%</span>
+            <span className="font-mono text-[10px] text-primary">
+              {factorsVal.latency !== 'N/A' && factorsVal.latency !== '' ? `${factorsVal.latency}%` : 'N/A'}
+            </span>
           </div>
           <div className="h-1 bg-card-bg rounded-full overflow-hidden">
             <div
               className="h-full bg-cyan-500 rounded-full"
-              style={{ width: `${factorsVal.latency}%` }}
+              style={{ width: factorsVal.latency !== 'N/A' && factorsVal.latency !== '' ? `${factorsVal.latency}%` : '0%' }}
             ></div>
           </div>
         </div>
@@ -335,12 +262,14 @@ const RoutingCard = ({
         <div className="space-y-1">
           <div className="flex justify-between text-[11px] text-secondary">
             <span>Cost Efficiency</span>
-            <span className="font-mono text-[10px] text-primary">{factorsVal.costEfficiency}%</span>
+            <span className="font-mono text-[10px] text-primary">
+              {factorsVal.costEfficiency !== 'N/A' && factorsVal.costEfficiency !== '' ? `${factorsVal.costEfficiency}%` : 'N/A'}
+            </span>
           </div>
           <div className="h-1 bg-card-bg rounded-full overflow-hidden">
             <div
               className="h-full bg-purple-500 rounded-full"
-              style={{ width: `${factorsVal.costEfficiency}%` }}
+              style={{ width: factorsVal.costEfficiency !== 'N/A' && factorsVal.costEfficiency !== '' ? `${factorsVal.costEfficiency}%` : '0%' }}
             ></div>
           </div>
         </div>
@@ -362,7 +291,7 @@ const RoutingCard = ({
             Est. Savings
           </span>
           <span className="text-[11px] font-semibold text-[#22C55E] font-mono flex items-center justify-center gap-0.5">
-            <TrendingUp size={10} />
+            {savingsVal !== 'N/A' && savingsVal !== '' && <TrendingUp size={10} />}
             {savingsVal}
           </span>
         </div>
@@ -373,7 +302,7 @@ const RoutingCard = ({
             Response Speed
           </span>
           <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 font-mono flex items-center justify-center gap-0.5">
-            <Zap size={10} />
+            {speedVal !== 'N/A' && speedVal !== '' && <Zap size={10} />}
             {speedVal}
           </span>
         </div>
@@ -395,28 +324,84 @@ const RoutingCard = ({
         <div className="mt-3.5 pt-3.5 border-t border-border-app/80 grid grid-cols-2 gap-x-4 gap-y-3.5 text-[11px] animate-in fade-in slide-in-from-top-1 duration-200">
           <div>
             <div className="text-neutral-600 dark:text-neutral-400 font-mono text-[9px] uppercase tracking-wider mb-0.5">
-              Intent Category
+              Provider
             </div>
-            <div className="text-primary font-medium">{detailsVal.intent}</div>
+            <div className="text-primary font-medium">{routing?.metrics?.provider_entity ?? 'N/A'}</div>
           </div>
           <div>
             <div className="text-neutral-600 dark:text-neutral-400 font-mono text-[9px] uppercase tracking-wider mb-0.5">
-              Context Length
+              Selected Model
             </div>
-            <div className="text-primary font-mono font-medium">{detailsVal.contextLength}</div>
+            <div className="text-primary font-mono font-medium truncate" title={routing?.selected_model ?? routing?.model ?? model ?? 'N/A'}>
+              {routing?.selected_model ?? routing?.model ?? model ?? 'N/A'}
+            </div>
           </div>
           <div>
             <div className="text-neutral-600 dark:text-neutral-400 font-mono text-[9px] uppercase tracking-wider mb-0.5">
-              Provider Entity
+              Intent
             </div>
-            <div className="text-primary font-medium">{detailsVal.provider}</div>
+            <div className="text-primary font-medium">
+              {routing?.intent ? (routing.intent.charAt(0).toUpperCase() + routing.intent.slice(1)) : 'N/A'}
+            </div>
           </div>
           <div>
             <div className="text-neutral-600 dark:text-neutral-400 font-mono text-[9px] uppercase tracking-wider mb-0.5">
-              Model Version
+              Routing Policy
             </div>
-            <div className="text-primary font-mono font-medium truncate" title={detailsVal.version}>
-              {detailsVal.version}
+            <div className="text-primary font-medium">
+              {routing?.routing_policy ? (routing.routing_policy.charAt(0).toUpperCase() + routing.routing_policy.slice(1)) : 'N/A'}
+            </div>
+          </div>
+          <div>
+            <div className="text-neutral-600 dark:text-neutral-400 font-mono text-[9px] uppercase tracking-wider mb-0.5">
+              Confidence
+            </div>
+            <div className="text-primary font-mono font-medium">{confidenceVal}</div>
+          </div>
+          <div>
+            <div className="text-neutral-600 dark:text-neutral-400 font-mono text-[9px] uppercase tracking-wider mb-0.5">
+              Latency
+            </div>
+            <div className="text-primary font-mono font-medium">
+              {routing?.latency_ms !== undefined && routing?.latency_ms !== null ? `${parseFloat(routing.latency_ms).toFixed(0)} ms` : 'N/A'}
+            </div>
+          </div>
+          <div>
+            <div className="text-neutral-600 dark:text-neutral-400 font-mono text-[9px] uppercase tracking-wider mb-0.5">
+              Prompt Tokens
+            </div>
+            <div className="text-primary font-mono font-medium">
+              {routing?.metrics?.prompt_tokens !== undefined && routing?.metrics?.prompt_tokens !== null ? routing.metrics.prompt_tokens : 'N/A'}
+            </div>
+          </div>
+          <div>
+            <div className="text-neutral-600 dark:text-neutral-400 font-mono text-[9px] uppercase tracking-wider mb-0.5">
+              Completion Tokens
+            </div>
+            <div className="text-primary font-mono font-medium">
+              {routing?.metrics?.completion_tokens !== undefined && routing?.metrics?.completion_tokens !== null ? routing.metrics.completion_tokens : 'N/A'}
+            </div>
+          </div>
+          <div>
+            <div className="text-neutral-600 dark:text-neutral-400 font-mono text-[9px] uppercase tracking-wider mb-0.5">
+              Total Tokens
+            </div>
+            <div className="text-primary font-mono font-medium">
+              {routing?.metrics?.total_tokens !== undefined && routing?.metrics?.total_tokens !== null ? routing.metrics.total_tokens : 'N/A'}
+            </div>
+          </div>
+          <div>
+            <div className="text-neutral-600 dark:text-neutral-400 font-mono text-[9px] uppercase tracking-wider mb-0.5">
+              Estimated Cost
+            </div>
+            <div className="text-primary font-mono font-medium">{costVal}</div>
+          </div>
+          <div>
+            <div className="text-neutral-600 dark:text-neutral-400 font-mono text-[9px] uppercase tracking-wider mb-0.5">
+              Fallback Used
+            </div>
+            <div className="text-primary font-medium">
+              {routing?.fallback_status !== undefined && routing?.fallback_status !== null ? (routing.fallback_status ? 'Yes' : 'No') : 'N/A'}
             </div>
           </div>
           <div>
@@ -427,37 +412,11 @@ const RoutingCard = ({
               {detailsVal.score}
             </div>
           </div>
-          <div>
+          <div className="col-span-2 pt-1 border-t border-border-app/30">
             <div className="text-neutral-600 dark:text-neutral-400 font-mono text-[9px] uppercase tracking-wider mb-0.5">
-              Fallbacks Evaluated
+              Reason
             </div>
-            <div className="flex flex-wrap gap-1 mt-0.5">
-              {detailsVal.fallbacks.map((fallback, idx) => (
-                <span
-                  key={idx}
-                  className="px-1.5 py-0.5 rounded bg-sidebar-bg border border-border-app text-[9px] font-mono text-secondary"
-                >
-                  {fallback}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* FUTURE-READY ARCHITECTURAL PLACEHOLDERS */}
-          {/* Token details context slot */}
-          <div className="col-span-2 pt-2 border-t border-border-app/30 grid grid-cols-3 gap-2 opacity-50 text-[10px] select-none pointer-events-none">
-            <div className="flex items-center gap-1 text-neutral-500">
-              <ShieldCheck size={10} />
-              <span>Token Usage Architecture Ready</span>
-            </div>
-            <div className="flex items-center gap-1 text-neutral-500">
-              <History size={10} />
-              <span>Historical stats ready</span>
-            </div>
-            <div className="flex items-center gap-1 text-neutral-500 font-sans">
-              <MessageSquare size={10} />
-              <span>Feedback hooks ready</span>
-            </div>
+            <div className="text-primary leading-normal text-xs select-text">{reasonVal}</div>
           </div>
         </div>
       )}

@@ -11,7 +11,12 @@ from fastapi import APIRouter, HTTPException, Depends, status
 
 from app.config import settings
 from app.schemas import ChatRequest, ChatResponse
-from app.schemas.chat import ResponseDetail, RoutingDetail, MetadataDetail
+from app.schemas.chat import (
+    ResponseDetail,
+    RoutingDetail,
+    MetadataDetail,
+    RoutingMetrics,
+)
 from app.classifier import BaseIntentClassifier, RuleBasedIntentClassifier
 from app.services import ProviderManager, LLMRouter, RoutingError
 from app.providers import ProviderError
@@ -113,74 +118,247 @@ async def process_chat_message(
             detail=f"An unexpected routing error occurred: {e}",
         )
 
-    # 3. Provider Resolution & Execution Stage
-    try:
-        provider = provider_mgr.get_provider(routing_decision.provider)
-        logger.info(
-            "Stage 3 [Provider Manager]: Resolved provider instance for '%s'",
-            routing_decision.provider,
-        )
-    except ValueError as e:
-        logger.error(
-            "Stage 3 [Provider Manager] Failed to resolve provider: %s", str(e)
-        )
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unknown provider requested: {e}",
-        )
+    # 3. Provider Resolution & Execution Stage with cross-provider failover
+    # If the primary provider fails, automatically retry with the alternate provider.
+    # Only return a graceful fallback message if BOTH providers fail.
+    primary_provider_name = routing_decision.provider
+    alternate_provider_name = "gemini" if primary_provider_name == "groq" else "groq"
 
-    # 4. Generate Response Stage
     provider_response: Dict[str, Any] = {}
-    try:
-        logger.info(
-            "Stage 4 [Provider Call]: Invoking %s.generate_response()",
-            routing_decision.provider,
+    used_fallback = False
+    last_error = None
+
+    for attempt_provider_name in [primary_provider_name, alternate_provider_name]:
+        try:
+            provider = provider_mgr.get_provider(attempt_provider_name)
+            logger.info(
+                "Stage 3 [Provider Manager]: Resolved provider instance for '%s'",
+                attempt_provider_name,
+            )
+        except ValueError as e:
+            logger.error(
+                "Stage 3 [Provider Manager] Failed to resolve provider '%s': %s",
+                attempt_provider_name,
+                str(e),
+            )
+            last_error = e
+            continue
+
+        try:
+            # Determine model for this provider
+            model_for_attempt = routing_decision.model
+            if attempt_provider_name != primary_provider_name:
+                # Use the fallback provider's default model
+                model_policies = routing_engine._model_policy_mapping.get(
+                    attempt_provider_name, {}
+                )
+                model_for_attempt = model_policies.get(
+                    request.routing_policy, "default"
+                )
+                used_fallback = True
+
+            logger.info(
+                "Stage 4 [Provider Call]: Calling %s API... (Model: %s)",
+                attempt_provider_name.capitalize(),
+                model_for_attempt,
+            )
+            provider_response = provider.generate_response(
+                prompt=request.message, model=model_for_attempt
+            )
+            logger.info(
+                "Stage 4 [Provider Call]: %s response received. Latency: %.2f ms, "
+                "Tokens: %d prompt / %d completion / %d total",
+                attempt_provider_name.capitalize(),
+                provider_response.get("latency_ms", 0),
+                provider_response.get("usage", {}).get("prompt_tokens", 0),
+                provider_response.get("usage", {}).get("completion_tokens", 0),
+                provider_response.get("usage", {}).get("total_tokens", 0),
+            )
+
+            # Update routing decision if we fell back
+            if used_fallback:
+                routing_decision = routing_engine.select_route(
+                    intent=intent_result.intent,
+                    routing_policy=request.routing_policy,
+                    available_providers=[attempt_provider_name],
+                )
+                routing_decision.reason = (
+                    f"Primary provider '{primary_provider_name}' failed. "
+                    f"Automatically fell back to '{attempt_provider_name}'."
+                )
+                routing_decision.confidence = 70.0
+                routing_decision.fallback_status = True
+
+            last_error = None
+            break  # Success — exit the retry loop
+
+        except (ProviderError, NotImplementedError) as e:
+            logger.warning(
+                "Stage 4 [Provider Call]: %s call failed (%s). Trying fallback...",
+                attempt_provider_name.capitalize(),
+                str(e),
+            )
+            last_error = e
+            continue
+
+        except Exception as e:
+            logger.error(
+                "Stage 4 [Provider Call]: Unexpected error from %s: %s",
+                attempt_provider_name.capitalize(),
+                str(e),
+            )
+            last_error = e
+            continue
+
+    # If BOTH providers failed, return graceful fallback (never crash)
+    if last_error is not None:
+        logger.error(
+            "Stage 4 [Provider Call]: ALL providers failed. Returning graceful fallback. Last error: %s",
+            str(last_error),
         )
-        provider_response = provider.generate_response(
-            prompt=request.message, model=routing_decision.model
-        )
-    except (ProviderError, NotImplementedError) as e:
-        # For now providers should still return mock responses since real APIs are not connected.
-        # We catch missing API keys or unimplemented placeholders and return structured mock data.
-        logger.warning(
-            "Stage 4 [Provider Call]: Downstream call to %s failed (%s). Falling back to mock response.",
-            routing_decision.provider,
-            str(e),
-        )
-        # Standardized mock dictionary mapping
+        fallback_latency = (time.perf_counter() - start_time) * 1000
+        routing_decision.fallback_status = True
         provider_response = {
             "response": (
-                f"[Mock Response from {routing_decision.provider.upper()}]\n\n"
-                f'You asked: "{request.message}"\n\n'
-                f"This prompt was classified as '{intent_result.intent}' (confidence: {intent_result.confidence}%) "
-                f"and routed to {routing_decision.provider.upper()} using the '{request.routing_policy}' policy."
+                "I'm sorry, both AI providers (Gemini and Groq) are temporarily unavailable. "
+                "Please check your API keys and try again shortly.\n\n"
+                f"Your prompt was classified as **{intent_result.intent}** "
+                f"(confidence: {intent_result.confidence}%) "
+                f"and would have been routed to **{primary_provider_name}**."
             ),
             "selected_model": routing_decision.model,
             "provider": routing_decision.provider,
-            "latency_ms": (time.perf_counter() - start_time) * 1000,
+            "latency_ms": fallback_latency,
             "usage": {
-                "prompt_tokens": len(request.message) // 4,
-                "completion_tokens": 50,
-                "total_tokens": (len(request.message) // 4) + 50,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "total_tokens": 0,
             },
         }
-    except Exception as e:
-        logger.error("Stage 4 [Provider Call] Unexpected failure: %s", str(e))
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Bad Gateway: Downstream execution error: {e}",
-        )
 
     # 5. Response Packaging
     total_processing_time = int((time.perf_counter() - start_time) * 1000)
 
-    # Calculate dummy cost based on tokens
-    tokens = provider_response.get("usage", {}).get("total_tokens", 0)
-    estimated_cost = round(tokens * 0.000015, 6)
+    # Calculate cost using centralized pricing table and extract token usage
+    usage_data = provider_response.get("usage") or {}
+    prompt_tokens = usage_data.get("prompt_tokens", 0)
+    completion_tokens = usage_data.get("completion_tokens", 0)
+    total_tokens = usage_data.get("total_tokens", 0)
+
+    selected_model_name = provider_response.get(
+        "selected_model", routing_decision.model
+    )
+    latency_ms = provider_response.get("latency_ms", float(total_processing_time))
+
+    from app.config.pricing import calculate_cost_usd
+
+    estimated_cost_usd = calculate_cost_usd(selected_model_name, total_tokens)
+
+    # Dynamic metrics calculation
+    latency_index = max(0, min(100, int(100 - (latency_ms / 50.0))))
+
+    if latency_ms < 500:
+        response_speed = "Extremely Fast"
+    elif latency_ms < 1000:
+        response_speed = "Very Fast"
+    elif latency_ms < 2500:
+        response_speed = "Fast"
+    else:
+        response_speed = "Normal"
+
+    cost_efficiency_mapping = {
+        "gpt-4o-mini": 96,
+        "gpt-4o": 75,
+        "claude-3-5-sonnet": 70,
+        "claude-3-5-haiku": 90,
+        "gemini-1.5-flash": 98,
+        "gemini-2.5-flash": 98,
+        "gemini-1.5-pro": 85,
+        "gemini-2.5-pro": 85,
+        "llama-3.3": 92,
+        "llama-3.1": 97,
+    }
+    cost_efficiency = 80  # Default fallback
+    model_lower = selected_model_name.lower()
+    for key, score in cost_efficiency_mapping.items():
+        if key in model_lower:
+            cost_efficiency = score
+            break
+
+    intent_match = int(intent_result.confidence)
+
+    # Calculate response quality based on model capability
+    response_quality = 90  # Default fallback
+    model_lower = selected_model_name.lower()
+    if "llama" in model_lower:
+        if "3.3" in model_lower or "70b" in model_lower:
+            response_quality = 94
+        else:
+            response_quality = 88  # Llama 3.1 8b
+    elif "gemini" in model_lower:
+        if "pro" in model_lower:
+            response_quality = 96
+        else:
+            response_quality = 91
+
+    composite_score = int(
+        (intent_match + latency_index + cost_efficiency + response_quality) / 4
+    )
+
+    provider_entity_mapping = {
+        "gemini": "Gemini",
+        "openai": "OpenAI",
+        "claude": "Claude",
+        "groq": "Groq",
+    }
+    provider_key = provider_response.get("provider", routing_decision.provider).lower()
+    provider_entity = provider_entity_mapping.get(
+        provider_key, provider_key.capitalize()
+    )
+
+    fallbacks_evaluated = [
+        provider_entity_mapping.get(p.lower(), p.capitalize())
+        for p in registered_providers
+        if p.lower() != provider_key
+    ]
+
+    metrics_detail = RoutingMetrics(
+        latency_ms=latency_ms,
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+        total_tokens=total_tokens,
+        estimated_cost_usd=estimated_cost_usd,
+        intent_match=intent_match,
+        response_quality=response_quality,
+        latency_index=latency_index,
+        cost_efficiency=cost_efficiency,
+        composite_score=composite_score,
+        response_speed=response_speed,
+        context_length=total_tokens,
+        fallbacks_evaluated=fallbacks_evaluated,
+        provider_entity=provider_entity,
+        model_version=selected_model_name,
+    )
 
     logger.info(
         "Stage 5 [Pipeline Finished]: Successfully routed and processed. Total Latency: %d ms",
         total_processing_time,
+    )
+
+    # Output highly visible terminal telemetry block for hackathon demo
+    logger.info(
+        "\n"
+        "=================== ROUTEMIND TELEMETRY ===================\n"
+        f"  Detected Intent:     {intent_result.intent.upper()}\n"
+        f"  Routing Policy:      {request.routing_policy.upper()}\n"
+        f"  Chosen Provider:     {provider_entity}\n"
+        f"  Chosen Model:        {selected_model_name}\n"
+        f"  Fallback Used:       {'YES' if routing_decision.fallback_status else 'NO'}\n"
+        f"  Latency:             {latency_ms:.2f} ms\n"
+        f"  Token Usage:         Prompt: {prompt_tokens} | Completion: {completion_tokens} | Total: {total_tokens}\n"
+        f"  API Cost Estimate:   ${estimated_cost_usd:.8f}\n"
+        f"  Response Success:    {last_error is None}\n"
+        "==========================================================="
     )
 
     response_detail = ResponseDetail(
@@ -191,13 +369,21 @@ async def process_chat_message(
 
     routing_detail = RoutingDetail(
         intent=intent_result.intent,
-        provider=provider_response.get("provider", routing_decision.provider),
-        selected_model=provider_response.get("selected_model", routing_decision.model),
+        provider=provider_key,
+        selected_model=selected_model_name,
         routing_policy=request.routing_policy,
         confidence=intent_result.confidence,
         reason=routing_decision.reason,
-        estimated_cost=estimated_cost,
+        fallback_status=routing_decision.fallback_status,
+        estimated_cost=estimated_cost_usd,
         processing_time_ms=total_processing_time,
+        latency_ms=latency_ms,
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+        total_tokens=total_tokens,
+        estimated_cost_usd=estimated_cost_usd,
+        routing_reason=routing_decision.reason,
+        metrics=metrics_detail,
     )
 
     metadata_detail = MetadataDetail(

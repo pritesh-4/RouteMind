@@ -12,7 +12,7 @@ export function getMockRouting(query, file = null, policy = 'balanced') {
   const q = query.toLowerCase()
 
   // 1. MAX ACCURACY POLICY OVERRIDES
-  if (policy === 'accuracy') {
+  if (policy === 'quality') {
     if (file) {
       const ext = file.name.split('.').pop().toLowerCase()
       const isImage = ['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext)

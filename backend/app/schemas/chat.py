@@ -79,6 +79,104 @@ class ResponseDetail(BaseModel):
     )
 
 
+class RoutingMetrics(BaseModel):
+    """
+    Explainability metrics for model routing.
+    """
+
+    latency_ms: float = Field(
+        ...,
+        description="The total processing latency in milliseconds.",
+        examples=[842.0],
+        ge=0.0,
+    )
+    prompt_tokens: int = Field(
+        ...,
+        description="Tokens used in the prompt.",
+        examples=[158],
+        ge=0,
+    )
+    completion_tokens: int = Field(
+        ...,
+        description="Tokens used in the completion.",
+        examples=[311],
+        ge=0,
+    )
+    total_tokens: int = Field(
+        ...,
+        description="Total tokens used.",
+        examples=[469],
+        ge=0,
+    )
+    estimated_cost_usd: float = Field(
+        ...,
+        description="Estimated cost in USD calculated using pricing table.",
+        examples=[0.00009],
+        ge=0.0,
+    )
+    intent_match: int = Field(
+        ...,
+        description="Intent match confidence (0 to 100).",
+        examples=[95],
+        ge=0,
+        le=100,
+    )
+    response_quality: Optional[int] = Field(
+        default=None,
+        description="Objective response quality score (0 to 100).",
+        examples=[90],
+        ge=0,
+        le=100,
+    )
+    latency_index: int = Field(
+        ...,
+        description="Latency converted to a 0-100 score.",
+        examples=[92],
+        ge=0,
+        le=100,
+    )
+    cost_efficiency: int = Field(
+        ...,
+        description="Cost efficiency score (0 to 100) based on pricing.",
+        examples=[98],
+        ge=0,
+        le=100,
+    )
+    composite_score: int = Field(
+        ...,
+        description="Composite score computed from available metrics.",
+        examples=[94],
+        ge=0,
+        le=100,
+    )
+    response_speed: str = Field(
+        ...,
+        description="Speed description string.",
+        examples=["Very Fast"],
+    )
+    context_length: int = Field(
+        ...,
+        description="Context length (total tokens).",
+        examples=[469],
+        ge=0,
+    )
+    fallbacks_evaluated: List[str] = Field(
+        ...,
+        description="List of other providers evaluated by the router.",
+        examples=[["openai", "claude"]],
+    )
+    provider_entity: str = Field(
+        ...,
+        description="User-friendly name of the provider.",
+        examples=["Gemini"],
+    )
+    model_version: str = Field(
+        ...,
+        description="The actual model version selected.",
+        examples=["gemini-2.5-flash"],
+    )
+
+
 class RoutingDetail(BaseModel):
     """
     Explainability data and routing performance metrics for the decision.
@@ -111,6 +209,10 @@ class RoutingDetail(BaseModel):
         ge=0.0,
         le=100.0,
     )
+    fallback_status: bool = Field(
+        default=False,
+        description="Whether a fallback provider was used due to primary provider failure.",
+    )
     reason: str = Field(
         ...,
         description="Explaining rationale for why this model and provider were selected.",
@@ -129,6 +231,45 @@ class RoutingDetail(BaseModel):
         description="The total processing latency in milliseconds.",
         examples=[342],
         ge=0,
+    )
+    latency_ms: float = Field(
+        ...,
+        description="The total processing latency in milliseconds.",
+        examples=[342.1],
+        ge=0.0,
+    )
+    prompt_tokens: int = Field(
+        ...,
+        description="Tokens used in the prompt.",
+        examples=[10],
+        ge=0,
+    )
+    completion_tokens: int = Field(
+        ...,
+        description="Tokens used in the completion.",
+        examples=[20],
+        ge=0,
+    )
+    total_tokens: int = Field(
+        ...,
+        description="Total tokens used.",
+        examples=[30],
+        ge=0,
+    )
+    estimated_cost_usd: float = Field(
+        ...,
+        description="Estimated cost in USD calculated using pricing table.",
+        examples=[0.00015],
+        ge=0.0,
+    )
+    routing_reason: str = Field(
+        ...,
+        description="Explainability logic for routing.",
+        examples=["Reasoning explanation"],
+    )
+    metrics: RoutingMetrics = Field(
+        ...,
+        description="Detailed routing performance and decision metrics.",
     )
 
 

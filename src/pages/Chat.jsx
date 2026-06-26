@@ -37,11 +37,23 @@ const Chat = () => {
           'To build a fast, async HTTP server in Rust, we should use Tokio as the async runtime and Axum (built on top of hyper and tower) as the web framework. Here is a basic implementation:\n\n```rust\nuse axum::{routing::get, Router};\n\n#[tokio::main]\nasync fn main() {\n    let app = Router::new().route("/", get(|| async { "Hello from RouteMind!" }));\n    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();\n    axum::serve(listener, app).await.unwrap();\n}\n```',
         time: '2h ago',
         routing: {
-          model: 'Claude 3.5 Sonnet',
-          cost: '$0.0058',
-          confidence: '99%',
-          reason:
-            'Routed to Claude 3.5 Sonnet for precise code syntax formulation and optimized system design instructions.',
+          selected_model: 'llama-3.3-70b-versatile',
+          provider: 'groq',
+          routing_reason: 'Routed to Llama 3.3 via Groq for precise Rust syntax construction and system-level performance optimizations.',
+          metrics: {
+            estimated_cost_usd: 0.000084,
+            total_tokens: 120,
+            intent_match: 99,
+            response_quality: 94,
+            latency_index: 92,
+            cost_efficiency: 92,
+            composite_score: 94,
+            response_speed: 'Very Fast',
+            provider_entity: 'Groq',
+            model_version: 'llama-3.3-70b-versatile'
+          },
+          confidence: 99,
+          reason: 'Routed to Llama 3.3 via Groq for precise Rust syntax construction and system-level performance optimizations.',
         },
       },
     ],
@@ -49,21 +61,33 @@ const Chat = () => {
       {
         id: 'm3',
         role: 'user',
-        content: 'What is the latency difference between Gemini 1.5 Flash and GPT-4o?',
+        content: 'What is the latency difference between Gemini 2.5 Flash and Llama 3.3?',
         time: 'Yesterday',
       },
       {
         id: 'm4',
         role: 'assistant',
         content:
-          'Gemini 1.5 Flash exhibits significantly lower latency for structured data tasks, typically landing under 300ms. GPT-4o has a higher latency overhead (~500-800ms) but offers superior reasoning depths for highly semantic contexts.',
+          'Gemini 2.5 Flash has extremely low network latency, typically under 200ms, making it ideal for real-time document analysis and search. Llama 3.3 (running on Groq) is optimized for ultra-fast token generation speed, yielding high throughput for code execution and logic verification.',
         time: 'Yesterday',
         routing: {
-          model: 'Gemini 1.5 Flash',
-          cost: '$0.00008',
-          confidence: '94%',
-          reason:
-            'Routed to Gemini 1.5 Flash as cost constraints and simple latency inquiries benefit from faster token processing.',
+          selected_model: 'gemini-2.5-flash',
+          provider: 'gemini',
+          routing_reason: 'Routed to Gemini 2.5 Flash due to balanced latency and cost optimization policy mappings for general-intent questions.',
+          metrics: {
+            estimated_cost_usd: 0.000006,
+            total_tokens: 80,
+            intent_match: 94,
+            response_quality: 91,
+            latency_index: 96,
+            cost_efficiency: 98,
+            composite_score: 95,
+            response_speed: 'Extremely Fast',
+            provider_entity: 'Gemini',
+            model_version: 'gemini-2.5-flash'
+          },
+          confidence: 94,
+          reason: 'Routed to Gemini 2.5 Flash due to balanced latency and cost optimization policy mappings for general-intent questions.',
         },
       },
     ],
@@ -77,13 +101,15 @@ const Chat = () => {
   const timeoutRefs = useRef([])
 
   const [routingPolicy, setRoutingPolicy] = useState(() => {
-    return localStorage.getItem('routingPolicy') || 'balanced'
+    const stored = localStorage.getItem('routingPolicy') || 'balanced'
+    return stored === 'accuracy' ? 'quality' : stored
   })
 
   // Sync routing policy updates
   useEffect(() => {
     const handlePolicyUpdate = () => {
-      setRoutingPolicy(localStorage.getItem('routingPolicy') || 'balanced')
+      const stored = localStorage.getItem('routingPolicy') || 'balanced'
+      setRoutingPolicy(stored === 'accuracy' ? 'quality' : stored)
     }
     window.addEventListener('policy-updated', handlePolicyUpdate)
     return () => {
@@ -252,20 +278,28 @@ const Chat = () => {
       const stats = storedStats ? JSON.parse(storedStats) : defaultStats
       stats.totalQueries += 1
 
-      // Calculate savings metrics dynamically based on provider
-      let savedAmount = 0.0025
-      if (
-        model.includes('mini') ||
-        model.includes('Flash') ||
-        model.includes('Haiku') ||
-        model.includes('DeepSeek')
-      ) {
-        savedAmount = 0.0038
-      } else if (model.includes('Pro') || model.includes('Sonnet')) {
-        savedAmount = 0.001
+      // Calculate real savings based on actual token costs vs baseline model (Claude 3.5 Sonnet)
+      const actualCost = backendRoutingDetail.metrics?.estimated_cost_usd ?? backendRoutingDetail.estimated_cost_usd ?? 0
+      const totalTokens = backendRoutingDetail.metrics?.total_tokens ?? backendRoutingDetail.total_tokens ?? 0
+      let savedAmount = 0
+      if (totalTokens > 0) {
+        const baselineCost = totalTokens * 0.000003 // Claude 3.5 Sonnet baseline ($3.00 per M tokens)
+        savedAmount = Math.max(0, baselineCost - actualCost)
+      } else {
+        // Fallback estimate if token count is unavailable
+        savedAmount = model.toLowerCase().includes('llama') ? 0.0028 : 0.0035
       }
-      stats.savings = parseFloat((stats.savings + savedAmount).toFixed(4))
+
+      stats.savings = parseFloat((stats.savings + savedAmount).toFixed(6))
       stats.models[model] = (stats.models[model] || 0) + 1
+
+      // Calculate real overhead latency
+      const processingTime = backendRoutingDetail.processing_time_ms ?? 0
+      const providerLatency = backendRoutingDetail.latency_ms ?? 0
+      const overhead = Math.max(1, processingTime - providerLatency)
+      stats.totalOverhead = (stats.totalOverhead || 0) + overhead
+      stats.avgOverhead = stats.totalQueries > 0 ? (stats.totalOverhead / stats.totalQueries) : overhead
+
       localStorage.setItem('routingStats', JSON.stringify(stats))
       window.dispatchEvent(new Event('telemetry-updated'))
 

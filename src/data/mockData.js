@@ -1,11 +1,8 @@
 // Centralized mock data consumed across RouteMind components
 
 export const MODEL_CANDIDATES = [
-  'GPT-4o',
-  'Claude 3.5 Sonnet',
-  'Gemini 1.5 Flash',
-  'DeepSeek Coder',
-  'Llama 3.1',
+  'Gemini 2.5 Flash',
+  'Llama 3.3 (Groq)',
 ]
 
 export const ROUTING_STAGES = [
@@ -24,11 +21,11 @@ export const TERMINAL_EXAMPLES = [
       'Comparing Inference Models...',
       'Evaluating Memory & Costs...',
     ],
-    selectedModel: 'Claude 3.5 Sonnet',
+    selectedModel: 'Llama 3.3 (Groq)',
     reason:
-      'Routed to Claude 3.5 Sonnet due to unmatched React 19 architecture reasoning and code repair accuracy.',
-    cost: '$0.0048',
-    savings: '62%',
+      'Routed to Llama 3.3 (Groq) due to superior code logic evaluation and sub-second generation speeds.',
+    cost: '$0.00018',
+    savings: '85%',
   },
   {
     prompt: 'Summarize the attention mechanism in this 80-page transformers PDF.',
@@ -37,11 +34,11 @@ export const TERMINAL_EXAMPLES = [
       'Measuring Context Payload...',
       'Evaluating Edge Node Latency...',
     ],
-    selectedModel: 'Gemini 1.5 Pro',
+    selectedModel: 'Gemini 2.5 Flash',
     reason:
-      'Routed to Gemini 1.5 Pro due to 2M token long-context payload capabilities and high semantic retrieval rates.',
-    cost: '$0.0015',
-    savings: '82%',
+      'Routed to Gemini 2.5 Flash due to high semantic document indexing and optimal cost efficiency.',
+    cost: '$0.00006',
+    savings: '97%',
   },
   {
     prompt: 'Draft a short, punchy product update tweet for RouteMind v2 launch.',
@@ -50,23 +47,19 @@ export const TERMINAL_EXAMPLES = [
       'Comparing Inference Models...',
       'Calculating Token Budget...',
     ],
-    selectedModel: 'GPT-4o',
+    selectedModel: 'Gemini 2.5 Flash',
     reason:
-      'Routed to GPT-4o for optimal speed, balanced creative copywriting syntax, and cost-efficient edge processing.',
-    cost: '$0.0022',
-    savings: '74%',
+      'Routed to Gemini 2.5 Flash for rapid low-overhead creative copywriting and low-cost response packaging.',
+    cost: '$0.00001',
+    savings: '98%',
   },
 ]
 
 export const defaultStats = {
-  totalQueries: 14,
-  savings: 0.85,
+  totalQueries: 0,
+  savings: 0.0,
   models: {
-    'GPT-4o': 5,
-    'GPT-4o-mini': 1,
-    'Claude 3.5 Sonnet': 3,
-    'Gemini 1.5 Pro': 3,
-    'Gemini 1.5 Flash': 1,
-    'DeepSeek Coder': 1,
+    'gemini-2.5-flash': 0,
+    'llama-3.3-70b-versatile': 0,
   },
 }
