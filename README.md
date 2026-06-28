@@ -10,7 +10,7 @@ RouteMind eliminates the decision fatigue of choosing between AI tools. Instead 
 
 ### 1. Intelligent Query Routing
 
-- **Intent Classification:** Dispatches each query to the best-fit model based on its nature (e.g. Coding → Groq Llama, Research → Gemini, Reasoning → NVIDIA NIM).
+- **Intent Classification:** Dispatches each query to the best-fit model based on its nature (e.g. Coding → GPT-4o, Research → Gemini, Document → Claude).
 - **Multi-Step Routing Pipeline:** Real-time visual feedback for intent analysis → model comparison → model selection → response generation.
 - **Explainable AI Decisions:** Confidence score, estimated cost, latency, and routing reason surfaced alongside every response.
 - **Adaptive Routing Policies:** Toggle between _Cost_, _Speed_, _Balanced_, and _Quality_ policies.
@@ -33,9 +33,8 @@ RouteMind eliminates the decision fatigue of choosing between AI tools. Instead 
 
 - **FastAPI:** Clean Python backend with health monitoring and CORS.
 - **Provider Adapter Pattern:** `BaseProvider` ABC — adding a new LLM = one new file.
-- **Composite-Scoring Router:** Intent × Policy × live health metrics → model selection with automatic failover chains.
-- **Extensible Classifier:** Regex-heuristic `RuleBasedIntentClassifier` with confidence scoring and complexity detection.
-- **Background Health Monitor:** EMA-latency tracking, consecutive-failure counting, and per-provider block lists.
+- **Rule-Based Router:** Intent × Policy → model selection with automatic fallback.
+- **Extensible Classifier:** Regex-heuristic `RuleBasedIntentClassifier` with confidence scoring.
 
 ---
 
@@ -62,43 +61,34 @@ RouteMind eliminates the decision fatigue of choosing between AI tools. Instead 
 RouteMind/
 ├── .github/
 │   └── workflows/
-│       └── ci.yml                        # GitHub Actions CI: lint → test → build
-├── backend/
+│       └── ci.yml               # GitHub Actions CI workflow (lint → test → build)
+├── backend/                     # Python FastAPI Backend
 │   ├── app/
 │   │   ├── classifier/
-│   │   │   └── intent_classifier.py      # RuleBasedIntentClassifier + complexity detection
-│   │   ├── config/
-│   │   │   ├── __init__.py               # Pydantic Settings (dotenv loader)
-│   │   │   └── pricing.py                # Per-model cost parsing utility
-│   │   ├── errors.py                     # Unified exception hierarchy
-│   │   ├── main.py                       # Composition root: CORS, lifespan, exception handlers
+│   │   │   └── intent_classifier.py  # BaseIntentClassifier + RuleBasedIntentClassifier
+│   │   ├── config.py            # Pydantic Settings + dotenv loader
+│   │   ├── main.py              # CORS, logging, router registration (lifespan)
 │   │   ├── providers/
-│   │   │   ├── base.py                   # BaseProvider ABC + ProviderError types
-│   │   │   ├── gemini_provider.py        # ✅ Live — Google Gemini API
-│   │   │   ├── groq_provider.py          # ✅ Live — Groq Llama completions
-│   │   │   ├── nvidia_provider.py        # ✅ Live — NVIDIA NIM hosted models
-│   │   │   └── openrouter_provider.py    # ✅ Live — OpenRouter free-tier models
+│   │   │   ├── base.py          # Abstract BaseProvider + exception hierarchy
+│   │   │   ├── openai_provider.py   # Live OpenAI SDK integration
+│   │   │   ├── claude_provider.py   # ⚠️ Placeholder — NotImplementedError
+│   │   │   └── gemini_provider.py   # ⚠️ Placeholder — NotImplementedError
 │   │   ├── routes/
-│   │   │   ├── chat.py                   # POST /chat — classify → route → call → respond
-│   │   │   └── health.py                 # GET / and GET /health
+│   │   │   ├── chat.py          # POST /chat — validates, classifies, routes, calls provider
+│   │   │   └── health.py        # GET / and GET /health
 │   │   ├── schemas/
-│   │   │   └── chat.py                   # ChatRequest + flat ChatResponse Pydantic models
+│   │   │   └── chat.py          # ChatRequest + ChatResponse (nested: response/routing/metadata)
 │   │   └── services/
-│   │       ├── health_monitor.py         # Background EMA-latency + failure tracking
-│   │       ├── provider_manager.py       # Lazy-loading provider registry
-│   │       └── router.py                 # LLMRouter: composite-scoring engine
-│   ├── .env                              # Local secrets (never commit)
-│   ├── requirements.txt
-│   └── tests/
-│       ├── conftest.py
+│   │       ├── provider_manager.py  # Lazy-loading provider registry + health cache
+│   │       └── router.py        # LLMRouter: intent × policy → RoutingDecision
+│   ├── .env                     # Local environment variables (never commit secrets)
+│   ├── requirements.txt         # Python dependencies
+│   └── tests/                   # Pytest suite
 │       ├── test_classifier.py
 │       ├── test_router.py
 │       ├── test_provider_manager.py
-│       ├── test_chat_endpoint.py
-│       ├── test_nvidia_provider.py
-│       ├── test_openrouter_provider.py
-│       └── test_production_readiness.py
-├── src/
+│       └── test_chat_endpoint.py
+├── src/                         # React Frontend
 │   ├── components/
 │   │   ├── ChatInput.jsx
 │   │   ├── ChatMessage.jsx
@@ -125,10 +115,11 @@ RouteMind/
 │   │   ├── api.js               # Fetch wrapper with AbortController timeout
 │   │   └── chatService.js       # POST /chat + GET /health mappings
 │   ├── utils/
+│   │   ├── mockRouter.js
 │   │   ├── fileHelpers.jsx
 │   │   └── animations.js
 │   ├── test/
-│   │   ├── fileHelpers.test.js
+│   │   ├── mockRouter.test.js
 │   │   └── setup.js
 │   ├── App.jsx
 │   ├── main.jsx
@@ -152,18 +143,19 @@ Requires Node.js v18+ and Python v3.9+.
 
 ```bash
 # Install dependencies
-pnpm install
+npm install        # or: pnpm install
 
 # Start dev server (http://localhost:5173)
-pnpm dev
+npm run dev        # or: pnpm dev
 
 # Production build
-pnpm build
-pnpm preview
+npm run build      # or: pnpm build
+npm run preview    # or: pnpm preview
 
 # Lint + test
-pnpm lint
-pnpm test:run
+npm run lint       # ESLint check
+npm run test:run   # Vitest single pass
+npm run test       # Vitest watch mode
 ```
 
 ### Backend Setup
@@ -173,7 +165,7 @@ cd backend
 
 # Create and activate virtual environment
 python -m venv venv
-source venv/bin/activate        # macOS / Linux
+source venv/bin/activate        # macOS/Linux
 venv\Scripts\activate           # Windows
 
 # Install dependencies
@@ -186,20 +178,25 @@ python -m pytest tests/ -v
 uvicorn app.main:app --reload
 ```
 
-Interactive API docs available at `http://127.0.0.1:8000/docs` (local only).
+Interactive API docs available at `http://127.0.0.1:8000/docs`.
 
 ### Environment Variables (`.env`)
 
 Create `backend/.env` with:
 
 ```env
-# Provider API keys
-GEMINI_API_KEY=AIza...
-GROQ_API_KEY=gsk_...
-NVIDIA_NIM_API_KEY=nvapi-...
-OPENROUTER_API_KEY=sk-or-...
+# Required for any real LLM calls
+OPENAI_API_KEY=sk-...
 
-# CORS — add your deployed frontend URL here
+# Required once Claude/Gemini providers are implemented
+ANTHROPIC_API_KEY=sk-ant-...
+GEMINI_API_KEY=AIza...
+
+# Required for NVIDIA NIM integration
+NVIDIA_NIM_API_KEY=nvapi-...
+NVIDIA_NIM_BASE_URL="https://integrate.api.nvidia.com/v1"
+
+# CORS — add your Vercel deployment URL here
 CORS_ORIGINS=["http://localhost:5173","http://localhost:3000","https://your-app.vercel.app"]
 
 ENVIRONMENT=development
@@ -218,7 +215,7 @@ ENVIRONMENT=development
   "message": "Write a fast Rust HTTP server using actix-web",
   "conversation_id": "conv_8f3a9e2d",
   "routing_policy": "quality",
-  "attachments": [],
+  "attachments": ["server_design.pdf"],
   "user_id": "usr_9x12bc8f",
   "timestamp": "2026-06-26T07:00:00Z"
 }
@@ -226,34 +223,37 @@ ENVIRONMENT=development
 
 `routing_policy` must be one of: `balanced` | `speed` | `cost` | `quality`
 
-**Response (flat `ChatResponse`):**
+**Response:**
 
 ```json
 {
-  "success": true,
-  "response": "Here is a minimal actix-web server...",
-  "conversation_id": "conv_8f3a9e2d",
-  "routing_metadata": {
-    "intent": "coding",
-    "provider": "groq",
-    "selected_model": "llama-3.3-70b-versatile",
-    "routing_policy": "quality",
-    "confidence": 95.0,
-    "reason": "Routed to Groq Llama-3.3-70b for low-latency high-quality code generation.",
-    "processing_time_ms": 820
+  "response": {
+    "content": "Here is a minimal actix-web server...",
+    "conversation_id": "conv_8f3a9e2d",
+    "attachments": ["server_design.pdf"]
   },
-  "estimated_cost": 0.00012,
-  "usage": {
-    "prompt_tokens": 42,
-    "completion_tokens": 380,
-    "total_tokens": 422
+  "routing": {
+    "intent": "coding",
+    "provider": "openai",
+    "selected_model": "gpt-4o",
+    "routing_policy": "quality",
+    "confidence": 99.0,
+    "reason": "Routed to GPT-4o for high-quality reasoning matching 'coding' intent under the 'quality' policy.",
+    "estimated_cost": 0.00165,
+    "processing_time_ms": 3250
+  },
+  "metadata": {
+    "request_id": "req_84d72f9a1",
+    "timestamp": "2026-06-26T07:00:04.123456Z",
+    "status": "success",
+    "api_version": "1.0.0"
   }
 }
 ```
 
 ### `GET /health`
 
-Returns service status and per-provider health state.
+Returns service status and registered provider list.
 
 ---
 
@@ -261,51 +261,48 @@ Returns service status and per-provider health state.
 
 ### Intent → Provider Mapping
 
-| Intent      | `balanced`               | `speed`               | `cost`                | `quality`                | Failover Chain                      |
-| :---------- | :----------------------- | :-------------------- | :-------------------- | :----------------------- | :---------------------------------- |
-| `coding`    | groq / llama-3.3-70b     | groq / llama-3.1-8b   | groq / llama-3.1-8b   | groq / llama-3.3-70b     | groq → nvidia → gemini → openrouter |
-| `research`  | gemini / flash           | gemini / flash        | gemini / flash        | gemini / pro             | gemini → nvidia → groq → openrouter |
-| `document`  | gemini / flash           | gemini / flash        | gemini / flash        | gemini / pro             | gemini → nvidia → groq → openrouter |
-| `reasoning` | nvidia / llama-3.1-70b   | nvidia / llama-3.1-8b | nvidia / llama-3.1-8b | nvidia / llama-3.1-70b   | nvidia → gemini → groq → openrouter |
-| `analysis`  | nvidia / llama-3.1-70b   | nvidia / llama-3.1-8b | nvidia / llama-3.1-8b | nvidia / llama-3.1-70b   | nvidia → gemini → groq → openrouter |
-| `writing`   | openrouter / deepseek-r1 | groq / llama-3.1-8b   | openrouter / free     | openrouter / deepseek-r1 | openrouter → groq → gemini → nvidia |
-| `general`   | gemini / flash           | gemini / flash        | gemini / flash        | gemini / pro             | gemini → nvidia → groq → openrouter |
+| Intent      | `balanced` / `cost`                       | `speed`                                   | `quality`                                 | Preferred Order (Failover List)           |
+| :---------- | :---------------------------------------- | :---------------------------------------- | :---------------------------------------- | :---------------------------------------- |
+| `coding`    | `openai` / `gpt-4o-mini`                  | `openai` / `gpt-4o-mini`                  | `openai` / `gpt-4o`                       | `openai` → `groq` → `gemini` → `nvidia`   |
+| `writing`   | `claude` / `claude-3-5-sonnet`            | `claude` / `claude-3-5-haiku`             | `claude` / `claude-3-5-sonnet`            | `claude` → `gemini` → `openai` → `nvidia` |
+| `research`  | `gemini` / `gemini-1.5-flash`             | `gemini` / `gemini-1.5-flash`             | `gemini` / `gemini-1.5-pro`               | `gemini` → `openai` → `claude` → `nvidia` |
+| `document`  | `gemini` / `gemini-1.5-flash`             | `gemini` / `gemini-1.5-flash`             | `gemini` / `gemini-1.5-pro`               | `gemini` → `openai` → `claude` → `nvidia` |
+| `reasoning` | `nvidia` / `meta/llama-3.1-405b-instruct` | `nvidia` / `meta/llama-3.1-405b-instruct` | `nvidia` / `meta/llama-3.1-405b-instruct` | `nvidia` → `gemini` → `groq` → `openai`   |
+| `analysis`  | `nvidia` / `meta/llama-3.1-405b-instruct` | `nvidia` / `meta/llama-3.1-405b-instruct` | `nvidia` / `meta/llama-3.1-405b-instruct` | `nvidia` → `gemini` → `groq` → `openai`   |
+| `planning`  | `nvidia` / `meta/llama-3.1-405b-instruct` | `nvidia` / `meta/llama-3.1-405b-instruct` | `nvidia` / `meta/llama-3.1-405b-instruct` | `nvidia` → `gemini` → `groq` → `openai`   |
+| `strategy`  | `nvidia` / `meta/llama-3.1-405b-instruct` | `nvidia` / `meta/llama-3.1-405b-instruct` | `nvidia` / `meta/llama-3.1-405b-instruct` | `nvidia` → `gemini` → `groq` → `openai`   |
+| `general`   | `gemini` / `gemini-1.5-flash`             | `gemini` / `gemini-1.5-flash`             | `gemini` / `gemini-1.5-pro`               | `gemini` → `nvidia` → `groq` → `openai`   |
 
-### Composite Scoring Weights
+> ⚠️ Reasoning-related intents (`reasoning`, `analysis`, `planning`, `strategy`) automatically override default policy models to always route to the premium high-capacity models (e.g., `meta/llama-3.1-405b-instruct` on NVIDIA NIM, `gemini-1.5-pro` on Gemini, etc.) for complex logic evaluation.
 
-Each healthy provider is scored across five dimensions before selection:
+### Dynamic Fallback Chains
 
-| Factor                            | Weight |
-| :-------------------------------- | :----- |
-| Specialization capability         | 35%    |
-| Latency (from health monitor EMA) | 20%    |
-| Cost efficiency                   | 15%    |
-| Health status                     | 15%    |
-| Historical success rate           | 15%    |
+If the selected provider is unavailable, RouteMind executes a 3-provider failover chain. The first healthy provider in the sequence is invoked:
 
-### Failover Chains
-
-If the selected provider fails, RouteMind retries up to 3 times then executes a provider failover chain, always prioritizing healthy nodes first:
-
-- `groq` → `nvidia` → `gemini` → `openrouter`
-- `gemini` → `nvidia` → `groq` → `openrouter`
-- `nvidia` → `gemini` → `groq` → `openrouter`
-- `openrouter` → `groq` → `gemini` → `nvidia`
+- **NVIDIA Primary:** `nvidia` → `gemini` → `groq`
+- **Gemini Primary:** `gemini` → `nvidia` → `groq`
+- **Groq Primary:** `groq` → `nvidia` → `gemini`
 
 ---
 
 ## ⚠️ Known Bugs
 
-| #   | Severity  | File                   | Description                                                                         |
-| :-- | :-------- | :--------------------- | :---------------------------------------------------------------------------------- |
-| 1   | 🟡 Medium | `services/api.js`      | 15 s `AbortController` timeout too short for large Gemini / NVIDIA responses        |
-| 2   | 🟢 Low    | `intent_classifier.py` | Intent tie-breaking is non-deterministic (dict iteration order)                     |
-| 3   | 🟢 Low    | `router.py`            | `balanced` and `cost` policies resolve to identical models — no cost-weighted delta |
-| 4   | 🟢 Low    | `routes/chat.py`       | Flat `tokens × 0.000015` cost formula applied regardless of provider or model tier  |
-| 5   | 🟢 Low    | `ChatInput.jsx`        | Helper text uses `text-[11px]` — below the 12 px accessibility floor                |
-| 6   | 🟢 Low    | `Tooltip.jsx`          | Hover-only; not keyboard or screen-reader accessible                                |
-| 7   | 🟢 Low    | `Chat.jsx`             | `handleNewChat` in header is an inline lambda instead of calling the shared handler |
-| 8   | 🟢 Low    | `chatService.js`       | No SSE streaming — full response is buffered before rendering                       |
+| #   | Severity  | File                   | Description                                                                                                                                     |
+| :-- | :-------- | :--------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔴 High   | `claude_provider.py`   | All methods raise `NotImplementedError` — no live Claude calls possible                                                                         |
+| 2   | 🔴 High   | `gemini_provider.py`   | All methods raise `NotImplementedError` — no live Gemini calls possible                                                                         |
+| 3   | 🔴 High   | `requirements.txt`     | Missing `anthropic`, `google-generativeai`, `pytest` packages                                                                                   |
+| 4   | 🔴 High   | `config.py`            | `ANTHROPIC_API_KEY` and `GEMINI_API_KEY` not declared in `Settings` model                                                                       |
+| 5   | 🟡 Medium | `routes/chat.py`       | Uses `list_registered_providers()` instead of `get_available_providers()` — dead providers (Claude/Gemini) treated as available at routing time |
+| 6   | 🟡 Medium | `config.py`            | `CORS_ORIGINS` default missing `localhost:5173` and production Vercel URL                                                                       |
+| 7   | 🟡 Medium | `services/api.js`      | 15 s `AbortController` timeout too short for GPT-4o / Gemini Pro on long responses                                                              |
+| 8   | 🟢 Low    | `intent_classifier.py` | Intent tie-breaking is non-deterministic (dict key order)                                                                                       |
+| 9   | 🟢 Low    | `router.py`            | `balanced` and `cost` policies resolve to identical models — no cost-weighted scoring                                                           |
+| 10  | 🟢 Low    | `routes/chat.py`       | Flat `tokens × 0.000015` cost formula regardless of provider or model tier                                                                      |
+| 11  | 🟢 Low    | `ChatInput.jsx`        | Helper text uses `text-[11px]` — below the 12 px accessibility floor                                                                            |
+| 12  | 🟢 Low    | `Tooltip.jsx`          | Hover-only; not keyboard or screen-reader accessible                                                                                            |
+| 13  | 🟢 Low    | `Chat.jsx`             | `handleNewChat` in header is an inline lambda instead of calling the shared handler                                                             |
+| 14  | 🟢 Low    | `chatService.js`       | No SSE streaming — full response is buffered before rendering                                                                                   |
 
 ---
 
@@ -322,7 +319,7 @@ Every push and pull request to `main` triggers the GitHub Actions workflow (`ci.
 ## 🌐 Deployment
 
 - **Frontend:** Vercel. `vercel.json` rewrites all routes to `index.html` (standard SPA pattern). Push to `main` auto-deploys.
-- **Backend:** Deployed and serving live requests. Local dev server runs at `http://127.0.0.1:8000`.
+- **Backend:** deployed. Planned target: Render (FastAPI + Uvicorn).
 
 ---
 
